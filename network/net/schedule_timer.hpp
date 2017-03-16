@@ -1,0 +1,53 @@
+#pragma once
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include "ios_wrapper.hpp"
+namespace cytx
+{
+    using namespace rpc;
+    class schedule_timer : public boost::asio::deadline_timer
+    {
+        using base_t = boost::asio::deadline_timer;
+        using ios_t = ios_wrapper;
+    public:
+        schedule_timer(ios_t& ios)
+            : base_t(ios.service())
+            , ios_(ios)
+        {
+        }
+
+        ~schedule_timer() { cancel(); }
+    public:
+        void async_wait_func(int milliseconds, std::function<void()> func)
+        {
+            expires(milliseconds);
+            base_t::async_wait([f = std::move(func)](const boost::system::error_code& ec){
+                if (!ec)
+                    f();
+            });
+        }
+
+        void async_wait(int milliseconds, std::function<void(const boost::system::error_code&)> func)
+        {
+            expires(milliseconds);
+            base_t::async_wait(func);
+        }
+    protected:
+        void expires(int milliseconds)
+        {
+            expires_from_now(boost::posix_time::milliseconds(milliseconds));
+        }
+        void expires_at(int timestamp)
+        {
+            base_t::expires_at(boost::posix_time::from_time_t(timestamp));
+        }
+        void expires_at_ms(int64_t timestamp)
+        {
+            auto t = boost::posix_time::from_time_t(timestamp / 1000) + boost::posix_time::milliseconds(timestamp % 1000);
+            base_t::expires_at(t);
+        }
+    protected:
+        ios_t& ios_;
+    };
+}
