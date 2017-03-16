@@ -1,4 +1,4 @@
 #pragma once
+#include "serialize.hpp"
 #include "server/server.hpp"
-#include "base/utils.hpp"
 #include "codec/codec.hpp"
