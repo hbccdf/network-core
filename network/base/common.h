@@ -134,7 +134,7 @@ namespace cytx {
             bool need_reply() const
             {
                 auto proto = to_protocol(protocol_id);
-                return proto.need_reply;
+                return (!proto.is_reply) && proto.need_reply;
             }
 
             uint16_t result() const
@@ -416,7 +416,7 @@ namespace cytx {
                 else
                 {
                     auto proto = to_protocol(server_header().protocol_id);
-                    return proto.need_reply;
+                    return (!proto.is_reply) && proto.need_reply;
                 }
             }
 

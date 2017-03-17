@@ -154,7 +154,7 @@ namespace cytx
                     {
                         conn->irouter()->message_received(conn, header, const_cast<char*>(data), size);
                     }
-                    else if (!header.is_reply())
+                    else if (header.need_reply())
                     {
                         auto ctx = context_t::make_error_message(conn->get_io_service(), header, cannot_find_invoker_error);
                         conn->response(ctx);
@@ -165,7 +165,7 @@ namespace cytx
                     auto& invoker = itr->second;
                     if (!invoker)
                     {
-                        if (header.is_reply())
+                        if (!header.need_reply())
                             return;
                         auto ctx = context_t::make_error_message(conn->get_io_service(), header, cannot_find_invoker_error);
                         conn->response(ctx);
@@ -177,7 +177,7 @@ namespace cytx
             }
             catch (exception const& error)
             {
-                if (header.is_reply())
+                if (!header.need_reply())
                     return;
                 // response serialized exception to client
                 auto args_not_match_error = codec_policy{ header_t::big_endian() }.pack(error);

@@ -87,7 +87,7 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     invoker_call_handler(h, args_tuple);
-                    if (header.is_reply() || !header.need_reply())
+                    if (!header.need_reply())
                         return;
 
                     header.reply(true);
@@ -115,7 +115,7 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     invoker_call_handler(h, args_tuple);
-                    if (header.is_reply() || !header.need_reply())
+                    if (!header.need_reply())
                         return;
 
                     header.reply(true);
@@ -149,7 +149,7 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
-                    if (header.is_reply() || !header.need_reply())
+                    if (!header.need_reply())
                         return;
 
                     header.reply(true);
@@ -178,7 +178,7 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
-                    if (header.is_reply() || !header.need_reply())
+                    if (!header.need_reply())
                         return;
 
                     header.reply(true);

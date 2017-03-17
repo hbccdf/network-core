@@ -294,7 +294,7 @@ namespace cytx {
 
             bool push_call(context_ptr& ctx)
             {
-                if(!ctx->is_reply())
+                if(ctx->need_reply())
                     push_call_response(ctx);
                 call_list_.push_back(ctx);
                 return true;
@@ -302,7 +302,7 @@ namespace cytx {
 
             void push_call_response(context_ptr& ctx)
             {
-                if (ctx->get_head().need_reply())
+                if (ctx->need_reply())
                 {
                     auto call_id = ++call_id_;
                     ctx->get_head().call_id(call_id);
@@ -378,7 +378,7 @@ namespace cytx {
 
             bool push_call(context_ptr& ctx)
             {
-                if (!ctx->is_reply())
+                if (ctx->need_reply())
                     push_call_response(ctx);
                 call_list_.push_back(ctx);
                 return true;
@@ -386,7 +386,7 @@ namespace cytx {
 
             void push_call_response(context_ptr& ctx)
             {
-                if (ctx->get_head().need_reply())
+                if (ctx->need_reply())
                 {
                     auto protocol_id = reply_protocol(ctx->get_head().protocol_id);
                     if (call_map_.find(protocol_id) != call_map_.end())
