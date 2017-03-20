@@ -12,13 +12,20 @@ if(NOT INCLUDED_COMMON)
     set(EXECUTABLE_OUTPUT_PATH ${BIN_OUTPUT_DIR})
     set(LIBRARY_OUTPUT_PATH ${LIB_OUTPUT_DIR})
 
+    set(COMMON_LIBS Common)
     set(INCLUDE_DIRS 
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR})
 
-        add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_WIN32_WINNT=0x601 -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DFMT_HEADER_ONLY)
-        set(BOOST_DIR ${ROOT}/third_party/boost_1_61_0)
-        set(BOOST_LIB_PATH ${ROOT}/libs64/boost_1_61_0/windows/x64)
+    add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_WIN32_WINNT=0x601 -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DFMT_HEADER_ONLY)
+    
+    include(boost)
+    include(thrift)
+    set(THRIFT_LIB_NAME libthrift)
+
+    set(COMMON_DIR ${ROOT}/Common)
+    set(EXTS "*.cpp")
+    set(PROTOCOL_DIR ${ROOT}/protocol)
 
     include_directories(
         ${INCLUDE_DIRS}
@@ -31,6 +38,5 @@ if(NOT INCLUDED_COMMON)
 
     link_directories(
         ${LIB_OUTPUT_DIR}
-        ${BOOST_LIB_PATH}
         )
 endif()
