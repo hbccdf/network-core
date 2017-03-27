@@ -207,7 +207,7 @@ namespace cytx
         template <typename Handler>
         bool router<T, H>::register_raw_invoker_impl(uint64_t proto_hash, Handler&& handler)
         {
-            auto itr = this->invokers_.find(protocol);
+            auto itr = this->invokers_.find(proto_hash);
             if (this->invokers_.end() != itr)
                 return false;
 

@@ -102,6 +102,25 @@ namespace cytx {
                 return router_.register_codec_invoker<CallCodecPolicy>((uint32_t)protocol, std::forward<Handler>(handler));
             }
 
+            template <typename Handler>
+            bool register_raw_handler(std::string const& name, Handler&& handler)
+            {
+                return router_.register_raw_invoker(name, std::forward<Handler>(handler));
+            }
+
+            template <typename Handler>
+            bool register_raw_handler(uint32_t protocol, Handler&& handler)
+            {
+                return router_.register_raw_invoker(protocol, std::forward<Handler>(handler));
+            }
+
+            template <typename proto_type, typename Handler>
+            auto register_raw_handler(proto_type protocol, Handler&& handler)
+                ->std::enable_if_t<std::is_enum<proto_type>::value, bool>
+            {
+                return router_.register_raw_invoker((uint32_t)protocol, std::forward<Handler>(handler));
+            }
+
         protected:
             void init_callback_functions()
             {
