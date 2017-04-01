@@ -6,6 +6,7 @@
 #include "../base/excetion.hpp"
 #include "wait_barrier.hpp"
 #include <queue>
+#include "schedule_timer.hpp"
 
 namespace cytx {
     namespace rpc
@@ -18,7 +19,7 @@ namespace cytx {
         {
             using buffer_t = buffer_type;
             using success_function_t = std::function<void(char const*, size_t)>;
-            using on_error_function_t = std::function<void(exception const&)>;
+            using on_error_function_t = std::function<void(rpc_result const&)>;
             using asio_buffers = std::vector<boost::asio::const_buffer>;
             using post_func_t = std::function<void()>;
             using message_t = std::vector<char>;
@@ -26,6 +27,9 @@ namespace cytx {
             using context_t = typename get_context<buffer_type, header_type>::type;
             using header_t = header_type;
             using ios_t = ios_wrapper;
+            using timer_t = schedule_timer;
+            using duration_t = typename timer_t::duration_t;
+            using timer_ptr = std::shared_ptr<timer_t>;
 
         public:
             base_rpc_context(ios_t& ios, header_t const& h, buffer_t&& msg)
@@ -37,7 +41,7 @@ namespace cytx {
                 boost::asio::buffer(send_msg.data(), send_msg.size()) })
             {
             }
-        public:
+
             base_rpc_context(ios_t& ios, uint32_t protocol, buffer_t&& msg)
                 : ios_(ios)
                 , send_msg(std::move(msg))
@@ -72,16 +76,6 @@ namespace cytx {
             {
                 head.reply(true);
                 head.length(static_cast<uint32_t>(send_msg.size()));
-            }
-
-            base_rpc_context(ios_t& ios, header_t const& h, buffer_t& msg, post_func_t postf)
-                : base_rpc_context(ios, h, std::move(buffer_t{ msg.begin(), msg.end() }), std::move(postf))
-            {
-            }
-
-            base_rpc_context(ios_t& ios, buffer_t& msg, post_func_t postf)
-                : base_rpc_context(ios, std::move(buffer_t{ msg.begin(), msg.end() }), std::move(postf))
-            {
             }
 
             void ntoh()
@@ -134,21 +128,9 @@ namespace cytx {
                 }
             }
 
-            void error(exception&& recv_error)
+            void error(const rpc_result& recv_error)
             {
-                err = std::move(recv_error);
-
-                post_error();
-            }
-
-            void error(error_code errcode, std::string const& message = "")
-            {
-                err.set_code(errcode);
-                if (!message.empty())
-                {
-                    err.set_message(message);
-                }
-
+                err = recv_error;
                 post_error();
             }
 
@@ -178,7 +160,7 @@ namespace cytx {
                     barrier_ptr->wait();
 
                 if (err)
-                    throw err;
+                    throw rpc_exception(err);
             }
 
             void apply_post_func() const
@@ -187,12 +169,16 @@ namespace cytx {
                     post_func();
             }
 
-            // for response
-            static auto make_error_message(ios_t& ios, header_t const& h, buffer_t&& msg, post_func_t postf = nullptr)
+            void timeout(const duration_t& duration)
             {
-                auto ctx = make_message(ios, h, std::forward<buffer_t>(msg), std::move(postf));
-                ctx->head.result(static_cast<uint16_t>(result_code::fail));
-                return ctx;
+                duration_ = duration;
+            }
+
+            // for response
+            static auto make_error_message(ios_t& ios, header_t& h, error_code code)
+            {
+                h.result((uint16_t)code);
+                return make_message(ios, h, buffer_t{}, nullptr);
             }
 
             static auto make_message(ios_t& ios, header_t const& h, buffer_t&& msg, post_func_t postf = nullptr)
@@ -205,34 +191,19 @@ namespace cytx {
                 return std::make_shared<context_t>(ios, std::forward<buffer_t>(msg), std::move(postf));
             }
 
-            static auto make_error_message(ios_t& ios, header_t const& h, buffer_t& msg, post_func_t postf = nullptr)
-            {
-                auto ctx = make_message(ios, h, msg, std::move(postf));
-                ctx->head.result(static_cast<uint16_t>(result_code::fail));
-                return ctx;
-            }
-
-            static auto make_message(ios_t& ios, header_t const& h, buffer_t& msg, post_func_t postf = nullptr)
-            {
-                return std::make_shared<context_t>(ios, h, msg, std::move(postf));
-            }
-
-            static auto make_message(ios_t& ios, buffer_t& msg, post_func_t postf = nullptr)
-            {
-                return std::make_shared<context_t>(ios, msg, std::move(postf));
-            }
-
             ios_t& ios_;
             buffer_t send_msg;
             header_t head;
             std::vector<char> recv_msg;
             asio_buffers send_buffer;
-            exception err;
+            rpc_result err;
             success_function_t on_ok;
             on_error_function_t on_error;
             post_func_t post_func;
             std::unique_ptr<result_barrier_t> barrier_ptr;
             bool is_over = false;
+            timer_ptr timer_ptr_;
+            duration_t duration_{0};
         };
 
         template<typename buffer_type>
@@ -244,7 +215,7 @@ namespace cytx {
             using base_t = base_rpc_context<buffer_type, msg_header>;
             using buffer_t = buffer_type;
             using success_function_t = std::function<void(char const*, size_t)>;
-            using on_error_function_t = std::function<void(exception const&)>;
+            using on_error_function_t = std::function<void(rpc_result const&)>;
             using asio_buffers = std::vector<boost::asio::const_buffer>;
             using post_func_t = std::function<void()>;
             using message_t = std::vector<char>;

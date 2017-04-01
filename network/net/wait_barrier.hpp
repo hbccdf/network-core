@@ -45,6 +45,11 @@ namespace cytx {
                 }
             }
 
+            bool is_over() const
+            {
+                return is_over_;
+            }
+
         protected:
             ios_t& ios_;
             bool is_over_ = false;

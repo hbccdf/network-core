@@ -177,6 +177,6 @@ namespace cytx
     auto bind(F&& f, Args&& ... args)
     {
         using args_tuple_t = typename cat<F, std::tuple<Args...>>::type;
-        return bind_help<args_tuple_t>::bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
+        return (function_traits<F>::stl_function_type)bind_help<args_tuple_t>::bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
     }
 }

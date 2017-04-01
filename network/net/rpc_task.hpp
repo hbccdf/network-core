@@ -1,6 +1,7 @@
 #pragma once
 #include "async_rpc_channel.hpp"
 #include <boost/optional.hpp>
+#include "schedule_timer.hpp"
 
 namespace cytx
 {
@@ -15,12 +16,16 @@ namespace cytx
             using client_private_ptr = std::shared_ptr<client_private_t>;
             using context_ptr = typename client_private_t::context_ptr;
             using header_t = header_type;
+            using timer_t = schedule_timer;
+            using duration_t = typename timer_t::duration_t;
+            using timer_ptr = std::shared_ptr<timer_t>;
 
         protected:
             rpc_task(client_private_ptr client, context_ptr& ctx)
                 : client_(client)
                 , ctx_(ctx)
                 , dismiss_(false)
+                , duration_(0)
             {}
 
             ~rpc_task()
@@ -29,9 +34,11 @@ namespace cytx
             }
 
             rpc_task(rpc_task&& other)
-                : client_(other.client_)
+                : client_(std::move(other.client_))
                 , ctx_(std::move(other.ctx_))
                 , dismiss_(other.dismiss_)
+                , timer_ptr_(std::move(other.timer_ptr_))
+                , duration_(std::move(other.duration_))
             {
                 other.dismiss_ = true;
             }
@@ -42,26 +49,40 @@ namespace cytx
             {
                 if (!dismiss_)
                 {
-                    if (client_->status() == status_t::disconnected)
+                    dismiss_ = true;
+                    if (client_->is_client() && client_->status() == status_t::disconnected)
                     {
-                        client_->connect().on_ok([c = client_, ctx = ctx_] {
-                                if (c->irouter())
-                                {
-                                    boost::system::error_code ec;
-                                    c->irouter()->connection_incoming(ec, c);
-                                }
-                                c->call_context_ptr(ctx);
-                            })
-                            .on_error([c = client_, ctx = ctx_](auto& ec) {
-                                if(ctx->on_error)
-                                    ctx->on_error(cytx::rpc::exception(error_code::connect_fail, ec.message()));
-                                else if(c->irouter())
-                                    c->irouter()->connection_incoming(ec, c);
-                            });
+                        auto on_ok_func = [c = client_, ctx = ctx_]() mutable {
+                            if (c->irouter())
+                            {
+                                c->irouter()->connection_incoming(rpc_result(), c);
+                            }
+                            c->call_context(ctx);
+                        };
+
+                        auto on_error_func = [c = client_, ctx = ctx_](auto& ec) {
+                            if (ctx->on_ok || ctx->on_error || ctx->barrier_ptr)
+                                ctx->error(ec);
+                            else if (c->irouter())
+                                c->irouter()->connection_incoming(ec, c);
+                        };
+
+                        client_->connect().on_ok(on_ok_func).on_error(on_error_func).delay(duration_);
+                    }
+                    else if(!timer_ptr_ || duration_.count() <= 0)
+                    {
+                        client_->call_context(ctx_);
                     }
                     else
                     {
-                        client_->call_context(ctx_);
+                        auto on_timer_func = [c = std::move(client_), ctx = std::move(ctx_), t = timer_ptr_](const boost::system::error_code& ec) mutable {
+                            t.reset();
+                            if (!ec)
+                            {
+                                c->call_context(ctx);
+                            }
+                        };
+                        timer_ptr_->async_wait(duration_, on_timer_func);
                     }
                 }
             }
@@ -71,7 +92,7 @@ namespace cytx
                 if (!dismiss_)
                 {
                     dismiss_ = true;
-                    if (client_->status() == status_t::disconnected)
+                    if (client_->is_client() && client_->status() == status_t::disconnected)
                     {
                         auto task = client_->connect();
                         auto ec = task.wait();
@@ -83,7 +104,7 @@ namespace cytx
                         }
                         else
                         {
-                            throw cytx::rpc::exception(error_code::connect_fail, ec.message());
+                            throw cytx::rpc::rpc_exception(ec);
                         }
                     }
                     else
@@ -115,6 +136,8 @@ namespace cytx
             client_private_ptr client_;
             context_ptr ctx_;
             bool dismiss_;
+            timer_ptr timer_ptr_;
+            duration_t duration_;
         };
 
         template <typename CodecPolicy, typename ConnectPolicy, typename header_type, typename Ret>
@@ -128,6 +151,8 @@ namespace cytx
             using client_private_ptr = typename base_type::client_private_ptr;
             using context_ptr = typename base_type::context_ptr;
             using header_t = header_type;
+            using timer_t = typename base_type::timer_t;
+            using duration_t = typename base_type::duration_t;
 
         public:
             typed_rpc_task(client_private_ptr client, context_ptr& ctx)
@@ -162,6 +187,33 @@ namespace cytx
                 return std::move(*this);
             }
 
+            typed_rpc_task&& delay(const duration_t& duration) &&
+            {
+                if (duration.count() <= 0)
+                    return std::move(*this);
+
+                if (!this->timer_ptr_)
+                    timer_ptr_ = std::make_shared<timer_t>(client_->get_io_service());
+                duration_ = duration;
+                return std::move(*this);
+            }
+
+            typed_rpc_task&& delay(int milliseconds) &&
+            {
+                return std::move(*this).delay(duration_t(milliseconds));
+            }
+
+            typed_rpc_task&& timeout(const duration_t& duration) &&
+            {
+                this->ctx_->timeout(duration);
+                return std::move(*this);
+            }
+
+            typed_rpc_task&& timeout(int milliseconds) &&
+            {
+                return std::move(*this).timeout(duration_t(milliseconds));
+            }
+
             void wait(duration_t const& duration = duration_t::max()) &
             {
                 if (!this->dismiss_)
@@ -170,7 +222,7 @@ namespace cytx
                     {
                         result_ = std::make_shared<result_type>();
                     }
-
+                    this->ctx_->timeout(duration);
                     this->ctx_->on_ok = [r = result_](char const* data, size_t size)
                     {
                         codec_policy codec{ header_t::big_endian() };
@@ -181,15 +233,15 @@ namespace cytx
                 this->do_call_and_wait();
             }
 
-            void wait(cytx::rpc::exception& ec, duration_t const& duration = duration_t::max()) &
+            void wait(cytx::rpc::rpc_result& ec, duration_t const& duration = duration_t::max()) &
             {
                 try
                 {
                     wait(duration);
                 }
-                catch(cytx::rpc::exception& e)
+                catch(cytx::rpc::rpc_exception& e)
                 {
-                    ec = e;
+                    ec = e.result();
                 }
             }
 
@@ -199,7 +251,7 @@ namespace cytx
                 return *result_;
             }
 
-            boost::optional<result_type> get(cytx::rpc::exception& ec, duration_t const& duration = duration_t::max()) &
+            boost::optional<result_type> get(cytx::rpc::rpc_result& ec, duration_t const& duration = duration_t::max()) &
             {
                 boost::optional<result_type> r;
                 try
@@ -207,9 +259,9 @@ namespace cytx
                     wait(duration);
                     r = *result_;
                 }
-                catch (cytx::rpc::exception& e)
+                catch (cytx::rpc::rpc_exception& e)
                 {
-                    ec = e;
+                    ec = e.result();
                 }
                 return r;
             }
@@ -229,6 +281,8 @@ namespace cytx
             using client_private_ptr = typename base_type::client_private_ptr;
             using context_ptr = typename base_type::context_ptr;
             using header_t = typename base_type::header_t;
+            using timer_t = typename base_type::timer_t;
+            using duration_t = typename base_type::duration_t;
 
         public:
             typed_rpc_task(client_private_ptr client, context_ptr& ctx)
@@ -252,25 +306,53 @@ namespace cytx
                 return std::move(*this);
             }
 
+            typed_rpc_task&& delay(const duration_t& duration) &&
+            {
+                if (duration.count() <= 0)
+                    return std::move(*this);
+
+                if (!this->timer_ptr_)
+                    timer_ptr_ = std::make_shared<timer_t>(client_->get_io_service());
+                duration_ = duration;
+                return std::move(*this);
+            }
+
+            typed_rpc_task&& delay(int milliseconds) &&
+            {
+                return std::move(*this).delay(duration_t(milliseconds));
+            }
+
+            typed_rpc_task&& timeout(const duration_t& duration) &&
+            {
+                this->ctx_->timeout(duration);
+                return std::move(*this);
+            }
+
+            typed_rpc_task&& timeout(int milliseconds) &&
+            {
+                return std::move(*this).timeout(duration_t(milliseconds));
+            }
+
             void wait(duration_t const& duration = duration_t::max()) &
             {
                 if (!this->dismiss_)
                 {
+                    this->ctx_->timeout(duration);
                     this->ctx_->on_ok = nullptr;
                     this->ctx_->on_error = nullptr;
                 }
                 this->do_call_and_wait();
             }
 
-            void wait(cytx::rpc::exception& ec, duration_t const& duration = duration_t::max()) &
+            void wait(cytx::rpc::rpc_result& ec, duration_t const& duration = duration_t::max()) &
             {
                 try
                 {
                     wait(duration);
                 }
-                catch (cytx::rpc::exception& e)
+                catch (cytx::rpc::rpc_exception& e)
                 {
-                    ec = e;
+                    ec = e.result();
                 }
             }
         };
@@ -283,12 +365,19 @@ namespace cytx
             using client_private_t = async_rpc_channel<codec_policy, header_type>;
             using client_private_ptr = std::shared_ptr<client_private_t>;
             using on_ok_func_t = std::function<void()>;
-            using on_error_func_t = std::function<void(const boost::system::error_code&)>;
+            using on_error_func_t = std::function<void(const rpc_result&)>;
+            using timer_t = schedule_timer;
+            using duration_t = typename timer_t::duration_t;
+            using timer_ptr = std::shared_ptr<timer_t>;
 
         public:
             connect_task(client_private_ptr client)
                 : client_(client)
                 , dismiss_(false)
+                , timer_ptr_(std::make_shared<timer_t>(client_->get_io_service()))
+                , timer_timeout_ptr_(std::make_shared<timer_t>(client_->get_io_service()))
+                , timeout_duration_(0)
+                , duration_(0)
             {}
 
             ~connect_task()
@@ -297,12 +386,14 @@ namespace cytx
             }
 
             connect_task(connect_task&& other)
-                : client_(other.client_)
+                : client_(std::move(other.client_))
                 , on_ok_(std::move(other.on_ok_))
                 , on_error_(std::move(other.on_error_))
                 , barrier_ptr_(std::move(other.barrier_ptr_))
-                , result_(other.result_)
+                , result_(std::move(other.result_))
                 , dismiss_(other.dismiss_)
+                , timer_ptr_(std::move(other.timer_ptr_))
+                , duration_(std::move(other.duration_))
             {
                 other.dismiss_ = true;
             }
@@ -321,23 +412,58 @@ namespace cytx
                 return std::move(*this);
             }
 
-            boost::system::error_code wait(duration_t const& duration = duration_t::max()) &
+            connect_task&& delay(const duration_t& duration) &&
+            {
+                if (duration.count() > 0)
+                duration_ = duration;
+                return std::move(*this);
+            }
+
+            connect_task&& delay(int milliseconds) &&
+            {
+                return std::move(*this).delay(duration_t(milliseconds));
+            }
+
+            connect_task&& timeout(const duration_t& duration) &&
+            {
+                if (duration.count() > 0)
+                    timeout_duration_ = duration;
+                return std::move(*this);
+            }
+
+            connect_task&& timeout(int milliseconds) &&
+            {
+                return std::move(*this).delay(duration_t(milliseconds));
+            }
+
+            rpc_result wait(duration_t const& duration = duration_t::max()) &
             {
                 if (!this->dismiss_)
                 {
-                    if (nullptr == result_)
+                    if (duration != duration_t::max())
                     {
-                        result_ = std::make_shared<boost::system::error_code>();
+                        timeout_duration_ = duration;
                     }
 
-                    this->on_ok_ = [this]
+                    if (nullptr == result_)
                     {
-                        barrier_ptr_->notify();
+                        result_ = std::make_shared<rpc_result>();
+                    }
+
+                    create_barrier();
+
+                    this->on_ok_ = [b = barrier_ptr_]
+                    {
+                        if (b->is_over())
+                            return;
+                        b->notify();
                     };
-                    this->on_error_ = [this, r = result_](auto& ec)
+                    this->on_error_ = [b = barrier_ptr_, r = result_](auto& ec)
                     {
+                        if (b->is_over())
+                            return;
                         *r = ec;
-                        barrier_ptr_->notify();
+                        b->notify();
                     };
                 }
                 this->do_call_and_wait();
@@ -347,9 +473,23 @@ namespace cytx
         protected:
             void do_call_managed()
             {
-                if (!dismiss_)
+                if (dismiss_)
+                    return;
+                dismiss_ = true;
+                if (!timer_ptr_ || duration_.count() <= 0)
                 {
                     client_->start(std::move(on_ok_), std::move(on_error_));
+                }
+                else
+                {
+                    auto on_timer_func = [c = std::move(client_), on_ok_f = std::move(on_ok_), on_err_f = std::move(on_error_), t = timer_ptr_](const boost::system::error_code& ec) mutable {
+                        t.reset();
+                        if (!ec)
+                        {
+                            c->start(std::move(on_ok_f), std::move(on_err_f));
+                        }
+                    };
+                    timer_ptr_->async_wait(duration_, on_timer_func);
                 }
             }
 
@@ -358,7 +498,23 @@ namespace cytx
                 if (!dismiss_)
                 {
                     dismiss_ = true;
-                    create_barrier();
+                    if (timeout_duration_.count() > 0)
+                    {
+                        auto on_timer_func = [b = barrier_ptr_, r = result_](auto& ec) {
+                            if (b->is_over())
+                                return;
+                            if (ec)
+                            {
+                                *r = ec;
+                            }
+                            else
+                            {
+                                *r = rpc_result(error_code::timeout);
+                            }
+                            b->notify();
+                        };
+                        timer_timeout_ptr_->async_wait(timeout_duration_, on_timer_func);
+                    }
                     client_->start(std::move(on_ok_), std::move(on_error_));
                     barrier_wait();
                 }
@@ -367,7 +523,7 @@ namespace cytx
             void create_barrier()
             {
                 if (!barrier_ptr_)
-                    barrier_ptr_ = std::make_unique<ios_result_barrier>(client_->get_io_service());
+                    barrier_ptr_ = std::make_shared<ios_result_barrier>(client_->get_io_service());
             }
 
             void barrier_wait()
@@ -380,8 +536,12 @@ namespace cytx
             bool dismiss_;
             on_ok_func_t on_ok_;
             on_error_func_t on_error_;
-            std::unique_ptr<ios_result_barrier> barrier_ptr_;
-            std::shared_ptr<boost::system::error_code> result_;
+            std::shared_ptr<ios_result_barrier> barrier_ptr_;
+            std::shared_ptr<rpc_result> result_;
+            timer_ptr timer_ptr_;
+            duration_t duration_;
+            timer_ptr timer_timeout_ptr_;
+            duration_t timeout_duration_;
         };
     }
 }

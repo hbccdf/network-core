@@ -17,13 +17,15 @@ namespace cytx
         template<typename... Args>
         static void read(Args&&... args)
         {
-            read_xml(std::forward<Args>(args)...);
+            using namespace boost::property_tree::xml_parser;
+            read_xml(std::forward<Args>(args)..., trim_whitespace | no_comments);
         }
 
         template<typename... Args>
         static void read_file(Args&&... args)
         {
-            read_xml(std::forward<Args>(args)..., 0, std::locale());
+            using namespace boost::property_tree::xml_parser;
+            read_xml(std::forward<Args>(args)..., trim_whitespace | no_comments, std::locale());
         }
     };
 
@@ -44,7 +46,7 @@ namespace cytx
         template<typename... Args>
         static void read_file(Args&&... args)
         {
-            read_info(std::forward<Args>(args)..., 0, std::locale());
+            read_info(std::forward<Args>(args)..., std::locale());
         }
     };
 
@@ -65,7 +67,7 @@ namespace cytx
         template<typename... Args>
         static void read_file(Args&&... args)
         {
-            read_ini(std::forward<Args>(args)..., 0, std::locale());
+            read_ini(std::forward<Args>(args)..., std::locale());
         }
     };
 }

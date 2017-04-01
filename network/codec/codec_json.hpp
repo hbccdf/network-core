@@ -24,7 +24,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::exception(error_code::codec_fail, e.what());
+                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -40,7 +40,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::exception(error_code::codec_fail, e.what());
+                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -64,7 +64,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::exception(error_code::codec_fail, e.what());
+                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
                 }
             }
         };

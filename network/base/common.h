@@ -38,8 +38,8 @@ namespace cytx {
         inline uint32_t reply_protocol(uint32_t proto)
         {
             full_procotol full = to_protocol(proto);
-            if (!full.is_reply)
-                full.is_reply = true;
+            full.is_reply = true;
+            full.need_reply = false;
             return to_protocol(full);
         }
 
@@ -126,9 +126,7 @@ namespace cytx {
 
             void reply(bool is_reply)
             {
-                auto proto = to_protocol(protocol_id);
-                proto.is_reply = is_reply;
-                protocol_id = to_protocol(proto);
+                protocol_id = reply_protocol(protocol_id);
             }
 
             bool need_reply() const
@@ -403,16 +401,14 @@ namespace cytx {
                     internal_header().option.is_reply = is_reply;
                 else
                 {
-                    auto proto = to_protocol(server_header().protocol_id);
-                    proto.is_reply = is_reply;
-                    server_header().protocol_id = to_protocol(proto);
+                    server_header().protocol_id = reply_protocol(server_header().protocol_id);
                 }
             }
 
             bool need_reply() const
             {
                 if (is_internal())
-                    return !internal_header().option.is_one_way;
+                    return (!internal_header().option.is_reply) && !internal_header().option.is_one_way;
                 else
                 {
                     auto proto = to_protocol(server_header().protocol_id);
@@ -499,7 +495,7 @@ namespace cytx {
             size_t size_ = 0;
         };
 
-        enum class result_code : int16_t
+        enum class result_code : uint16_t
         {
             ok = 0,
             fail = 100,
@@ -508,8 +504,8 @@ namespace cytx {
         enum class error_code
         {
             ok,
+            fail = (int)result_code::fail,
             unknown,
-            fail,
             timeout,
             cancel,
             connect_fail,
@@ -517,6 +513,9 @@ namespace cytx {
             codec_fail,
             invalid_header,
             be_disconnected,
+            repeat_connect,
+            no_handler,
+            remote_error,
         };
     }
 }

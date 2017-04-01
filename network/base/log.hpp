@@ -34,6 +34,26 @@ namespace cytx
             return true;
         }
 
+        bool init(spdlog::level::level_enum lvl = spdlog::level::level_enum::debug)
+        {
+            try
+            {
+                auto stdout_sink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+                log_ = spdlog::create("logger", spdlog::sinks_init_list{ stdout_sink });
+                log_->set_level(lvl);
+            }
+            catch (std::exception&)
+            {
+                return false;
+            }
+            catch (...)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         std::shared_ptr<spdlog::logger> get_log()
         {
             return log_;
@@ -55,16 +75,16 @@ namespace cytx
     }
 
     template<typename... Args>
+    static inline void LOG_DEBUG(const char* fmt, const Args&... args)
+    {
+        log::get().get_log()->debug(fmt, args...);
+    }
+
+    template<typename... Args>
     static inline void LOG_INFO(const char* fmt, const Args&... args)
     {
         log::get().get_log()->info(fmt, args...);
     }
-
-    //template<typename... Args>
-    //static inline void LOG_NOTICE(const char* fmt, const Args&... args)
-    //{
-    //	log::get().get_log()->notice(fmt, args...);
-    //}
 
     template<typename... Args>
     static inline void LOG_WARN(const char* fmt, const Args&... args)
@@ -82,23 +102,5 @@ namespace cytx
     static inline void LOG_CRITICAL(const char* fmt, const Args&... args)
     {
         log::get().get_log()->critical(fmt, args...);
-    }
-
-    //template<typename... Args>
-    //static inline void LOG_ALERT(const char* fmt, const Args&... args)
-    //{
-    //	log::get().get_log()->alert(fmt, args...);
-    //}
-
-    //template<typename... Args>
-    //static inline void LOG_EMERG(const char* fmt, const Args&... args)
-    //{
-    //	log::get().get_log()->emerg(fmt, args...);
-    //}
-
-    template<typename... Args>
-    static inline void LOG_DEBUG(const char* fmt, const Args&... args)
-    {
-        log::get().get_log()->debug(fmt, args...);
     }
 }

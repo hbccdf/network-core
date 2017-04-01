@@ -121,6 +121,7 @@ namespace cytx {
         class async_rpc_channel : public rpc_call<CodecPolicy, header_type>,
             public std::enable_shared_from_this<async_rpc_channel<CodecPolicy, header_type>>
         {
+            using this_t = async_rpc_channel<CodecPolicy, header_type>;
         public:
             using base_t = rpc_call<CodecPolicy, header_type>;
             using ios_t = ios_wrapper;
@@ -135,6 +136,11 @@ namespace cytx {
             using router_t = typename router<codec_policy, header_t>;
             using irouter_t = irouter<connect_t>;
             using irouter_ptr = irouter_t*;
+            using on_error_func_t = std::function<void(const rpc_result&)>;
+            using on_success_func_t = std::function<void()>;
+            using timer_t = typename context_t::timer_t;
+            using duration_t = typename timer_t::duration_t;
+            using timer_ptr = std::shared_ptr<timer_t>;
 
             template <typename Ret>
             using rpc_task_alias = typed_rpc_task<codec_policy, codec_policy, header_t, Ret>;
@@ -201,48 +207,45 @@ namespace cytx {
             }
 
             void start(std::function<void()>&& on_success,
-                std::function<void(const boost::system::error_code&)>&& on_error_func)
+                std::function<void(const rpc_result&)>&& on_error_func)
             {
                 lock_t lock{ connect_mutex_ };
                 if (status_ != status_t::disconnected)
                 {
                     lock.unlock();
-                    boost::system::error_code ec(1, boost::system::generic_category());
                     if (on_error_func)
-                        on_error_func(ec);
+                        on_error_func(rpc_result(error_code::repeat_connect));
                     else if (irptr_)
                     {
-                        irptr_->connection_incoming(ec, this->shared_from_this());
+                        irptr_->connection_incoming(rpc_result(error_code::repeat_connect), this->shared_from_this());
                     }
                     return;
                 }
 
-                status_ = status_t::connecting;
-
-                using on_error_func_t = std::function<void(const boost::system::error_code&)>;
-                using on_success_func_t = std::function<void()>;
-                connection_.start(
-                    [this, on_succ = std::move(on_success)] // when successfully connected
-                {
+                auto on_success_func = [this, on_succ = std::move(on_success)] {
+                    lock_t lock{ connect_mutex_ };
                     start_rpc_service();
+                    lock.unlock();
                     if (on_succ)
                         on_succ();
-                    else if (irptr_)
+                    else if(irptr_)
                     {
-                        boost::system::error_code ec;
-                        irptr_->connection_incoming(ec, this->shared_from_this());
+                        irptr_->connection_incoming(rpc_result(), this->shared_from_this());
                     }
-                },
-                    [this, on_err = std::move(on_error_func)](const boost::system::error_code& ec) // when failed to connect
-                {
-                    stop_rpc_service(error_code::connect_fail);
-                    if(on_err)
-                        on_err(ec);
-                    else if (irptr_)
+                };
+
+                auto on_err_func = [this, on_err = std::move(on_error_func)](const boost::system::error_code& ec) mutable {
+                    rpc_result r(error_code::connect_fail, ec);
+                    if (stop_rpc_service(r, std::move(on_err)))
+                        return;
+                    if (irptr_)
                     {
-                        irptr_->connection_incoming(ec, this->shared_from_this());
+                        irptr_->connection_incoming(r, this->shared_from_this());
                     }
-                });
+                };
+
+                status_ = status_t::connecting;
+                connection_.start(on_success_func, on_err_func);
             }
 
             void start()
@@ -252,7 +255,6 @@ namespace cytx {
                 {
                     return;
                 }
-
                 start_rpc_service();
             }
 
@@ -267,19 +269,18 @@ namespace cytx {
                 connection_.socket().close(ignored_ec);
             }
 
-            void on_error(error_code err)
+            void on_error(const rpc_result& err)
             {
-                boost::system::error_code ec(1, boost::system::generic_category());
-                on_error(ec, err);
+                stop_rpc_service(err);
+                if (!is_client_)
+                    router_.on_error(this->shared_from_this(), err);
+                if (irptr_)
+                    irptr_->connection_terminated(err, this->shared_from_this());
             }
 
             void on_error(const boost::system::error_code& ec, error_code err = error_code::badconnect)
             {
-                stop_rpc_service(err);
-                if(!is_client_)
-                    router_.on_error(this->shared_from_this(), ec);
-                if (irptr_)
-                    irptr_->connection_terminated(ec, this->shared_from_this(), err);
+                on_error(rpc_result(err, ec));
             }
 
             template <typename CallCodecPolicy, typename Protocol, typename ... Args>
@@ -308,7 +309,7 @@ namespace cytx {
                 lock_t lock_connect{ connect_mutex_ };
                 if (status_ != status_t::connected && status_ != status_t::connecting)
                 {
-                    ctx->error(error_code::badconnect, "rpc session already stopped");
+                    ctx->error(rpc_result(error_code::badconnect, "rpc session already stopped"));
                     return;
                 }
 
@@ -319,24 +320,18 @@ namespace cytx {
 
                 if (!push_success)
                 {
-                    ctx->error(error_code::unknown);
+                    ctx->error(rpc_result(error_code::unknown, "push_call failed"));
                 }
 
                 if (empty && status_t::connected == status_)
                 {
-                    get_io_service().service().post([this]
-                    {
+                    get_io_service().service().post([this] {
                         if (to_calls_.empty())
                         {
                             call_impl();
                         }
                     });
                 }
-            }
-
-            void call_context_ptr(context_ptr ctx)
-            {
-                call_context(ctx);
             }
 
             void response(context_ptr& ctx)
@@ -370,13 +365,20 @@ namespace cytx {
                 recv_head();
             }
 
-            void stop_rpc_service(error_code error)
+            bool stop_rpc_service(const rpc_result& err, on_error_func_t&& on_error_func = nullptr)
             {
+                bool has_on_error_func = false;
                 lock_t lock{ connect_mutex_ };
                 status_ = status_t::disconnecting;
-                close(error != error_code::badconnect && error != error_code::connect_fail);
-                stop_rpc_calls(error);
+                close(err.value() == 0);
+                stop_rpc_calls(err);
+                if (on_error_func)
+                {
+                    on_error_func(err);
+                    has_on_error_func = true;
+                }
                 status_ = status_t::disconnected;
+                return has_on_error_func;
             }
 
             void call_impl()
@@ -394,8 +396,29 @@ namespace cytx {
                 auto& to_call = to_calls_.front();
 
                 to_call->hton();
+                set_timeout(to_call);
+
                 async_write(connection_.socket(), to_call->get_send_message(),
                     boost::bind(&async_rpc_channel::handle_send, this->shared_from_this(), asio_error, to_call));
+            }
+
+            void set_timeout(context_ptr& ctx)
+            {
+                if (ctx->on_ok || ctx->on_error || ctx->barrier_ptr)
+                {
+                    if (ctx->duration_.count() <= 0 || ctx->duration_ == duration_t::max())
+                        return;
+
+                    if (!ctx->timer_ptr_)
+                        ctx->timer_ptr_ = std::make_shared<timer_t>(get_io_service());
+
+                    ctx->timer_ptr_->async_wait(ctx->duration_, boost::bind(&this_t::handle_timeout, this->shared_from_this(), asio_error, ctx));
+                }
+            }
+
+            void handle_timeout(boost::system::error_code const& error, context_ptr& ctx)
+            {
+                ctx->error(rpc_result(error_code::timeout, error));
             }
 
             void recv_head()
@@ -429,13 +452,17 @@ namespace cytx {
                     return;
                 }
 
+                auto& ctx_head = call_ctx->get_head();
+                ctx_head.length(head_.length());
+                ctx_head.result(head_.result());
+
                 if (0 == head_.length())
                 {
                     call_complete(call_ctx);
                 }
                 else if (head_.length() > 10240)
                 {
-                    on_error(error_code::invalid_header);
+                    on_error(rpc_result(error_code::invalid_header));
                 }
                 else
                     async_read(connection_.socket(), call_ctx->get_recv_message(head_.length()), boost::bind(&async_rpc_channel::handle_recv_body,
@@ -451,7 +478,7 @@ namespace cytx {
                 }
                 else if (head_.length() > 10240)
                 {
-                    on_error(error_code::invalid_header);
+                    on_error(rpc_result(error_code::invalid_header));
                 }
                 else
                 {
@@ -473,38 +500,36 @@ namespace cytx {
                     }
                     else
                     {
-                        codec_policy cp{ header_t::big_endian() };
-                        auto recv_error = cp.template unpack<exception>(ctx->recv_msg.data(), ctx->recv_msg.size());
-                        ctx->error(std::move(recv_error));
+                        ctx->error(rpc_result(error_code::remote_error, get_ec((error_code)rcode)));
                     }
                 }
 
                 recv_head();
             }
 
-            void stop_rpc_calls(error_code error)
+            void stop_rpc_calls(const rpc_result& err)
             {
                 to_calls_.clear();
                 call_map_t to_responses;
                 lock_t lock{ mutex_ };
                 calls_.task_calls_from_map(to_responses);
                 lock.unlock();
-                stop_rcp_calls_impl<call_map_t>(to_responses, error);
+                stop_rcp_calls_impl<call_map_t>(to_responses, err);
             }
 
             template<typename call_map_type>
-            auto stop_rcp_calls_impl(call_map_type& to_responses, error_code error)
+            auto stop_rcp_calls_impl(call_map_type& to_responses, const rpc_result& err)
                 -> std::enable_if_t<std::is_same<header_t, msg_header>::value, void>
             {
                 for (auto& elem : to_responses)
                 {
                     auto ctx = elem.second;
-                    ctx->error(error);
+                    ctx->error(err);
                 }
             }
 
             template<typename call_map_type>
-            auto stop_rcp_calls_impl(call_map_type& to_responses, error_code error)
+            auto stop_rcp_calls_impl(call_map_type& to_responses, const rpc_result& err)
                 -> std::enable_if_t<!std::is_same<header_t, msg_header>::value, void>
             {
                 for (auto& elem : to_responses)
@@ -514,12 +539,12 @@ namespace cytx {
                     {
                         auto ctx = que.front();
                         que.pop();
-                        ctx->error(error);
+                        ctx->error(err);
                     }
                 }
             }
 
-            void handle_send(boost::system::error_code const& error, context_ptr ctx)
+            void handle_send(boost::system::error_code const& error, context_ptr& ctx)
             {
                 if (!connection_.socket().is_open())
                     return;
@@ -564,7 +589,7 @@ namespace cytx {
                 }
             }
 
-            void handle_recv_body(context_ptr ctx, boost::system::error_code const& error)
+            void handle_recv_body(context_ptr& ctx, boost::system::error_code const& error)
             {
                 if (!connection_.socket().is_open())
                     return;
@@ -624,6 +649,8 @@ namespace cytx {
             {
                 return irptr_;
             }
+
+            bool is_client() const { return is_client_; }
 
         private:
             ios_t& ios_;

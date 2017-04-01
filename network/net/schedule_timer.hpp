@@ -11,6 +11,8 @@ namespace cytx
         using base_t = boost::asio::deadline_timer;
         using ios_t = ios_wrapper;
     public:
+        using duration_t = std::chrono::milliseconds;
+    public:
         schedule_timer(ios_t& ios)
             : base_t(ios.service())
             , ios_(ios)
@@ -31,6 +33,21 @@ namespace cytx
         void async_wait(int milliseconds, std::function<void(const boost::system::error_code&)> func)
         {
             expires(milliseconds);
+            base_t::async_wait(func);
+        }
+
+        void async_wait_func(const duration_t& duration, std::function<void()> func)
+        {
+            expires((int)duration.count());
+            base_t::async_wait([f = std::move(func)](const boost::system::error_code& ec){
+                if (!ec)
+                    f();
+            });
+        }
+
+        void async_wait(const duration_t& duration, std::function<void(const boost::system::error_code&)> func)
+        {
+            expires((int)duration.count());
             base_t::async_wait(func);
         }
     protected:

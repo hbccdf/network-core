@@ -25,7 +25,7 @@ namespace cytx
         }
 
         template<typename T>
-        void router_base<T>::on_error(connection_ptr const& conn_ptr, boost::system::error_code const& error)
+        void router_base<T>::on_error(connection_ptr const& conn_ptr, rpc_result const& error)
         {
             if (on_error_)
                 on_error_(conn_ptr, error);
@@ -129,8 +129,6 @@ namespace cytx
         template<typename T, typename H>
         void router<T, H>::apply_invoker(connection_ptr conn, char const* data, size_t size) const
         {
-            static auto cannot_find_invoker_error = codec_policy{ header_t::big_endian() }.pack(exception{ error_code::fail, "Cannot find handler!" });
-
             auto& header = conn->get_read_header();
 
             try
@@ -156,7 +154,7 @@ namespace cytx
                     }
                     else if (header.need_reply())
                     {
-                        auto ctx = context_t::make_error_message(conn->get_io_service(), header, cannot_find_invoker_error);
+                        auto ctx = context_t::make_error_message(conn->get_io_service(), header, error_code::no_handler);
                         conn->response(ctx);
                     }
                 }
@@ -167,7 +165,7 @@ namespace cytx
                     {
                         if (!header.need_reply())
                             return;
-                        auto ctx = context_t::make_error_message(conn->get_io_service(), header, cannot_find_invoker_error);
+                        auto ctx = context_t::make_error_message(conn->get_io_service(), header, error_code::no_handler);
                         conn->response(ctx);
                         return;
                     }
@@ -175,15 +173,13 @@ namespace cytx
                     invoker(conn, data, size);
                 }
             }
-            catch (exception const& error)
+            catch (rpc_exception const& error)
             {
                 if (!header.need_reply())
                     return;
                 // response serialized exception to client
-                auto args_not_match_error = codec_policy{ header_t::big_endian() }.pack(error);
-                auto args_not_match_error_message = context_t::make_error_message(conn->get_io_service(), header,
-                    std::move(args_not_match_error));
-                conn->response(args_not_match_error_message);
+                auto ctx = context_t::make_error_message(conn->get_io_service(), header, error.code());
+                conn->response(ctx);
             }
         }
 
@@ -207,7 +203,7 @@ namespace cytx
         template <typename Handler>
         bool router<T, H>::register_raw_invoker_impl(uint64_t proto_hash, Handler&& handler)
         {
-            auto itr = this->invokers_.find(protocol);
+            auto itr = this->invokers_.find(proto_hash);
             if (this->invokers_.end() != itr)
                 return false;
 

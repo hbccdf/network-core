@@ -68,7 +68,7 @@ namespace bench
                     ++recv_count;
                 }).on_error([](auto) { ++failed_count; ++recv_count; });
                 ++send_count;
-                
+
                 if (send_count % 100000 == 0)
                 {
                     using namespace std::chrono_literals;
@@ -106,6 +106,10 @@ namespace bench
                 {
                     client.call(client::add, a, b++);
                     ++success_count;
+                }
+                catch (cytx::rpc::rpc_exception& e)
+                {
+                    std::cout << e.message() << std::endl;
                 }
                 catch (...)
                 {

@@ -24,9 +24,19 @@ namespace cytx
         base_deserialize_adapter() {}
         void parse(const char* str) { parse(string(str)); }
         void parse(const char* str, size_t len) { parse(string(str, len)); }
-        void parse(const std::string& str) { stringstream ss; ss << str; T::read(ss, pt_); }
+        void parse(const std::string& str)
+        {
+            stringstream ss;
+            ss << str;
+            T::read(ss, pt_);
+            init();
+        }
 
-        void parse_file(const std::string& file) { T::read_file(file, pt_); }
+        void parse_file(const std::string& file)
+        {
+            T::read_file(file, pt_);
+            init();
+        }
 
         value_t& get_root(const char* key, bool has_root = true)
         {
@@ -94,7 +104,27 @@ namespace cytx
         template<typename T>
         void read(T& t, value_t& val)
         {
-            t = val.get_value<T>();
+            auto& str = val.data();
+            auto pos = val.data().find("$(");
+            if (pos != std::string::npos)
+            {
+                auto end_pos = str.find(")", pos);
+                if (end_pos != std::string::npos)
+                {
+                    std::string str_prop, new_str;
+                    auto str_val = str.substr(pos + 2, end_pos - (pos + 2));
+                    auto it = properties_.find(str_val);
+                    if (it != properties_.end())
+                    {
+                        str_prop = it->second;
+                        new_str = str;
+                        new_str.replace(pos, end_pos - pos + 1, str_prop.c_str());
+                    }
+                    t = cast<T>(new_str);
+                }
+            }
+            else
+                t = val.get_value<T>();
         }
 
         std::string first(member_iterator& it)
@@ -112,8 +142,131 @@ namespace cytx
             return it->second;
         }
 
-    public:
+    private:
+        void init()
+        {
+            if (pt_.empty())
+                return;
+
+            parse_using(pt_);
+
+            auto& tmp_pt = pt_.begin()->second;
+            for (auto it = tmp_pt.begin(); it != tmp_pt.end();)
+            {
+                auto& p = *it;
+                if (p.first == "property_group")
+                {
+                    for (auto& prop : p.second)
+                    {
+                        read(properties_[prop.first], prop.second);
+                    }
+                }
+                else if (p.first == "import")
+                {
+                    auto& import_pt = p.second;
+                    ptree other_pt;
+                    auto mb_it = get_member("path", import_pt);
+                    if (mb_it != member_end(import_pt))
+                    {
+                        std::string path;
+                        read<std::string>(path, second(mb_it));
+                        T::read_file(path, other_pt);
+                        it = tmp_pt.erase(it);
+                        for (auto& op : other_pt.begin()->second)
+                        {
+                            it = tmp_pt.push_back(op);
+                        }
+                        continue;
+                    }
+                }
+                ++it;
+            }
+        }
+
+        void parse_using(ptree& pt)
+        {
+            if (pt.empty())
+                return;
+
+            auto& tmp_pt = pt;
+            for (auto it = tmp_pt.begin(); it != tmp_pt.end();)
+            {
+                auto& p = *it;
+                if (p.first == "using")
+                {
+                    auto& using_pt = p.second;
+                    auto mb_it = get_member("node", using_pt);
+                    if (mb_it != member_end(using_pt))
+                    {
+                        std::string node_path;
+                        read<std::string>(node_path, second(mb_it));
+                        auto other_pt = pt_.get_child_optional(node_path);
+                        if (other_pt)
+                        {
+                            it = tmp_pt.erase(it);
+                            for (auto& op : other_pt.get())
+                            {
+                                tmp_pt.add_child(fmt::format("<xmlattr>.{}", op.first), op.second);
+                            }
+                            continue;
+                        }
+                    }
+                    ++it;
+                }
+                else if (p.first == "<xmlattr>")
+                {
+                    auto node_path_optional = p.second.get_optional<std::string>("using");
+                    if (node_path_optional)
+                    {
+                        auto other_pt = pt_.get_child_optional(node_path_optional.get());
+                        if (other_pt)
+                        {
+                            p.second.erase("using");
+                            for (auto& op : other_pt.get())
+                            {
+                                p.second.push_back(op);
+                            }
+                        }
+                    }
+                    ++it;
+                }
+                else
+                {
+                    parse_using(p.second);
+                    ++it;
+                }
+            }
+        }
+
+        template<typename T>
+        auto cast(std::string str) -> std::enable_if_t<std::is_same<T, bool>::value, T>
+        {
+            return str == "true" || str == "1" || str == "on";
+        }
+
+        template<typename T>
+        auto cast(std::string str) -> std::enable_if_t<!std::is_same<T, bool>::value, T>
+        {
+            return boost::lexical_cast<T>(str);
+        }
+
+        void debug(const ptree& pt, bool debug_pt = true)
+        {
+            std::stringstream ss;
+            T::write(ss, pt);
+            std::string str = ss.str();
+
+            if (debug_pt)
+                debug(pt_, false);
+        }
+
+        void debug()
+        {
+            debug(pt_, false);
+        }
+    protected:
         ptree pt_;
+        std::map<std::string, std::string> properties_;
     };
 
     using xml_deserialize_adapter = base_deserialize_adapter<xml_parser>;

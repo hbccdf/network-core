@@ -82,9 +82,9 @@ int main()
                 auto result = task.get();
                 std::cout << "client sub result = " << result << std::endl;
             }
-            catch (cytx::rpc::exception& e)
+            catch (cytx::rpc::rpc_exception& e)
             {
-                std::cout << "client sub failed, " << e.get_error_message() << std::endl;
+                std::cout << "client sub failed, " << e.message() << std::endl;
             }
         }
         using namespace std::chrono_literals;

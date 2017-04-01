@@ -900,3 +900,15 @@ TEST_F(xml_type, vector_struct_with_struct)
     assert_eq(v[1].tt.i, v[1].tt.i);
     assert_eq(v[1].tt.c, v[1].tt.c);
 }
+
+TEST_F(xml_type, vector_with_comment)
+{
+    struct person
+    {
+        int c;
+        META(c);
+    };
+    auto dv = get_de<vector<person>>(R"(<+><!--<+ c="9"/>--> <+ c="1"/></+>)");
+    assert_eq(dv.size(), 1);
+    assert_eq(dv[0].c, 1);
+}

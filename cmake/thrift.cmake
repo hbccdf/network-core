@@ -23,5 +23,5 @@ if(NOT THRIFT_DIR)
     
     include_directories(${THRIFT_DIR})
     link_directories(${THRIFT_LIB_DIR})
-    
+    set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LIBPATH:\"${THRIFT_LIB_DIR}/Release\"")
 endif()

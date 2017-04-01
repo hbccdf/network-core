@@ -72,13 +72,20 @@ namespace cytx {
             boost::asio::ip::tcp::resolver::query qry(ip, boost::lexical_cast<std::string>(port));
             boost::asio::ip::tcp::resolver::iterator it = slv.resolve(qry);
             boost::asio::ip::tcp::resolver::iterator end;
+            std::string host_ip;
             for (; it != end; it++)
             {
-                if ((*it).endpoint().address().is_v4())
+                if ((*it).endpoint().address().is_v6())
                 {
                     return (*it).endpoint().address().to_string();
                 }
+                else if ((*it).endpoint().address().is_v4() && host_ip.empty())
+                {
+                    host_ip = (*it).endpoint().address().to_string();
+                }
             }
+            if (!host_ip.empty())
+                return host_ip;
             return ip;
         }
 

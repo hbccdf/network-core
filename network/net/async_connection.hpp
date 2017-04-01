@@ -14,10 +14,6 @@ namespace cytx {
         using tcp = boost::asio::ip::tcp;
         using io_service_t = boost::asio::io_service;
         using lock_t = std::unique_lock<std::mutex>;
-        using deadline_timer_t = boost::asio::deadline_timer;
-        using steady_timer_t = boost::asio::steady_timer;
-        using duration_t = steady_timer_t::duration;
-
         static const auto asio_error = boost::asio::placeholders::error;
 
         class async_connection
