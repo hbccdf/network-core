@@ -1,4 +1,3 @@
-include(../../common.cmake)
 option(BUILD_GTEST "Builds the googletest subproject" OFF)
 
 #Note that googlemock target already builds googletest
