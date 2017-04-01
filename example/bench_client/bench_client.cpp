@@ -38,7 +38,7 @@ namespace bench
 
     void bench_async(boost::asio::ip::tcp::endpoint const& endpoint)
     {
-        using client_t = cytx::rpc::async_client<cytx::rpc::json_codec>;
+        using client_t = cytx::rpc::async_client<cytx::rpc::gos_codec>;
 
         auto client = std::make_shared<client_t>(endpoint);
 
@@ -81,7 +81,7 @@ namespace bench
 
     void bench_sync(boost::asio::ip::tcp::endpoint const& endpoint)
     {
-        using client_t = cytx::rpc::sync_client<cytx::rpc::json_codec>;
+        using client_t = cytx::rpc::sync_client<cytx::rpc::gos_codec>;
 
         std::thread{ []
         {
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 {
     using namespace cytx;
     using namespace cytx::rpc; 
-    //MemoryPoolManager::get_mutable_instance().init();
+    MemoryPoolManager::get_mutable_instance().init();
     config c;
     DeSerializer<xml_deserialize_adapter> de;
     de.enum_with_str(true);

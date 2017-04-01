@@ -8,6 +8,7 @@ add_executable(common_test main.cpp
     xml_test.cpp
     enum_test.cpp
     info_test.cpp
+    gos_test.cpp
     program_options_test.cpp)
 set_target_properties(common_test PROPERTIES FOLDER "test")
 target_link_libraries(common_test gmock)

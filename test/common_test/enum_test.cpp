@@ -1,11 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "auto_mocker.h"
+#include <network/base/auto_mocker.h>
 
-#include "network/serialize/common.hpp"
-#include "network/serialize/enum.hpp"
-#include "network/serialize/serializer.hpp"
-#include "network/serialize/deserializer.hpp"
+#include <network/serialize.hpp>
 
 using namespace cytx;
 

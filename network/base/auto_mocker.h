@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <memory>
-#include <CppFreeMock/cpp_free_mock.h>
+#include <cpp_free_mock.h>
 
 #define make_mocker(function) auto_close_mocker(MOCKER(function))
 

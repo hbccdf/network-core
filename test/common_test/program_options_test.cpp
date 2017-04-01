@@ -1,9 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "auto_mocker.h"
+#include <network/base/auto_mocker.h>
 
-#include "network/serialize/serializer.hpp"
-#include "network/serialize/deserializer.hpp"
+#include <network/serialize.hpp>
 using namespace cytx;
 using namespace std;
 using namespace boost::program_options;
