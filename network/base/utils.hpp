@@ -26,20 +26,6 @@
 namespace cytx {
     namespace rpc
     {
-        inline bool retry(const std::function<bool()>& func, size_t max_attempts, size_t retry_interval = 0)
-        {
-            for (size_t i = 0; i < max_attempts; i++)
-            {
-                if (func())
-                    return true;
-
-                if (retry_interval > 0)
-                    std::this_thread::sleep_for(std::chrono::milliseconds(retry_interval));
-            }
-
-            return false;
-        }
-
         inline std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string_list)
         {
             std::vector<std::string> address_port_list;
