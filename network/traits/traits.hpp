@@ -193,7 +193,7 @@ namespace cytx {
         }; \
     };  \
     template<typename T> \
-    using has_##token_t = typename has_##token<T>::value;
+    constexpr bool has_##token##_v = has_##token<T>::value;
 
 #define HAS_FUNC(token) \
     template <typename T> \
@@ -209,7 +209,7 @@ namespace cytx {
         static constexpr bool value = result_type::value; \
     }; \
     template<typename T> \
-    using has_##token_t = typename has_##token<T>::value;
+    constexpr bool has_##token##_v = has_##token<T>::value;
 
     template <typename T>
     struct has_meta_macro
@@ -223,6 +223,8 @@ namespace cytx {
     public:
         static constexpr bool value = result_type::value;
     };
+    template<typename T>
+    constexpr bool has_meta_macro_v = has_meta_macro<T>::value;
 
 #define IS_TEMPLATE_CLASS(token) \
 template<typename T> struct is_##token : is_specialization_of<detail::decay_t<T>, std::token>{}; \

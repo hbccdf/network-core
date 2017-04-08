@@ -17,12 +17,13 @@ if(NOT INCLUDED_COMMON)
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR})
 
-    add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_WIN32_WINNT=0x601 -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DFMT_HEADER_ONLY)
+    add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_WIN32_WINNT=0x601 -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DFMT_HEADER_ONLY -DNOMINMAX)
  
     include(boost)
     include(thrift)
     include(func)
     set(THRIFT_LIB_NAME libthrift)
+    set(MYSQL_LIB_NAME libmysql)
     
     # generator .brc file, to analize code graph
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FR")
@@ -47,6 +48,7 @@ if(NOT INCLUDED_COMMON)
         ${ROOT}/third_party/fmt
         ${ROOT}/third_party/rapidjson/include
         ${ROOT}/third_party/spdlog/include
+        ${ROOT}/third_party/mysql/include
         )
 
     link_directories(
