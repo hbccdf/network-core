@@ -155,8 +155,10 @@ namespace cytx
 
         using pair_t = enum_helper::pair_t;
         using vec_t = enum_helper::vec_t;
-        using map_t = enum_helper::map_t;
         using enum_helper_ptr = std::unique_ptr<enum_helper>;
+        using value_t = std::vector<enum_helper_ptr>;
+        using value_ptr = std::shared_ptr<value_t>;
+        using map_t = std::map<const char*, value_ptr>;
 
         static enum_factory& instance()
         {
@@ -174,24 +176,69 @@ namespace cytx
             {
                 vec.push_back({ p.first, (uint32_t)p.second });
             }
-            reg(meta.name(), std::move(vec));
+            reg(meta.name(), meta.alias_name(), std::move(vec));
         }
 
-        void reg(const char* enum_name, vec_t&& enum_fields)
+        void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
         {
             auto helper_ptr = std::unique_ptr<enum_helper>(new enum_helper());
             helper_ptr->init(enum_name, std::forward<vec_t>(enum_fields));
-            enums_.emplace(enum_name, std::move(helper_ptr));
+
+            value_ptr val_ptr = nullptr;
+            if (alias_name != nullptr)
+            {
+                auto it = enums_.find(alias_name);
+                if (it != enums_.end())
+                {
+                    val_ptr = it->second;
+                }
+                else
+                {
+                    val_ptr = std::make_shared<value_t>();
+                }
+            }
+            else
+            {
+                val_ptr = std::make_shared<value_t>();
+            }
+
+            val_ptr->emplace_back(std::move(helper_ptr));
+            enums_.emplace(enum_name, val_ptr);
+            if (alias_name)
+                enums_.emplace(alias_name, val_ptr);
         }
 
         template<typename T>
         boost::optional<std::string> to_string(T t, const char* split_field = "::")
         {
-            boost::optional<string> result;
+            boost::optional<std::string> result;
             auto name = enum_meta<T>().name();
             auto it = enums_.find(name);
             if (it != enums_.end())
-                return it->second->to_string(t, split_field);
+            {
+                for (auto& v : *it->second)
+                {
+                    auto r = v->to_string(t, split_field);
+                    if (r)
+                        return r;
+                }
+            }
+            return result;
+        }
+
+        boost::optional<std::string> to_string(uint32_t t, const char* enum_name, const char* split_field = "::")
+        {
+            boost::optional<std::string> result;
+            auto it = enums_.find(enum_name);
+            if (it != enums_.end())
+            {
+                for (auto& v : *it->second)
+                {
+                    auto r = v->to_string(t, split_field);
+                    if (r)
+                        return r;
+                }
+            }
             return result;
         }
 
@@ -203,20 +250,32 @@ namespace cytx
             auto name = enum_meta<T>().name();
             auto it = enums_.find(name);
             if (it != enums_.end())
-                return it->second->to_enum<T>(str, has_enum_name, std::forward<vector<const char*>>(splits));
+            {
+                for (auto& v : *it->second)
+                {
+                    auto r = v->to_enum<T>(str, has_enum_name, std::forward<vector<const char*>>(splits));
+                    if (r)
+                        return r;
+                }
+            }
             return result;
         }
 
     private:
         enum_factory() {}
 
-        std::map<const char*, enum_helper_ptr> enums_;
+        map_t enums_;
     };
 
     template<typename T>
     auto to_string(T t, const char* split_str = "::")  -> std::enable_if_t<enum_meta<T>::value, boost::optional<std::string>>
     {
         return enum_factory::instance().to_string<T>(t, split_str);
+    }
+
+    inline auto to_string(uint32_t t, const char* enum_name, const char* split_str = "::")  -> boost::optional<std::string>
+    {
+        return enum_factory::instance().to_string(t, enum_name, split_str);
     }
 
     template<typename T>
@@ -242,8 +301,7 @@ namespace cytx
 #define PAIR_ENUM(name, t) std::make_pair(#t, name##::t)
 #define MAKE_ENUM_TUPLE(enum_name, ...) template<> struct enum_meta<enum_name>  : public std::true_type \
     { auto operator() () { return std::make_tuple(__VA_ARGS__);  } \
-    const char* name() { return #enum_name; } \
-};
+    const char* name() { return #enum_name; }
 
 #define MAKE_ENUM_ARG_LIST_1(name, op, arg, ...)   op(name, arg)
 #define MAKE_ENUM_ARG_LIST_2(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_1(name, op, __VA_ARGS__))
@@ -294,6 +352,13 @@ namespace cytx
 MAKE_ENUM_TUPLE(name, MAKE_ENUM_ARG_LIST(name, N, PAIR_ENUM, __VA_ARGS__))
 
 #define REG_ENUM(name, ...) EMMBED_ENUM_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__) \
+    const char* alias_name() { return nullptr; } \
+}; \
+namespace ___reg_enum_helper_value___ ## name ## __LINE__ { static int val = cytx::detail::reg_enum<name>(); }
+
+#define REG_ALIAS_ENUM(name, alias_name_str, ...) EMMBED_ENUM_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__) \
+    const char* alias_name() { return #alias_name_str; } \
+}; \
 namespace ___reg_enum_helper_value___ ## name ## __LINE__ { static int val = cytx::detail::reg_enum<name>(); }
 
 }
