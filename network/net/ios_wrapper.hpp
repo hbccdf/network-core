@@ -9,6 +9,7 @@
 namespace cytx {
     namespace rpc
     {
+        using io_service_t = boost::asio::io_service;
         using tcp = boost::asio::ip::tcp;
         using inter_server_ptr = std::shared_ptr<io_service_t>;
         using work_ptr = std::unique_ptr<io_service_t::work>;

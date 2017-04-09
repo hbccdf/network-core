@@ -114,16 +114,40 @@ namespace cytx {
                 return conn_->free_call_impl<CallCodecPolicy, result_type>((uint64_t)proto, true, std::forward<Args>(args)...);
             }
 
-            template <typename Protocol, typename ... Args>
-            auto send(int conn_id, Protocol const& protocol, Args&& ... args)
+            template <typename CallCodecPolicy, typename ... Args>
+            auto send(int conn_id, std::string name, Args&& ... args)
             {
-                return conn_->send_impl<codec_policy>(conn_id, protocol, std::forward<Args>(args)...);
+                return conn_->send_impl<CallCodecPolicy>(conn_id, std::hash<string>{}(name), false, std::forward<Args>(args)...);
             }
 
-            template <typename CallCodecPolicy, typename Protocol, typename ... Args>
-            auto send(int conn_id, Protocol const& protocol, Args&& ... args)
+            template <typename CallCodecPolicy, typename ... Args>
+            auto send(int conn_id, uint32_t proto, Args&& ... args)
             {
-                return conn_->send_impl<CallCodecPolicy>(conn_id, protocol, std::forward<Args>(args)...);
+                return conn_->send_impl<CallCodecPolicy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
+            }
+
+            template <typename CallCodecPolicy, typename T, typename ... Args>
+            auto send(int conn_id, T proto, Args&& ... args)
+            {
+                return conn_->send_impl<CallCodecPolicy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
+            }
+
+            template <typename ... Args>
+            auto send(int conn_id, std::string name, Args&& ... args)
+            {
+                return conn_->send_impl<codec_policy>(conn_id, std::hash<string>{}(name), false, std::forward<Args>(args)...);
+            }
+
+            template <typename ... Args>
+            auto send(int conn_id, uint32_t proto, Args&& ... args)
+            {
+                return conn_->send_impl<codec_policy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
+            }
+
+            template <typename T, typename ... Args>
+            auto send(int conn_id, T proto, Args&& ... args)
+            {
+                return conn_->send_impl<codec_policy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
             }
         private:
             connect_ptr conn_;
@@ -315,17 +339,14 @@ namespace cytx {
                 return rpc_task_t{ this->shared_from_this(), ctx };
             }
 
-            template <typename CallCodecPolicy, typename Protocol, typename ... Args>
-            auto send_impl(int conn_id, Protocol const& protocol, Args&& ... args)
+            template <typename CallCodecPolicy, typename ... Args>
+            auto send_impl(int conn_id, uint64_t proto, bool is_inter_proto, Args&& ... args)
             {
-                static_assert(is_rpc_protocol<Protocol>::value, "Illegal protocol for rpc call!");
-
-                using result_type = typename Protocol::result_type;
-                using rpc_task_t = typed_rpc_task<CallCodecPolicy, codec_policy, header_t, result_type>;
+                using rpc_task_t = typed_rpc_task<CallCodecPolicy, codec_policy, header_t, void>;
                 CallCodecPolicy cp{ header_t::big_endian() };
-                auto ctx = rpc::make_rpc_context<header_t>(ios_, cp, protocol, std::forward<Args>(args)...);
-                ctx->set_conn_id(conn_id);
-                return rpc_task_t{ this->shared_from_this(), ctx };
+                auto ctx = rpc::make_rpc_context<header_t>(ios_, cp, proto, is_inter_proto, std::forward<Args>(args)...);
+                ctx->get_head().set_conn_id(conn_id);
+                call_context(ctx);
             }
 
             void call_context(context_ptr& ctx)
@@ -362,6 +383,8 @@ namespace cytx {
             {
                 call_context(ctx);
             }
+
+            using rpc_call::send;
 
             void send(header_t& header, const char* const data)
             {

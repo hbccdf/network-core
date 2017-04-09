@@ -59,6 +59,7 @@ namespace cytx
     public:
         void start();
         void stop();
+        void close();
     private:
         void auto_start_timer();
     private:
@@ -195,6 +196,16 @@ namespace cytx
                 stop_timer(it->second);
         }
 
+        void close_timer(int32_t id)
+        {
+            auto it = timers_.find(id);
+            if (it != timers_.end())
+            {
+                stop_timer(it->second);
+                timers_.erase(it);
+            }
+        }
+
         void start_timer(timer_info_ptr ti_ptr)
         {
             ti_ptr->status = timer_status::ok;
@@ -249,6 +260,16 @@ namespace cytx
         {
             need_start_ = false;
             timer_->stop_timer(id_);
+        }
+    }
+
+    inline void timer_proxy::close()
+    {
+        if (timer_)
+        {
+            need_start_ = false;
+            timer_->close_timer(id_);
+            timer_ = nullptr;
         }
     }
 
