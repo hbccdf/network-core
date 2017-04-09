@@ -113,6 +113,18 @@ namespace cytx {
             {
                 return conn_->free_call_impl<CallCodecPolicy, result_type>((uint64_t)proto, true, std::forward<Args>(args)...);
             }
+
+            template <typename Protocol, typename ... Args>
+            auto send(int conn_id, Protocol const& protocol, Args&& ... args)
+            {
+                return conn_->send_impl<codec_policy>(conn_id, protocol, std::forward<Args>(args)...);
+            }
+
+            template <typename CallCodecPolicy, typename Protocol, typename ... Args>
+            auto send(int conn_id, Protocol const& protocol, Args&& ... args)
+            {
+                return conn_->send_impl<CallCodecPolicy>(conn_id, protocol, std::forward<Args>(args)...);
+            }
         private:
             connect_ptr conn_;
         };
@@ -206,8 +218,7 @@ namespace cytx {
                 on_error(error_code::be_disconnected);
             }
 
-            void start(std::function<void()>&& on_success,
-                std::function<void(const rpc_result&)>&& on_error_func)
+            void start(on_success_func_t&& on_success, on_error_func_t&& on_error_func)
             {
                 lock_t lock{ connect_mutex_ };
                 if (status_ != status_t::disconnected)
@@ -304,6 +315,19 @@ namespace cytx {
                 return rpc_task_t{ this->shared_from_this(), ctx };
             }
 
+            template <typename CallCodecPolicy, typename Protocol, typename ... Args>
+            auto send_impl(int conn_id, Protocol const& protocol, Args&& ... args)
+            {
+                static_assert(is_rpc_protocol<Protocol>::value, "Illegal protocol for rpc call!");
+
+                using result_type = typename Protocol::result_type;
+                using rpc_task_t = typed_rpc_task<CallCodecPolicy, codec_policy, header_t, result_type>;
+                CallCodecPolicy cp{ header_t::big_endian() };
+                auto ctx = rpc::make_rpc_context<header_t>(ios_, cp, protocol, std::forward<Args>(args)...);
+                ctx->set_conn_id(conn_id);
+                return rpc_task_t{ this->shared_from_this(), ctx };
+            }
+
             void call_context(context_ptr& ctx)
             {
                 lock_t lock_connect{ connect_mutex_ };
@@ -395,11 +419,31 @@ namespace cytx {
             {
                 auto& to_call = to_calls_.front();
 
+                auto conn_ptr = this->shared_from_this();
+                if (router_.before_send_func_)
+                {
+                    if (!router_.before_send_func_(conn_ptr, to_call->get_head()))
+                    {
+                        to_call->error(rpc_result(error_code::cancel));
+                        get_io_service().service().post([this] {
+                            if (to_calls_.empty())
+                            {
+                                call_impl();
+                            }
+                            else
+                            {
+                                call_impl1();
+                            }
+                        });
+                        return;
+                    }
+                }
+
                 to_call->hton();
                 set_timeout(to_call);
 
                 async_write(connection_.socket(), to_call->get_send_message(),
-                    boost::bind(&async_rpc_channel::handle_send, this->shared_from_this(), asio_error, to_call));
+                    boost::bind(&async_rpc_channel::handle_send, conn_ptr, asio_error, to_call));
             }
 
             void set_timeout(context_ptr& ctx)
@@ -558,6 +602,12 @@ namespace cytx {
                 }
                 else
                 {
+                    if (router_.before_send_func_)
+                    {
+                        auto conn_ptr = this->shared_from_this();
+                        router_.before_send_func_(conn_ptr, ctx->get_head());
+                    }
+
                     if (ctx->is_reply())
                         ctx->apply_post_func();
                     ctx.reset();

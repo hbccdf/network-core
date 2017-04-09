@@ -204,7 +204,11 @@ namespace cytx {
 
             uint16_t from_unique_id;
             uint16_t to_unique_id;
-            uint32_t conn_id;
+            union
+            {
+                uint32_t conn_id;
+                uint32_t user_id;
+            };
             uint32_t call_id;
 
             uint16_t result;
@@ -426,6 +430,12 @@ namespace cytx {
                     internal_header().result = r;
                 else
                     server_header().result = r;
+            }
+
+            void set_conn_id(uint32_t id)
+            {
+                if (!is_internal())
+                    server_header().conn_id = id;
             }
 
             uint32_t call_id() const

@@ -83,14 +83,18 @@ namespace cytx {
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto& header = conn->get_read_header();
+                    auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     invoker_call_handler(h, args_tuple);
-                    if (!header.need_reply())
-                        return;
+                    if (recv_proto == header.proto())
+                    {
+                        if (!header.need_reply())
+                            return;
 
-                    header.reply(true);
+                        header.reply(true);
+                    }
                     auto ctx = context_t::make_message(conn->get_io_service(), conn->get_read_header(), context_t::buffer_t{});
                     conn->response(ctx);
                 };
@@ -111,14 +115,18 @@ namespace cytx {
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto& header = conn->get_read_header();
+                    auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     invoker_call_handler(h, args_tuple);
-                    if (!header.need_reply())
-                        return;
+                    if (recv_proto == header.proto())
+                    {
+                        if (!header.need_reply())
+                            return;
 
-                    header.reply(true);
+                        header.reply(true);
+                    }
                     auto ctx = context_t::make_message(conn->get_io_service(), conn->get_read_header(), context_t::buffer_t{}, [conn, &p] { p(conn); });
                     conn->response(ctx);
                 };
@@ -145,14 +153,18 @@ namespace cytx {
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto& header = conn->get_read_header();
+                    auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
-                    if (!header.need_reply())
-                        return;
+                    if (recv_proto == header.proto())
+                    {
+                        if (!header.need_reply())
+                            return;
 
-                    header.reply(true);
+                        header.reply(true);
+                    }
                     auto message = cp.pack(result);
                     auto ctx = context_t::make_message(conn->get_io_service(), conn->get_read_header(), std::move(message));
                     conn->response(ctx);
@@ -174,14 +186,18 @@ namespace cytx {
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto& header = conn->get_read_header();
+                    auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
-                    if (!header.need_reply())
-                        return;
+                    if (recv_proto == header.proto())
+                    {
+                        if (!header.need_reply())
+                            return;
 
-                    header.reply(true);
+                        header.reply(true);
+                    }
                     auto message = cp.pack(result);
                     auto ctx = context_t::make_message(conn->get_io_service(), conn->get_read_header(), std::move(message),
                         [conn, r = std::move(result), &p] { p(conn, r); });

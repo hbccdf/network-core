@@ -103,6 +103,11 @@ namespace cytx {
                 return head.need_reply();
             }
 
+            bool have_reply_process() const
+            {
+                return on_ok || on_error || barrier_ptr || timer_ptr_;
+            }
+
             decltype(auto) get_send_message() const
             {
                 return send_buffer;
@@ -265,7 +270,7 @@ namespace cytx {
 
             bool push_call(context_ptr& ctx)
             {
-                if(ctx->need_reply())
+                if(ctx->need_reply() && ctx->have_reply_process())
                     push_call_response(ctx);
                 call_list_.push_back(ctx);
                 return true;

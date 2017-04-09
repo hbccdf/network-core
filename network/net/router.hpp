@@ -21,6 +21,8 @@ namespace cytx {
             using on_read_func = std::function<void(connection_ptr)>;
             using on_error_func = std::function<void(connection_ptr, rpc_result const& error)>;
             using before_invoke_func = std::function<bool(connection_ptr, const header_t&, const char*, size_t)>;
+            using before_send_func = std::function<bool(connection_ptr, const header_t&)>;
+            using after_send_func = std::function<void(connection_ptr, const header_t&)>;
             using proto_func = std::function<bool(const header_t&)>;
 
         protected:
@@ -39,13 +41,23 @@ namespace cytx {
             inline void set_on_read(on_read_func&& on_read);
             inline void set_on_error(on_error_func&& on_error);
             inline void set_before_invoker(before_invoke_func&& before_invoker);
-
+            void set_before_send_func(before_send_func&& before_send)
+            {
+                before_send_func_ = std::move(before_send);
+            }
+            void set_after_send_func(after_send_func&& after_send)
+            {
+                after_send_func_ = std::move(after_send);
+            }
         protected:
             invoker_container invokers_;
             on_read_func on_read_;
             on_error_func on_error_;
             before_invoke_func before_invoker_;
             std::vector<proto_func_invoker> proto_invokers_;
+        public:
+            before_send_func before_send_func_;
+            after_send_func after_send_func_;
         };
 
         template<typename T, typename H>

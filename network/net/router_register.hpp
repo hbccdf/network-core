@@ -16,6 +16,8 @@ namespace cytx {
             using router_t = router<codec_policy, header_type>;
             using header_t = header_type;
             using before_invoke_func = typename router_t::before_invoke_func;
+            using before_send_func = typename router_t::before_send_func;
+            using after_send_func = typename router_t::after_send_func;
 
             router_register()
             {
@@ -125,6 +127,15 @@ namespace cytx {
             inline void set_before_invoker(before_invoke_func&& before_invoker)
             {
                 router_.set_before_invoker(std::forward<before_invoke_func>(before_invoker));
+            }
+
+            inline void set_before_send_func(before_send_func&& before_send)
+            {
+                router_.set_before_send_func(std::forward<before_send_func>(before_send));
+            }
+            inline void set_after_send_func(after_send_func&& after_send)
+            {
+                router_.set_after_send_func(std::forward<after_send_func>(after_send));
             }
 
         protected:
