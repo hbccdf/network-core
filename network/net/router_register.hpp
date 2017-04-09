@@ -15,6 +15,7 @@ namespace cytx {
             using connection_ptr = std::shared_ptr<connection_t>;
             using router_t = router<codec_policy, header_type>;
             using header_t = header_type;
+            using before_invoke_func = typename router_t::before_invoke_func;
 
             router_register()
             {
@@ -119,6 +120,11 @@ namespace cytx {
                 ->std::enable_if_t<std::is_enum<proto_type>::value, bool>
             {
                 return router_.register_raw_invoker((uint32_t)protocol, std::forward<Handler>(handler));
+            }
+
+            inline void set_before_invoker(before_invoke_func&& before_invoker)
+            {
+                router_.set_before_invoker(std::forward<before_invoke_func>(before_invoker));
             }
 
         protected:

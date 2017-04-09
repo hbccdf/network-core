@@ -8,7 +8,7 @@
 namespace cytx {
     namespace rpc
     {
-        REG_ENUM(error_code, ok, unknown, fail, timeout, cancel, connect_fail, badconnect, codec_fail, invalid_header, be_disconnected, 
+        REG_ENUM(error_code, ok, unknown, fail, timeout, cancel, connect_fail, badconnect, codec_fail, invalid_header, be_disconnected,
             repeat_connect, no_handler, remote_error);
 
         class application_category : public boost::system::error_category
@@ -20,8 +20,8 @@ namespace cytx {
             }
         public:
             const char *name() const noexcept override { return "application"; }
-            std::string message(int ev) const override 
-            { 
+            std::string message(int ev) const override
+            {
                 auto it = messages_.find(ev);
                 if (it != messages_.end())
                     return it->second;
@@ -51,7 +51,7 @@ namespace cytx {
             {
                 messages_.emplace((int)ec, fmt::format("name: {}, msg: {}", to_string(ec).value(), msg));
             }
-            
+
         private:
             std::map<int, std::string> messages_;
         };
@@ -90,7 +90,7 @@ namespace cytx {
             }
 
             rpc_result(boost::system::error_code ec)
-                : app_ec_(get_ec(error_code::fail))
+                : app_ec_(get_ec(!ec ? error_code::ok : error_code::fail))
                 , sys_ec_(ec)
                 , msg_()
             {
@@ -104,7 +104,7 @@ namespace cytx {
             }
 
             explicit operator bool() const noexcept
-            {	
+            {
                 return !is_success();
             }
 
