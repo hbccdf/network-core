@@ -88,6 +88,8 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     invoker_call_handler(h, args_tuple);
+                    if (header.result() == (uint16_t)result_code::not_reply)
+                        return;
                     if (recv_proto == header.proto())
                     {
                         if (!header.need_reply())
@@ -120,6 +122,8 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     invoker_call_handler(h, args_tuple);
+                    if (header.result() == (uint16_t)result_code::not_reply)
+                        return;
                     if (recv_proto == header.proto())
                     {
                         if (!header.need_reply())
@@ -158,6 +162,8 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
+                    if (header.result() == (uint16_t)result_code::not_reply)
+                        return;
                     if (recv_proto == header.proto())
                     {
                         if (!header.need_reply())
@@ -191,6 +197,8 @@ namespace cytx {
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
+                    if (header.result() == (uint16_t)result_code::not_reply)
+                        return;
                     if (recv_proto == header.proto())
                     {
                         if (!header.need_reply())

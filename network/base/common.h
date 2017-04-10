@@ -508,6 +508,7 @@ namespace cytx {
         enum class result_code : uint16_t
         {
             ok = 0,
+            not_reply = 99,
             fail = 100,
         };
 

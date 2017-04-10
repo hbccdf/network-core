@@ -625,10 +625,10 @@ namespace cytx {
                 }
                 else
                 {
-                    if (router_.before_send_func_)
+                    if (router_.after_send_func_)
                     {
                         auto conn_ptr = this->shared_from_this();
-                        router_.before_send_func_(conn_ptr, ctx->get_head());
+                        router_.after_send_func_(conn_ptr, ctx->get_head());
                     }
 
                     if (ctx->is_reply())
