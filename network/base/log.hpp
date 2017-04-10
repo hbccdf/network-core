@@ -25,6 +25,7 @@ namespace cytx
             auto stdout_sink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
             log_ = spdlog::create("logger", spdlog::sinks_init_list{ rotating, stdout_sink });
             log_->set_level(lvl);
+            log_->flush_on(spdlog::level::level_enum::err);
         }
 
         void init(spdlog::level::level_enum lvl = spdlog::level::level_enum::debug)
@@ -32,11 +33,17 @@ namespace cytx
             auto stdout_sink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
             log_ = spdlog::create("logger", spdlog::sinks_init_list{ stdout_sink });
             log_->set_level(lvl);
+            log_->flush_on(spdlog::level::level_enum::err);
         }
 
         std::shared_ptr<spdlog::logger> get_log()
         {
             return log_;
+        }
+
+        void flush()
+        {
+            log_->flush();
         }
 
     private:
