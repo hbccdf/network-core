@@ -162,6 +162,32 @@ namespace cytx
 
             typed_rpc_task(typed_rpc_task const&) = default;
 
+            typed_rpc_task&& reply(uint32_t reply_id) &&
+            {
+                ctx_->reply_protocol_id = reply_id;
+                return std::move(*this);
+            }
+
+            template<typename T>
+            auto reply(T reply_id) && -> std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&&>
+            {
+                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                return std::move(*this);
+            }
+
+            typed_rpc_task& reply(uint32_t reply_id) &
+            {
+                ctx_->reply_protocol_id = reply_id;
+                return *this;
+            }
+
+            template<typename T>
+            auto reply(T reply_id) & ->std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&>
+            {
+                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                return *this;
+            }
+
             template <typename F>
             typed_rpc_task&& on_ok(F&& f) &&
             {
@@ -291,6 +317,32 @@ namespace cytx
             }
 
             typed_rpc_task(typed_rpc_task const&) = default;
+
+            typed_rpc_task&& reply(uint32_t reply_id) &&
+            {
+                ctx_->reply_protocol_id = reply_id;
+                return std::move(*this);
+            }
+
+            template<typename T>
+            auto reply(T reply_id) && ->std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&&>
+            {
+                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                return std::move(*this);
+            }
+
+            typed_rpc_task& reply(uint32_t reply_id) &
+            {
+                ctx_->reply_protocol_id = reply_id;
+                return *this;
+            }
+
+            template<typename T>
+            auto reply(T reply_id) & ->std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&>
+            {
+                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                return *this;
+            }
 
             template <typename F>
             typed_rpc_task&& on_ok(F&& f) &&

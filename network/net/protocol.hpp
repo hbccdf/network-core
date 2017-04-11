@@ -3,7 +3,7 @@
 #include <boost/type_traits.hpp>
 
 #define DEFINE_STR_PROTOCOL(handler, ...) static const ::cytx::rpc::rpc_protocol<__VA_ARGS__> handler{ #handler }
-#define DEFINE_PROTOCOL(name, handler, ...) static const ::cytx::rpc::rpc_protocol<__VA_ARGS__> name{ (uint32_t)handler }
+#define DEFINE_PROTOCOL(name, handler, func, ...) static const ::cytx::rpc::rpc_protocol<func> name{ (uint32_t)handler, __VA_ARGS__ }
 
 namespace cytx {
     namespace rpc
@@ -45,6 +45,22 @@ namespace cytx {
             explicit rpc_protocol_base(uint32_t protocol)
                 : name_(protocol)
                 , is_inter_protocl_(true)
+                , reply_protocol_(0)
+            {
+            }
+
+            explicit rpc_protocol_base(uint32_t protocol, uint32_t reply_id)
+                : name_(protocol)
+                , is_inter_protocl_(true)
+                , reply_protocol_(reply_id)
+            {
+            }
+
+            template<typename T>
+            explicit rpc_protocol_base(uint32_t protocol, T reply_id)
+                : name_(protocol)
+                , is_inter_protocl_(true)
+                , reply_protocol_((uint32_t)reply_id)
             {
             }
 
@@ -58,6 +74,11 @@ namespace cytx {
                 return is_inter_protocl_;
             }
 
+            uint32_t reply_protocol() const
+            {
+                return reply_protocol_;
+            }
+
             template <typename CodecPolicy, typename ... TArgs>
             auto pack_args(CodecPolicy const& cp, TArgs&& ... args) const
             {
@@ -68,6 +89,7 @@ namespace cytx {
         private:
             uint64_t name_;
             bool is_inter_protocl_;
+            uint32_t reply_protocol_;
         };
 
         template <typename Ret, typename ... Args>
