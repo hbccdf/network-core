@@ -109,12 +109,12 @@ namespace cytx
                 o.row_ = nullptr;
             }
 
-            std::string operator[](size_t index)
+            const char* operator[](size_t index)
             {
                 return row_[index];
             }
 
-            std::string operator[](const std::string& key)
+            const char* operator[](const std::string& key)
             {
                 auto it = fields_ptr_->find(key);
                 auto index = it->second;

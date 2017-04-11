@@ -3,6 +3,21 @@
 
 namespace cytx
 {
+    namespace util
+    {
+        template<typename T>
+        auto cast(const std::string& str) -> std::enable_if_t<std::is_same<T, bool>::value, T>
+        {
+            return str == "true" || str == "1" || str == "on";
+        }
+
+        template<typename T>
+        auto cast(const std::string& str) -> std::enable_if_t<!std::is_same<T, bool>::value && is_basic_type<T>::value, T>
+        {
+            return boost::lexical_cast<T>(str);
+        }
+    }
+
     namespace orm
     {
         class smart_db;
@@ -125,9 +140,9 @@ namespace cytx
             inline query_proxy&& orderby(const field_proxy<T> &field) &&
             {
                 if (sql_orderby_.empty())
-                    sql_orderby_ = fmt::format(" order by {}", field.table_name(), field.name());
+                    sql_orderby_ = fmt::format(" order by {}.{}", field.table_name(), field.name());
                 else
-                    sql_orderby_ = fmt::format("{}, {}", field.table_name(), field.name());
+                    sql_orderby_ = fmt::format("{}, {}.{}", sql_orderby_, field.table_name(), field.name());
                 return std::move(*this);
             }
 
@@ -135,9 +150,9 @@ namespace cytx
             inline query_proxy&& orderby_desc(const field_proxy<T> &field) &&
             {
                 if (sql_orderby_.empty())
-                    sql_orderby_ = fmt::format(" order by {} desc", field.table_name(), field.name());
+                    sql_orderby_ = fmt::format(" order by {}.{} desc", field.table_name(), field.name());
                 else
-                    sql_orderby_ = fmt::format("{}, {} desc", field.table_name(), field.name());
+                    sql_orderby_ = fmt::format("{}, {}.{} desc", sql_orderby_, field.table_name(), field.name());
                 return std::move(*this);
             }
 
@@ -190,14 +205,16 @@ namespace cytx
             {
                 fmt::MemoryWriter names_wr;
                 fmt::MemoryWriter values_wr;
+                bool is_first = true;
 
-                for_each(t, [this, &names_wr, &values_wr](auto& item, size_t I, bool is_last)
+                for_each(t, [&names_wr, &values_wr, &is_first](auto& item, size_t I, bool is_last)
                 {
                     if (!item.second)
                         return;
 
-                    names_wr.write("{}{}", item.first, is_last ? "" : ",");
-                    values_wr.write("'{}'{}", item.second.value(), is_last ? "" : ",");
+                    names_wr.write("{}{}", is_first ? "" : ",", item.first);
+                    values_wr.write("{}{}", is_first ? "" : ",", util::cast_string(item.second.value()));
+                    is_first = false;
                 });
 
                 string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", std::decay_t<T>::type_name(), names_wr.str(), values_wr.str());
@@ -209,15 +226,17 @@ namespace cytx
             {
                 fmt::MemoryWriter names_wr;
                 fmt::MemoryWriter values_wr;
+                bool is_first = true;
 
                 auto t = std::make_tuple(arg0, args...);
-                for_each(t, [this, &names_wr, &values_wr](auto& item, size_t I, bool is_last)
+                for_each(t, [&names_wr, &values_wr, &is_first](auto& item, size_t I, bool is_last)
                 {
                     if (!item)
                         return;
 
-                    names_wr.write("{}{}", item.name(), is_last ? "" : ",");
-                    values_wr.write("'{}'{}", item.value(), is_last ? "" : ",");
+                    names_wr.write("{}{}", is_first ? "" : ",", item.name());
+                    values_wr.write("{}{}", is_first ? "" : ",", util::cast_string(item.value()));
+                    is_first = false;
                 });
                 string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", arg0.table_name(), names_wr.str(), values_wr.str());
                 execute_general(insert_sql);
@@ -227,13 +246,15 @@ namespace cytx
             auto update(T&& t) -> std::enable_if_t<is_reflection<std::decay_t<T>>::value, update_proxy>
             {
                 fmt::MemoryWriter values_wr;
+                bool is_first = true;
 
-                for_each(t, [this, &values_wr](auto& item, size_t I, bool is_last)
+                for_each(t, [&values_wr, &is_first](auto& item, size_t I, bool is_last)
                 {
                     if (!item.second)
                         return;
 
-                    values_wr.write("{}='{}'", item.first, item.second.value(), is_last ? "" : ",");
+                    values_wr.write("{}={}", item.first, util::cast_string(item.second.value()), is_last ? "" : ",");
+                    is_first = false;
                 });
 
                 string update_sql = fmt::format("UPDATE `{}` SET {}", std::decay_t<T>::type_name(), values_wr.str());
@@ -245,10 +266,12 @@ namespace cytx
             {
                 auto t = std::make_tuple(arg0, args...);
                 fmt::MemoryWriter values_wr;
+                bool is_first = true;
 
-                for_each(t, [this, &values_wr](auto& item, size_t I, bool is_last)
+                for_each(t, [&values_wr, &is_first](auto& item, size_t I, bool is_last)
                 {
-                    values_wr.write("{}{}", item.str(), is_last ? "" : ",");
+                    values_wr.write("{}{}", is_first ? "" : ",", item.str());
+                    is_first = false;
                 });
 
                 string update_sql = fmt::format("UPDATE `{}` SET {}", arg0.table_name(), values_wr.str());
@@ -270,13 +293,13 @@ namespace cytx
             }
         };
 
-        int64_t update_proxy::to_value() &&
+        inline int64_t update_proxy::to_value() &&
         {
             std::string update_sql = fmt::format("{} {}", sql_, sql_where_);
             return db_->execute_general(update_sql);
         }
 
-        int64_t delete_proxy::to_value() &&
+        inline int64_t delete_proxy::to_value() &&
         {
             std::string delete_sql = fmt::format("{} {}", sql_, sql_where_);
             return db_->execute_general(delete_sql);
@@ -295,7 +318,7 @@ namespace cytx
                 auto row = result_set[i];
                 for_each(t, [this, &row](auto& item, size_t I, bool is_last) {
                     auto str = row[item.first];
-                    item.second.set_value(boost::lexical_cast<decltype(item.second.value())>(str));
+                    item.second.set_value(util::cast<std::decay_t<decltype(item.second.value())>>(str));
                 });
                 v.push_back(t);
             }

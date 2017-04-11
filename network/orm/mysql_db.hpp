@@ -9,7 +9,7 @@ namespace cytx
     {
         namespace detail
         {
-            std::map<std::string, std::string> split(std::string connect_str)
+            inline std::map<std::string, std::string> split(std::string connect_str)
             {
                 std::map<std::string, std::string> connect_args;
 

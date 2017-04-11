@@ -9,6 +9,20 @@
 #include "../traits/traits.hpp"
 
 namespace cytx {
+    namespace util
+    {
+        template<typename T>
+        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type<T>::value && !std::is_same<std::string, T>::value, std::string>
+        {
+            return fmt::format("{}", t);
+        }
+
+        template<typename T>
+        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<std::string, T>::value, std::string>
+        {
+            return fmt::format("'{}'", t);
+        }
+    }
     namespace orm
     {
         struct set_expr
@@ -79,7 +93,7 @@ namespace cytx {
             inline field_proxy& operator = (T v)
             {
                 set_value(v);
-                auto str_expr = fmt::format("{}.{}={}", table_name(), field_name_, v);
+                auto str_expr = fmt::format("{}.{}={}", table_name(), field_name_, util::cast_string(v));
                 expr_ = str_expr;
                 return *this;
             }
@@ -105,12 +119,12 @@ namespace cytx {
         private:
             inline set_expr add_operator(const char* op, T v)
             {
-                auto str_expr = fmt::format("{}.{}{}{}", table_name(), field_name_, op, v);
+                auto str_expr = fmt::format("{}.{}{}{}", table_name(), field_name_, op, util::cast_string(v));
                 return set_expr{ str_expr };
             }
             inline field_proxy& add_oper_with_equal(const char* op, T v)
             {
-                expr_ = fmt::format("{0}.{1}={0}.{1}{2}{3}", table_name(), field_name_, op, v);
+                expr_ = fmt::format("{0}.{1}={0}.{1}{2}{3}", table_name(), field_name_, op, util::cast_string(v));
                 return *this;
             }
         private:
@@ -153,7 +167,7 @@ namespace cytx {
             inline field_proxy& operator = (std::string v)
             {
                 set_value(v);
-                auto str_expr = fmt::format("{}.{}='{}'", table_name(), field_name_, v);
+                auto str_expr = fmt::format("{}.{}='{}'", table_name(), field_name_, util::cast_string(v));
                 expr_ = str_expr;
                 return *this;
             }
@@ -211,9 +225,9 @@ namespace cytx {
             {}
 
             template <typename T>
-            expr(const select_able<T> &field, std::string op, T value)
+            expr(const select_able<T> &field, std::string op, T v)
             {
-                auto str_expr = fmt::format("{}{}{}", field.field_name_, op, value);
+                auto str_expr = fmt::format("{}{}{}", field.field_name_, op, util::cast_string(v));
                 exprs.emplace_back(str_expr, field.table_name_);
             }
 
