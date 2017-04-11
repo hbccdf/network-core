@@ -103,6 +103,14 @@ namespace cytx {
                 return head.need_reply();
             }
 
+            uint32_t reply_protocol()
+            {
+                if (reply_protocol_id != 0)
+                    return reply_protocol_id;
+                else
+                    return cytx::rpc::reply_protocol(head.protocol_id);
+            }
+
             bool have_reply_process() const
             {
                 return on_ok || on_error || barrier_ptr || timer_ptr_;
@@ -209,6 +217,7 @@ namespace cytx {
             bool is_over = false;
             timer_ptr timer_ptr_;
             duration_t duration_{0};
+            uint32_t reply_protocol_id = 0;
         };
 
         template<typename buffer_type>
@@ -364,7 +373,7 @@ namespace cytx {
             {
                 if (ctx->need_reply())
                 {
-                    auto protocol_id = reply_protocol(ctx->get_head().protocol_id);
+                    auto protocol_id = ctx->reply_protocol();
                     if (call_map_.find(protocol_id) != call_map_.end())
                     {
                         call_map_[protocol_id].push(ctx);

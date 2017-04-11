@@ -129,7 +129,7 @@ namespace cytx
         template<typename T, typename H>
         void router<T, H>::apply_invoker(connection_ptr conn, char const* data, size_t size) const
         {
-            auto& header = conn->get_read_header();
+            auto header = conn->get_read_header();
 
             try
             {

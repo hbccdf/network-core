@@ -82,7 +82,7 @@ namespace cytx {
                 (connection_ptr conn, char const* data, size_t size)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto& header = conn->get_read_header();
+                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
@@ -116,7 +116,7 @@ namespace cytx {
                 (connection_ptr conn, char const* data, size_t size)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto& header = conn->get_read_header();
+                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
@@ -156,7 +156,7 @@ namespace cytx {
                 (connection_ptr conn, char const* data, size_t size)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto& header = conn->get_read_header();
+                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
@@ -191,7 +191,7 @@ namespace cytx {
                 (connection_ptr conn, char const* data, size_t size)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto& header = conn->get_read_header();
+                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;

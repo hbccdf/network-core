@@ -327,6 +327,7 @@ namespace cytx {
                 using rpc_task_t = typed_rpc_task<CallCodecPolicy, codec_policy, header_t, result_type>;
                 CallCodecPolicy cp{ header_t::big_endian() };
                 auto ctx = rpc::make_rpc_context<header_t>(ios_, cp, protocol, std::forward<Args>(args)...);
+                ctx->reply_protocol_id = protocol.reply_protocol();
                 return rpc_task_t{ this->shared_from_this(), ctx };
             }
 
@@ -558,6 +559,7 @@ namespace cytx {
 
             void call_complete(context_ptr& ctx)
             {
+                recv_head();
                 if (nullptr != ctx)
                 {
                     auto rcode = ctx->head.result();
@@ -570,8 +572,6 @@ namespace cytx {
                         ctx->error(rpc_result(error_code::remote_error, get_ec((error_code)rcode)));
                     }
                 }
-
-                recv_head();
             }
 
             void stop_rpc_calls(const rpc_result& err)
@@ -684,8 +684,8 @@ namespace cytx {
 
                 if (!error)
                 {
-                    router_.on_read(this->shared_from_this());
                     recv_head();
+                    router_.on_read(this->shared_from_this());
                 }
                 else
                 {
