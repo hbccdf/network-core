@@ -61,10 +61,17 @@ namespace cytx {
         {
             using value_t = T;
 
-            field_proxy(const std::string* table_name, T& v, std::string name)
+            field_proxy(const std::string* table_name, T* v, std::string name)
                 : select_able<T>(name, table_name)
                 , set_expr("")
                 , val_(v), is_init_(false) {}
+
+            field_proxy& operator=(const field_proxy& o)
+            {
+                *val_ = *o.val_;
+                is_init_ = o.is_init_;
+                return *this;
+            }
 
             explicit operator bool() const noexcept
             {
@@ -80,13 +87,13 @@ namespace cytx {
 
             T value()
             {
-                return val_;
+                return *val_;
             }
 
             void set_value(T v)
             {
                 is_init_ = true;
-                val_ = v;
+                *val_ = v;
             }
 
         public:
@@ -128,17 +135,24 @@ namespace cytx {
                 return *this;
             }
         private:
-            T& val_;
+            T* val_;
             bool is_init_;
         };
 
         template<>
         struct field_proxy<std::string> : public select_able<std::string>, public set_expr
         {
-            field_proxy(const std::string* table_name, std::string& v, std::string name)
+            field_proxy(const std::string* table_name, std::string* v, std::string name)
                 : select_able<std::string>(name, table_name)
                 , set_expr("")
                 , val_(v), is_init_(false) {}
+
+            field_proxy& operator=(const field_proxy& o)
+            {
+                *val_ = *o.val_;
+                is_init_ = o.is_init_;
+                return *this;
+            }
 
             explicit operator bool() const noexcept
             {
@@ -154,13 +168,13 @@ namespace cytx {
 
             std::string value()
             {
-                return val_;
+                return *val_;
             }
 
             void set_value(std::string v)
             {
                 is_init_ = true;
-                val_ = v;
+                *val_ = v;
             }
 
         public:
@@ -202,7 +216,7 @@ namespace cytx {
                 return *this;
             }*/
         private:
-            std::string& val_;
+            std::string* val_;
             bool is_init_;
         };
 

@@ -207,7 +207,7 @@ namespace cytx
                 fmt::MemoryWriter values_wr;
                 bool is_first = true;
 
-                for_each(t, [&names_wr, &values_wr, &is_first](auto& item, size_t I, bool is_last)
+                for_each(std::forward<T>(t), [&names_wr, &values_wr, &is_first](auto& item, size_t I, bool is_last)
                 {
                     if (!item.second)
                         return;
