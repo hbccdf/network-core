@@ -541,7 +541,8 @@ namespace cytx {
             {
                 if (0 == head_.length())
                 {
-                    router_.on_read(this->shared_from_this());
+                    auto header = head_;
+                    router_.on_read(this->shared_from_this(), header);
                     recv_head();
                 }
                 else if (head_.length() > 10240)
@@ -684,8 +685,9 @@ namespace cytx {
 
                 if (!error)
                 {
+                    auto header = get_read_header();
                     recv_head();
-                    router_.on_read(this->shared_from_this());
+                    router_.on_read(this->shared_from_this(), header);
                 }
                 else
                 {

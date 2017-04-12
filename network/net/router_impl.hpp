@@ -18,10 +18,10 @@ namespace cytx
         }
 
         template<typename T>
-        void router_base<T>::on_read(connection_ptr const& conn_ptr)
+        void router_base<T>::on_read(connection_ptr const& conn_ptr, header_t& header)
         {
             if (on_read_)
-                on_read_(conn_ptr);
+                on_read_(conn_ptr, header);
         }
 
         template<typename T>
@@ -127,10 +127,8 @@ namespace cytx
         }
 
         template<typename T, typename H>
-        void router<T, H>::apply_invoker(connection_ptr conn, char const* data, size_t size) const
+        void router<T, H>::apply_invoker(connection_ptr conn, header_t& header, char const* data, size_t size) const
         {
-            auto header = conn->get_read_header();
-
             try
             {
                 if (this->before_invoker_ && !this->before_invoker_(conn, header, data, size))

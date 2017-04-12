@@ -18,7 +18,7 @@ namespace cytx {
             using header_t = typename connection_t::header_t;
             using invoker_t = std::function<void(connection_ptr, char const*, size_t)>;
             using invoker_container = std::unordered_map<uint64_t, invoker_t>;
-            using on_read_func = std::function<void(connection_ptr)>;
+            using on_read_func = std::function<void(connection_ptr, header_t&)>;
             using on_error_func = std::function<void(connection_ptr, rpc_result const& error)>;
             using before_invoke_func = std::function<bool(connection_ptr, const header_t&, const char*, size_t)>;
             using before_send_func = std::function<bool(connection_ptr, const header_t&)>;
@@ -36,7 +36,7 @@ namespace cytx {
             inline bool register_invoker(uint64_t name, invoker_t&& invoker);
             inline bool has_invoker(uint64_t name) noexcept;
 
-            inline void on_read(connection_ptr const& conn_ptr);
+            inline void on_read(connection_ptr const& conn_ptr, header_t& header);
             inline void on_error(connection_ptr const& conn_ptr, rpc_result const& error);
             inline void set_on_read(on_read_func&& on_read);
             inline void set_on_error(on_error_func&& on_error);
@@ -115,7 +115,7 @@ namespace cytx {
 
             inline bool has_invoker(std::string const& name) const;
 
-            inline void apply_invoker(connection_ptr conn, char const* data, size_t size) const;
+            inline void apply_invoker(connection_ptr conn, header_t& header, char const* data, size_t size) const;
 
         private:
             template <typename CallCodecPolicy, typename Handler, typename ... Handlers>

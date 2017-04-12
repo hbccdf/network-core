@@ -141,11 +141,10 @@ namespace cytx {
         protected:
             void init_callback_functions()
             {
-                router_.set_on_read([this](connection_ptr conn_ptr)
+                router_.set_on_read([this](connection_ptr conn_ptr, header_t& header)
                 {
-                    auto& header = conn_ptr->get_read_header();
                     auto read_buffer = conn_ptr->get_read_buffer();
-                    router_.apply_invoker(conn_ptr, read_buffer.data(), read_buffer.size());
+                    router_.apply_invoker(conn_ptr, header, read_buffer.data(), read_buffer.size());
                 });
             }
 
