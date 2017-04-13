@@ -2,6 +2,8 @@
 #include "db_common.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include "../base/log.hpp"
+#include <errmsg.h>
 
 namespace cytx
 {
@@ -26,6 +28,8 @@ namespace cytx
                 return std::move(connect_args);
             }
         }
+
+        using log_ptr_t = std::shared_ptr<spdlog::logger>;
 
         class mysql_db;
         class table_factory
@@ -55,10 +59,16 @@ namespace cytx
         class mysql_db
         {
         public:
-            mysql_db(std::string connect_str)
+            mysql_db(std::string connect_str, log_ptr_t log = nullptr)
+                : log_(log)
             {
                 conn_ = mysql_init(conn_);
                 connect_str_ = connect_str;
+                auto args = detail::split(connect_str_);
+                ip_ = args["ip"];
+                port_ = boost::lexical_cast<uint32_t>(args["port"]);
+                user_ = args["user"];
+                pwd_ = args["pwd"];
             }
 
             ~mysql_db()
@@ -79,21 +89,23 @@ namespace cytx
             {
                 if (is_connected_)
                 {
+                    if (log_)
+                        log_->warn("repeat connect");
+
                     mr = mysql_result();
                     return;
                 }
-                auto args = detail::split(connect_str_);
-                ip_ = args["ip"];
-                port_ = boost::lexical_cast<uint32_t>(args["port"]);
-                user_ = args["user"];
-                pwd_ = args["pwd"];
 
                 if (mysql_real_connect(conn_, ip_.c_str(), user_.c_str(), pwd_.c_str(), nullptr, port_, nullptr, 0) == nullptr)
                 {
+                    if (log_)
+                        log_->error("connect mysql failed, code:{}, msg:{}", mysql_errno(conn_), mysql_error(conn_));
                     mr = mysql_result(conn_);
                 }
                 else
                 {
+                    if (log_)
+                        log_->info("connect mysql success");
                     is_connected_ = true;
                     mr = mysql_result();
                 }
@@ -107,12 +119,19 @@ namespace cytx
                     throw mysql_exception(mr);
             }
 
-            void create_db(std::string db_name, mysql_result& mr, bool use_new_db = true)
+            void create_db(std::string db_name, mysql_result& mr, bool use_new_db = true, bool only_select_db = false)
             {
-                execute(fmt::format("CREATE DATABASE IF NOT EXISTS {} DEFAULT CHARSET utf8 COLLATE utf8_general_ci;", db_name), mr);
-                if (mr)
+                if (use_new_db)
                 {
-                    return;
+                    db_name_ = db_name;
+                }
+                if (!only_select_db)
+                {
+                    execute(fmt::format("CREATE DATABASE IF NOT EXISTS {} DEFAULT CHARSET utf8 COLLATE utf8_general_ci;", db_name), mr);
+                    if (mr)
+                    {
+                        return;
+                    }
                 }
 
                 if (use_new_db && mysql_select_db(conn_, db_name.c_str()) != 0)
@@ -144,7 +163,7 @@ namespace cytx
 
             void execute(std::string sql_str, mysql_result& mr)
             {
-                if (mysql_query(conn_, sql_str.c_str()))
+                if (inter_query(conn_, sql_str.c_str()))
                 {
                     mr = mysql_result(conn_);
                 }
@@ -165,7 +184,7 @@ namespace cytx
 
             int64_t execute_general(std::string sql_str, mysql_result& mr)
             {
-                if (mysql_query(conn_, sql_str.c_str()))
+                if (inter_query(conn_, sql_str.c_str()))
                 {
                     mr = mysql_result(conn_);
                     return 0;
@@ -187,7 +206,7 @@ namespace cytx
             T execute_scalar(std::string sql_str, mysql_result& mr)
             {
                 T t;
-                if (mysql_query(conn_, sql_str.c_str()))
+                if (inter_query(conn_, sql_str.c_str()))
                 {
                     mr = mysql_result(conn_);
                     return t;
@@ -201,7 +220,7 @@ namespace cytx
 
             mysql_result_set execute_query(std::string sql_str)
             {
-                if (mysql_query(conn_, sql_str.c_str()))
+                if (inter_query(conn_, sql_str.c_str()))
                 {
                     throw mysql_exception(conn_);
                 }
@@ -218,14 +237,79 @@ namespace cytx
                 return conn_ != nullptr && is_connected_;
             }
 
+            const log_ptr_t& get_log() const
+            {
+                return log_;
+            }
+
+        protected:
+            int inter_query(MYSQL *mysql, const char *q)
+            {
+                int query_id = ++query_id_;
+                if (log_)
+                    log_->info("[query_id:{}] {}", query_id_, q);
+
+                if (mysql_query(mysql, q))
+                {
+                    int err = mysql_errno(mysql);
+                    if (err == CR_SERVER_GONE_ERROR || err == CR_SERVER_LOST)
+                    {
+                        if(log_)
+                            log_->warn("[query_id:{}] connect disconnect, code:{}, msg:{}", query_id, err, mysql_error(mysql));
+                        //需要重连
+                        is_connected_ = false;
+                        mysql_close(conn_);
+                        conn_ = nullptr;
+                        conn_ = mysql_init(conn_);
+                        mysql_result mr;
+                        connect(mr);
+                        if (!mr)
+                        {
+                            create_db(db_name_, mr, true, true);
+                        }
+                        if (mr)
+                        {
+                            if(log_)
+                                log_->error("[query_id:{}] reconnect failed, code:{}, msg:{}", query_id, err, mysql_error(mysql));
+                            return mr.code();
+                        }
+                        else
+                        {
+                            int second_query = mysql_query(mysql, q);
+                            if (second_query)
+                            {
+                                if(log_)
+                                    log_->error("[query_id:{}] failed, code:{}, msg:{}", query_id, err, mysql_error(mysql));
+                            }
+                            else
+                            {
+                                log_->info("[query_id:{}] success", query_id);
+                            }
+                            return second_query;
+                        }
+                    }
+                    else
+                    {
+                        if (log_)
+                            log_->error("[query_id:{}] failed, code:{}, msg:{}", query_id, err, mysql_error(mysql));
+                        return err;
+                    }
+                }
+                log_->debug("[query_id:{}] success", query_id);
+                return 0;
+            }
+
         protected:
             MYSQL* conn_ = nullptr;
             bool is_connected_ = false;
             std::string connect_str_;
+            log_ptr_t log_ = nullptr;
             std::string ip_;
             uint32_t port_;
             std::string user_;
             std::string pwd_;
+            int query_id_ = 0;
+            std::string db_name_;
         };
     }
 }

@@ -1,5 +1,8 @@
 #pragma once
 #include "db_meta.hpp"
+#ifdef VERSION
+#undef VERSION
+#endif
 #include <my_global.h>
 #include <mysql.h>
 #include <string>
