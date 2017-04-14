@@ -32,7 +32,7 @@ namespace cytx
 
         void init(const std::string& file_name, spdlog::level::level_enum lvl = spdlog::level::level_enum::debug, const std::string& logger_name = "logger")
         {
-            auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 3);
+            auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 1000);
             log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, get_stdout_sink() });
             log_->set_level(lvl);
             log_->flush_on(spdlog::level::level_enum::err);
