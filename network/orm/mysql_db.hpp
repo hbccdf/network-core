@@ -62,6 +62,9 @@ namespace cytx
             mysql_db(std::string connect_str, log_ptr_t log = nullptr)
                 : log_(log)
             {
+                if (log_)
+                    log_->debug("---------------------------------------------------------");
+
                 conn_ = mysql_init(conn_);
                 connect_str_ = connect_str;
                 auto args = detail::split(connect_str_);
