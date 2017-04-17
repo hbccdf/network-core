@@ -72,6 +72,12 @@ namespace cytx
                 port_ = boost::lexical_cast<uint32_t>(args["port"]);
                 user_ = args["user"];
                 pwd_ = args["pwd"];
+                
+                auto it = args.find("db");
+                if (it != args.end())
+                {
+                    db_name_ = it->second;
+                }
             }
 
             ~mysql_db()
@@ -111,7 +117,29 @@ namespace cytx
                         log_->info("connect mysql success");
                     is_connected_ = true;
                     mr = mysql_result();
+
+                    if (!db_name_.empty())
+                    {
+                        select_db(db_name_, mr);
+                    }
                 }
+            }
+
+            void select_db(std::string db_name)
+            {
+                mysql_result mr;
+                select_db(db_name, mr);
+                if (mr)
+                    throw mysql_exception(mr);
+            }
+
+            void select_db(std::string db_name, mysql_result& mr)
+            {
+                db_name_ = db_name;
+                if (mysql_select_db(conn_, db_name.c_str()) != 0)
+                    mr = mysql_result(conn_);
+                else
+                    mr = mysql_result();
             }
 
             void create_db(std::string db_name, bool use_new_db = true)
@@ -122,25 +150,16 @@ namespace cytx
                     throw mysql_exception(mr);
             }
 
-            void create_db(std::string db_name, mysql_result& mr, bool use_new_db = true, bool only_select_db = false)
+            void create_db(std::string db_name, mysql_result& mr, bool use_new_db = true)
             {
-                if (use_new_db)
+                execute(fmt::format("CREATE DATABASE IF NOT EXISTS {} DEFAULT CHARSET utf8 COLLATE utf8_general_ci;", db_name), mr);
+                if (mr)
                 {
-                    db_name_ = db_name;
-                }
-                if (!only_select_db)
-                {
-                    execute(fmt::format("CREATE DATABASE IF NOT EXISTS {} DEFAULT CHARSET utf8 COLLATE utf8_general_ci;", db_name), mr);
-                    if (mr)
-                    {
-                        return;
-                    }
+                    return;
                 }
 
-                if (use_new_db && mysql_select_db(conn_, db_name.c_str()) != 0)
-                    mr = mysql_result(conn_);
-                else
-                    mr = mysql_result();
+                if (use_new_db)
+                    select_db(db_name, mr);
             }
 
             template<typename T>
@@ -266,10 +285,6 @@ namespace cytx
                         conn_ = mysql_init(conn_);
                         mysql_result mr;
                         connect(mr);
-                        if (!mr)
-                        {
-                            create_db(db_name_, mr, true, true);
-                        }
                         if (mr)
                         {
                             if(log_)
@@ -298,7 +313,8 @@ namespace cytx
                         return err;
                     }
                 }
-                log_->debug("[query_id:{}] success", query_id);
+                if(log_)
+                    log_->debug("[query_id:{}] success", query_id);
                 return 0;
             }
 
