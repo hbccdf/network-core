@@ -215,9 +215,19 @@ namespace cytx
                     return t;
                 }
                 MYSQL_RES* res = mysql_store_result(conn_);
-                MYSQL_ROW  row = mysql_fetch_row(res);
-                t = boost::lexical_cast<T>(row[0]);
-                mysql_free_result(res);
+                try
+                {
+                    MYSQL_ROW  row = mysql_fetch_row(res);
+                    t = boost::lexical_cast<T>(row[0]);
+                }
+                catch (...)
+                {
+
+                }
+                if (res != nullptr)
+                {
+                    mysql_free_result(res);
+                }
                 return t;
             }
 
