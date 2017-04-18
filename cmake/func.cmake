@@ -20,7 +20,7 @@ endfunction()
 
 
 function(target_use_pch)
-    target_sources(${ARGV0} PUBLIC stdafx.cpp)
+    target_sources(${ARGV0} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp)
     target_compile_options(${ARGV0} PUBLIC "/Yu" "/FI stdafx.h")
     set_source_files_properties(stdafx.cpp PROPERTIES COMPILE_FLAGS "/Yc")
     #set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LIBPATH:\"${THRIFT_LIB_DIR}/Release\"")
