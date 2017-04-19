@@ -1,12 +1,11 @@
 #pragma once
 #include "../traits/traits.hpp"
 #include "common.hpp"
-#include <boost/lexical_cast.hpp>
-#include <fmt/format.h>
 #include "json_util.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include "parser.hpp"
 #include <boost/program_options.hpp>
+#include "../base/cast.hpp"
 
 namespace cytx
 {
@@ -120,7 +119,7 @@ namespace cytx
                         new_str = str;
                         new_str.replace(pos, end_pos - pos + 1, str_prop.c_str());
                     }
-                    t = cast<T>(new_str);
+                    t = util::cast<T>(new_str);
                 }
             }
             else
@@ -236,18 +235,6 @@ namespace cytx
                     ++it;
                 }
             }
-        }
-
-        template<typename T>
-        auto cast(std::string str) -> std::enable_if_t<std::is_same<T, bool>::value, T>
-        {
-            return str == "true" || str == "1" || str == "on";
-        }
-
-        template<typename T>
-        auto cast(std::string str) -> std::enable_if_t<!std::is_same<T, bool>::value, T>
-        {
-            return boost::lexical_cast<T>(str);
         }
 
         void debug(const ptree& pt, bool debug_pt = true)

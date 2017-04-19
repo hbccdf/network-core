@@ -1,9 +1,22 @@
 #pragma once
 #include <spdlog/spdlog.h>
 #include <memory>
+#include "../serialize/enum.hpp"
 
 namespace cytx
 {
+    enum class log_level_t
+    {
+        trace = 0,
+        debug = 1,
+        info = 2,
+        warn = 3,
+        err = 4,
+        critical = 5,
+        off = 6
+    };
+    REG_ENUM(log_level_t, trace, debug, info, warn, err, critical, off);
+
     class log
     {
     public:
@@ -11,14 +24,6 @@ namespace cytx
         {
             static log _log;
             return _log;
-        }
-
-        static auto get_stdout_sink()
-        {
-            static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> out_sink_;
-            if(out_sink_ == nullptr)
-                out_sink_ = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
-            return out_sink_;
         }
 
         log(bool auto_init = true)
@@ -30,18 +35,18 @@ namespace cytx
             }
         }
 
-        void init(const std::string& file_name, spdlog::level::level_enum lvl = spdlog::level::level_enum::debug, const std::string& logger_name = "logger")
+        void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
         {
             auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 1000);
             log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, get_stdout_sink() });
-            log_->set_level(lvl);
+            log_->set_level((spdlog::level::level_enum)lvl);
             log_->flush_on(spdlog::level::level_enum::err);
         }
 
-        void init(spdlog::level::level_enum lvl = spdlog::level::level_enum::debug, const std::string& logger_name = "logger")
+        void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
         {
             log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ get_stdout_sink() });
-            log_->set_level(lvl);
+            log_->set_level((spdlog::level::level_enum)lvl);
             log_->flush_on(spdlog::level::level_enum::err);
         }
 
@@ -56,6 +61,14 @@ namespace cytx
         }
 
     private:
+        static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> get_stdout_sink()
+        {
+            static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> out_sink_;
+            if (out_sink_ == nullptr)
+                out_sink_ = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
+            return out_sink_;
+        }
+
         log(const log&) = delete;
         log(log&&) = delete;
 
