@@ -45,7 +45,7 @@ namespace cytx
             template<typename T>
             void register_table(std::string create_table_sql)
             {
-                register_table(T::type_name(), create_table_sql);
+                register_table(get_name<T>(), create_table_sql);
             }
 
             void register_table(std::string table_name, std::string create_table_sql)
@@ -165,14 +165,14 @@ namespace cytx
             template<typename T>
             void create_table()
             {
-                std::string sql = table_factory::instance().create_table_sql_map_[T::type_name()];
+                std::string sql = table_factory::instance().create_table_sql_map_[get_name<T>()];
                 execute(sql);
             }
 
             template<typename T>
             void drop_table()
             {
-                execute(fmt::format("DROP TABLE IF EXISTS {}", T::type_name()));
+                execute(fmt::format("DROP TABLE IF EXISTS {}", get_name<T>()));
             }
 
             void execute(std::string sql_str)

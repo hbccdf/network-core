@@ -17,7 +17,7 @@ struct enum_meta : public std::false_type {};
 
 namespace cytx
 {
-    HAS_FUNC(type_name);
+    template<typename T> struct is_db_meta : is_specialization_of<std::decay_t<T>, db_meta> {};
 
     template <typename T, class = std::void_t<>>
     struct is_reflection : std::false_type
@@ -26,7 +26,7 @@ namespace cytx
 
     // this way of using SFINEA is type reference and cv qualifiers immuned
     template <typename T>
-    struct is_reflection<T, std::void_t<std::enable_if_t<has_type_name_v<T>>>> : std::true_type
+    struct is_reflection<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>> : std::true_type
     {
     };
 
@@ -38,6 +38,30 @@ namespace cytx
     template<typename T>
     struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta<T>::value>>> : std::true_type
     {};
+
+    template<typename T, class = std::void_t<>>
+    struct get_meta_t { };
+
+    template<typename T>
+    struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+    {
+        using type = db_meta<std::decay_t<T>>;
+    };
+
+    template<typename T>
+    struct get_meta_t<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
+    {
+        using type = enum_meta<T>;
+    };
+
+    template<typename T>
+    struct get_meta_t<T, std::void_t<std::enable_if_t<is_db_meta<T>::value>>>
+    {
+        using type = std::decay_t<T>;
+    };
+
+    template<typename T>
+    using meta_t = typename get_meta_t<T>::type;
 
 
     template<typename T>
@@ -75,6 +99,15 @@ namespace cytx
         static auto meta()
         {
             return enum_meta<T>::Meta();
+        }
+    };
+
+    template<typename T>
+    struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+    {
+        static auto meta(T&& t)
+        {
+            return t.Meta();
         }
     };
 
@@ -188,19 +221,19 @@ namespace cytx
     constexpr const char* get_name()
     {
         static_assert(I < get_value<T>(), "out of range");
-        return T::__arr[i];
+        return meta_t<T>::_arr[i];
     }
 
     template<typename T>
     const char* get_name()
     {
-        return T::type_name();
+        return meta_t<T>::meta_name();
     }
 
     template<typename T>
     const char* get_name(size_t i)
     {
-        return i >= get_value<T>() ? "" : T::__arr[i];
+        return i >= get_value<T>() ? "" : meta_t<T>::_arr[i];
     }
 
     template<typename T>

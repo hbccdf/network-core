@@ -1,11 +1,11 @@
 #pragma once
-#include <fmt/format.h>
 #include <boost/optional.hpp>
 #include <vector>
 #include <map>
 #include <memory>
 #include <cstdint>
 #include "../traits/traits.hpp"
+#include "../base/cast.hpp"
 
 namespace cytx {
     namespace util
@@ -48,26 +48,30 @@ namespace cytx {
         struct select_able
         {
             std::string field_name_;
-            const std::string* table_name_;
+            const char* table_name_;
 
-            select_able(std::string field_name, const std::string* table_name)
+            select_able(std::string field_name, const char* table_name)
                 : field_name_(std::move(field_name)), table_name_(table_name)
             {}
         };
 
-        template<typename T>
+        template<typename P, typename T>
         struct field_proxy : public select_able<T>, public set_expr
         {
-            using value_t = T;
+            using parent_t = P;
+            using val_t = T;
+            using val_ptr = T P::*;
+            using meta_t = db_meta<parent_t>;
 
-            field_proxy(const std::string* table_name, T* v, std::string name)
-                : select_able<T>(name, table_name)
+            field_proxy(parent_t* p, val_ptr v, const char* name)
+                : select_able<T>(name, meta_t::meta_name())
                 , set_expr("")
+                , p_(p)
                 , val_(v), is_init_(false) {}
 
             field_proxy& operator=(const field_proxy& o)
             {
-                *val_ = *o.val_;
+                p_->*val_ = o.p_->*val_;
                 is_init_ = o.is_init_;
                 return *this;
             }
@@ -81,74 +85,81 @@ namespace cytx {
                 return !is_init_;
             }
 
-            std::string name() const { return field_name_; }
-            const std::string& table_name() const { return *table_name_; }
+            const char* name() const { return field_name_.c_str(); }
+            const char* table_name() const { return table_name_; }
 
-            T value()
+            val_t value()
             {
-                return *val_;
+                return p_->*val_;
             }
 
-            void set_value(T v)
+            void set_value(val_t v)
             {
                 is_init_ = true;
-                *val_ = v;
+                p_->*val_ = v;
             }
 
         public:
-            inline field_proxy& operator = (T v)
+            inline field_proxy& operator = (val_t v)
             {
                 set_value(v);
-                auto str_expr = fmt::format("{}.{}={}", table_name(), field_name_, util::cast_string(v));
+                auto str_expr = fmt::format("{}.{}={}", table_name(), name(), util::cast_string(v));
                 expr_ = str_expr;
                 return *this;
             }
             inline field_proxy& operator = (set_expr v)
             {
-                auto str_expr = fmt::format("{}.{}={}", table_name(), field_name_, v.str());
+                auto str_expr = fmt::format("{}.{}={}", table_name(), name(), v.str());
                 expr_ = str_expr;
                 return *this;
             }
 
-            inline set_expr operator + (T v) { return add_operator("+", v); }
-            inline set_expr operator - (T v) { return add_operator("-", v); }
-            inline set_expr operator * (T v) { return add_operator("*", v); }
-            inline set_expr operator / (T v) { return add_operator("/", v); }
-            inline set_expr operator % (T v) { return add_operator("%", v); }
+            inline set_expr operator + (val_t v) { return add_operator("+", v); }
+            inline set_expr operator - (val_t v) { return add_operator("-", v); }
+            inline set_expr operator * (val_t v) { return add_operator("*", v); }
+            inline set_expr operator / (val_t v) { return add_operator("/", v); }
+            inline set_expr operator % (val_t v) { return add_operator("%", v); }
 
-            inline field_proxy& operator += (T v) { return add_oper_with_equal("+", v); }
-            inline field_proxy& operator -= (T v) { return add_oper_with_equal("-", v); }
-            inline field_proxy& operator *= (T v) { return add_oper_with_equal("*", v); }
-            inline field_proxy& operator /= (T v) { return add_oper_with_equal("/", v); }
-            inline field_proxy& operator %= (T v) { return add_oper_with_equal("%", v); }
+            inline field_proxy& operator += (val_t v) { return add_oper_with_equal("+", v); }
+            inline field_proxy& operator -= (val_t v) { return add_oper_with_equal("-", v); }
+            inline field_proxy& operator *= (val_t v) { return add_oper_with_equal("*", v); }
+            inline field_proxy& operator /= (val_t v) { return add_oper_with_equal("/", v); }
+            inline field_proxy& operator %= (val_t v) { return add_oper_with_equal("%", v); }
 
         private:
-            inline set_expr add_operator(const char* op, T v)
+            inline set_expr add_operator(const char* op, val_t v)
             {
-                auto str_expr = fmt::format("{}.{}{}{}", table_name(), field_name_, op, util::cast_string(v));
+                auto str_expr = fmt::format("{}.{}{}{}", table_name(), name(), op, util::cast_string(v));
                 return set_expr{ str_expr };
             }
-            inline field_proxy& add_oper_with_equal(const char* op, T v)
+            inline field_proxy& add_oper_with_equal(const char* op, val_t v)
             {
-                expr_ = fmt::format("{0}.{1}={0}.{1}{2}{3}", table_name(), field_name_, op, util::cast_string(v));
+                expr_ = fmt::format("{0}.{1}={0}.{1}{2}{3}", table_name(), name(), op, util::cast_string(v));
                 return *this;
             }
         private:
-            T* val_;
+            parent_t* p_;
+            val_ptr val_;
             bool is_init_;
         };
 
-        template<>
-        struct field_proxy<std::string> : public select_able<std::string>, public set_expr
+        template<typename P>
+        struct field_proxy<P, std::string> : public select_able<std::string>, public set_expr
         {
-            field_proxy(const std::string* table_name, std::string* v, std::string name)
-                : select_able<std::string>(name, table_name)
+            using parent_t = P;
+            using val_t = std::string;
+            using val_ptr = std::string P::*;
+            using meta_t = db_meta<parent_t>;
+
+            field_proxy(parent_t* p, val_ptr v, const char* name)
+                : select_able(name, meta_t::meta_name())
                 , set_expr("")
+                , p_(p)
                 , val_(v), is_init_(false) {}
 
             field_proxy& operator=(const field_proxy& o)
             {
-                *val_ = *o.val_;
+                p_->*val_ = o.p_->*val_;
                 is_init_ = o.is_init_;
                 return *this;
             }
@@ -162,60 +173,32 @@ namespace cytx {
                 return !is_init_;
             }
 
-            std::string name() const { return field_name_; }
-            const std::string& table_name() const { return *table_name_; }
+            const char* name() const { return field_name_.c_str(); }
+            const char* table_name() const { return table_name_; }
 
-            std::string value()
+            val_t value()
             {
-                return *val_;
+                return p_->*val_;
             }
 
-            void set_value(std::string v)
+            void set_value(val_t v)
             {
                 is_init_ = true;
-                *val_ = v;
+                p_->*val_ = v;
             }
 
         public:
-            inline field_proxy& operator = (std::string v)
+            inline field_proxy& operator = (val_t v)
             {
                 set_value(v);
-                auto str_expr = fmt::format("{}.{}='{}'", table_name(), field_name_, util::cast_string(v));
+                auto str_expr = fmt::format("{}.{}='{}'", table_name(), name(), v);
                 expr_ = str_expr;
                 return *this;
             }
-            inline field_proxy& operator = (set_expr v)
-            {
-                auto str_expr = fmt::format("{}.{}='{}'", table_name(), field_name_, v.str());
-                expr_ = str_expr;
-                return *this;
-            }
-
-            /*inline set_expr operator + (std::string v) { return add_operator("+", v); }
-            inline set_expr operator - (std::string v) { return add_operator("-", v); }
-            inline set_expr operator * (std::string v) { return add_operator("*", v); }
-            inline set_expr operator / (std::string v) { return add_operator("/", v); }
-            inline set_expr operator % (std::string v) { return add_operator("%", v); }
-
-            inline field_proxy& operator += (std::string v) { return add_oper_with_equal("+", v); }
-            inline field_proxy& operator -= (std::string v) { return add_oper_with_equal("-", v); }
-            inline field_proxy& operator *= (std::string v) { return add_oper_with_equal("*", v); }
-            inline field_proxy& operator /= (std::string v) { return add_oper_with_equal("/", v); }
-            inline field_proxy& operator %= (std::string v) { return add_oper_with_equal("%", v); }*/
-
+          
         private:
-            /*inline set_expr add_operator(const char* op, std::string v)
-            {
-                auto str_expr = fmt::format("{}.{}{}{}", table_name(), field_name_, op, v);
-                return set_expr{ str_expr };
-            }
-            inline field_proxy& add_oper_with_equal(const char* op, std::string v)
-            {
-                expr_ = fmt::format("{0}.{1}={1}{2}{3}", table_name(), field_name_, op, v);
-                return *this;
-            }*/
-        private:
-            std::string* val_;
+            parent_t* p_;
+            val_ptr val_;
             bool is_init_;
         };
 
@@ -225,7 +208,8 @@ namespace cytx {
             aggregate(std::string str_func)
                 : select_able<T>(std::move(str_func), nullptr) {}
 
-            aggregate(std::string str_func, const field_proxy<T> &field)
+            template<typename P>
+            aggregate(std::string str_func, const field_proxy<P, T>& field)
                 : select_able<T>(fmt::format("{}({}.{})", str_func, field.table_name(), field.name()), nullptr)
             {}
         };
@@ -244,8 +228,8 @@ namespace cytx {
                 exprs.emplace_back(str_expr, field.table_name_);
             }
 
-            template <typename T>
-            expr(const field_proxy<T> &field1, std::string op, const field_proxy<T> &field2)
+            template<typename P, typename T>
+            expr(const field_proxy<P, T> &field1, std::string op, const field_proxy<P, T> &field2)
                 : exprs
             {
                 { field1.field_name_, field1.table_name_ },
@@ -261,7 +245,7 @@ namespace cytx {
                 {
                     if (with_table_name && p.second != nullptr)
                     {
-                        wr.write("{}.", *p.second);
+                        wr.write("{}.", p.second);
                     }
                     wr.write(p.first);
                 }
@@ -278,7 +262,7 @@ namespace cytx {
             }
 
         protected:
-            std::list<std::pair<std::string, const std::string*>> exprs;
+            std::list<std::pair<std::string, const char*>> exprs;
 
             expr and_or(const expr &right, std::string log_op) const
             {
@@ -332,64 +316,66 @@ namespace cytx {
 
         // field_proxy ? field_proxy
 
-        template <typename T>
-        inline expr operator == (const field_proxy<T> &op1, const field_proxy<T> &op2)
+        template <typename P, typename T>
+        inline expr operator == (const field_proxy<P, T> &op1, const field_proxy<P, T> &op2)
         {
             return expr{ op1 , "=", op2 };
         }
 
-        template <typename T>
-        inline expr operator != (const field_proxy<T> &op1, const field_proxy<T> &op2)
+        template <typename P, typename T>
+        inline expr operator != (const field_proxy<P, T> &op1, const field_proxy<P, T> &op2)
         {
             return expr{ op1, "!=", op2 };
         }
 
-        template <typename T>
-        inline expr operator > (const field_proxy<T> &op1, const field_proxy<T> &op2)
+        template <typename P, typename T>
+        inline expr operator > (const field_proxy<P, T> &op1, const field_proxy<P, T> &op2)
         {
             return expr{ op1 , ">", op2 };
         }
 
-        template <typename T>
-        inline expr operator >= (const field_proxy<T> &op1, const field_proxy<T> &op2)
+        template <typename P, typename T>
+        inline expr operator >= (const field_proxy<P, T> &op1, const field_proxy<P, T> &op2)
         {
             return expr{ op1, ">=", op2 };
         }
 
-        template <typename T>
-        inline expr operator < (const field_proxy<T> &op1, const field_proxy<T> &op2)
+        template <typename P, typename T>
+        inline expr operator < (const field_proxy<P, T> &op1, const field_proxy<P, T> &op2)
         {
             return expr{ op1 , "<", op2 };
         }
 
-        template <typename T>
-        inline expr operator <= (const field_proxy<T> &op1, const field_proxy<T> &op2)
+        template <typename P, typename T>
+        inline expr operator <= (const field_proxy<P, T> &op1, const field_proxy<P, T> &op2)
         {
             return expr{ op1, "<=", op2 };
         }
 
         // Nullable field_proxy == / != nullptr
 
-        /*template <typename T>
-        inline expr operator == (const NullableField<T> &op, std::nullptr_t)
+        template <typename T>
+        inline expr operator == (const nullable<T> &op, std::nullptr_t)
         {
             return expr{ op, " is null" };
         }
 
         template <typename T>
-        inline expr operator != (const NullableField<T> &op, std::nullptr_t)
+        inline expr operator != (const nullable<T> &op, std::nullptr_t)
         {
             return expr{ op, " is not null" };
-        }*/
+        }
 
         // String field_proxy & / | std::string
 
-        inline expr operator & (const field_proxy<std::string> &field, std::string val)
+        template<typename P>
+        inline expr operator & (const field_proxy<P, std::string> &field, std::string val)
         {
             return expr(field, " like ", std::move(val));
         }
 
-        inline expr operator | (const field_proxy<std::string> &field, std::string val)
+        template<typename P>
+        inline expr operator | (const field_proxy<P, std::string> &field, std::string val)
         {
             return expr(field, " not like ", std::move(val));
         }
@@ -401,32 +387,32 @@ namespace cytx {
             return aggregate<size_t> { "count (*)" };
         }
 
-        template <typename T>
-        inline auto count(const field_proxy<T> &field)
+        template <typename P, typename T>
+        inline auto count(const field_proxy<P, T> &field)
         {
             return aggregate<T> { "count", field };
         }
 
-        template <typename T>
-        inline auto sum(const field_proxy<T> &field)
+        template <typename P, typename T>
+        inline auto sum(const field_proxy<P, T> &field)
         {
             return aggregate<T> { "sum", field };
         }
 
-        template <typename T>
-        inline auto avg(const field_proxy<T> &field)
+        template <typename P, typename T>
+        inline auto avg(const field_proxy<P, T> &field)
         {
             return aggregate<T> { "avg", field };
         }
 
-        template <typename T>
-        inline auto max(const field_proxy<T> &field)
+        template <typename P, typename T>
+        inline auto max(const field_proxy<P, T> &field)
         {
             return aggregate<T> { "max", field };
         }
 
-        template <typename T>
-        inline auto min(const field_proxy<T> &field)
+        template <typename P, typename T>
+        inline auto min(const field_proxy<P, T> &field)
         {
             return aggregate<T> { "min", field };
         }

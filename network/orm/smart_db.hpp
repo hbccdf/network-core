@@ -3,21 +3,6 @@
 
 namespace cytx
 {
-    namespace util
-    {
-        template<typename T>
-        auto cast(const std::string& str) -> std::enable_if_t<std::is_same<T, bool>::value, T>
-        {
-            return str == "true" || str == "1" || str == "on";
-        }
-
-        template<typename T>
-        auto cast(const std::string& str) -> std::enable_if_t<!std::is_same<T, bool>::value && is_basic_type<T>::value, T>
-        {
-            return boost::lexical_cast<T>(str);
-        }
-    }
-
     namespace orm
     {
         class smart_db;
@@ -77,7 +62,7 @@ namespace cytx
         template<typename RESULT_T>
         class query_proxy
         {
-            using result_t = RESULT_T;
+            using result_t = typename RESULT_T::value_type;
             friend class smart_db;
         public:
             query_proxy(query_proxy&& q)
@@ -109,8 +94,8 @@ namespace cytx
                 return std::move(*this);
             }
 
-            template <typename T>
-            inline query_proxy&& groupby(const field_proxy<T>& field) &&
+            template <typename P, typename T>
+            inline query_proxy&& groupby(const field_proxy<P, T>& field) &&
             {
                 sql_groupby_ = fmt::format(" group by {}.{}", field.table_name(), field.name());
                 return std::move(*this);
@@ -136,8 +121,8 @@ namespace cytx
                 return std::move(*this);
             }
 
-            template <typename T>
-            inline query_proxy&& orderby(const field_proxy<T> &field) &&
+            template <typename P, typename T>
+            inline query_proxy&& orderby(const field_proxy<P, T> &field) &&
             {
                 if (sql_orderby_.empty())
                     sql_orderby_ = fmt::format(" order by {}.{}", field.table_name(), field.name());
@@ -146,8 +131,8 @@ namespace cytx
                 return std::move(*this);
             }
 
-            template <typename T>
-            inline query_proxy&& orderby_desc(const field_proxy<T> &field) &&
+            template <typename P, typename T>
+            inline query_proxy&& orderby_desc(const field_proxy<P, T> &field) &&
             {
                 if (sql_orderby_.empty())
                     sql_orderby_ = fmt::format(" order by {}.{} desc", field.table_name(), field.name());
@@ -217,7 +202,7 @@ namespace cytx
                     is_first = false;
                 });
 
-                string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", std::decay_t<T>::type_name(), names_wr.str(), values_wr.str());
+                string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", get_name<T>(), names_wr.str(), values_wr.str());
                 execute_general(insert_sql);
             }
 
@@ -282,14 +267,14 @@ namespace cytx
             auto delete_item()
                 -> std::enable_if_t<is_reflection<std::decay_t<T>>::value, delete_proxy>
             {
-                string delete_sql = fmt::format("DELETE FROM `{}`", T::type_name());
+                string delete_sql = fmt::format("DELETE FROM `{}`", get_name<T>());
                 return delete_proxy(this, delete_sql);
             }
 
             template<typename T>
             auto query() -> std::enable_if_t<is_reflection<std::decay_t<T>>::value, query_proxy<T>>
             {
-                return query_proxy<T>(this, fmt::format(" from {} ", T::type_name()));
+                return query_proxy<T>(this, fmt::format(" from {} ", get_name<T>()));
             }
         };
 
@@ -306,7 +291,7 @@ namespace cytx
         }
 
         template<typename RESULT_T>
-        std::vector<RESULT_T> cytx::orm::query_proxy<RESULT_T>::to_vector() &&
+        std::vector<typename RESULT_T::value_type> cytx::orm::query_proxy<RESULT_T>::to_vector() &&
         {
             std::string sql = fmt::format("{}{}{}{};", sql_select_, sql_target_, get_from_sql(), get_limit());
             auto result_set = db_->execute_query(sql);
@@ -314,13 +299,13 @@ namespace cytx
             std::vector<result_t> v;
             for (size_t i = 0; i < result_set.row_size(); ++i)
             {
-                result_t t;
+                RESULT_T t;
                 auto row = result_set[i];
                 for_each(t, [this, &row](auto& item, size_t I, bool is_last) {
                     auto str = row[item.first];
                     item.second.set_value(util::cast<std::decay_t<decltype(item.second.value())>>(str));
                 });
-                v.push_back(t);
+                v.push_back(t.Value());
             }
             return v;
         }

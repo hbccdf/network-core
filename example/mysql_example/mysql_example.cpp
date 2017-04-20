@@ -9,8 +9,8 @@ struct user_bean
 {
     int id;
     std::string name;
-    DB_META(user_bean, id, name);
 };
+DB_META(user_bean, id, name);
 
 struct t_server
 {
@@ -19,24 +19,20 @@ struct t_server
     string ip;
     int port;
     int valid;
-    DB_META(t_server, id, name, ip, port, valid);
 };
 
-//struct t_server1
-//{
-//    int id;
-//    string name;
-//    string ip;
-//    int port;
-//    int valid;
-//};
+DB_META(t_server, id, name, ip, port, valid);
+
 
 int main(int argc, char **argv)
 {
-    /*auto t_server_size = sizeof(t_server);
-    auto t_server_size1 = sizeof(t_server1);
+    cout << db_meta<t_server>::value << endl;
+    cout << db_meta<t_server>::meta_name() << endl;
+    cout << get_name<t_server>() << endl;
+
+    auto t_server_size = sizeof(t_server);
     auto str_size = sizeof(string);
-    cout << fmt::format("{}, {}, {}", t_server_size, t_server_size1, str_size);*/
+    cout << fmt::format("{}, {}", t_server_size, str_size) << endl;
 
     std::string sql = R"--(CREATE TABLE IF NOT EXISTS `t_server` (
         `id` int(11) NOT NULL,
@@ -57,22 +53,22 @@ int main(int argc, char **argv)
         auto row_count = db.execute_scalar("select count(*) from t_server");
         cout << row_count << endl;
 
-        t_server t;
-        t._id = 1, t._ip = "localhost", t._name = "test", t._port = 12345, t._valid = 1;
+        t_server_query t;
+        t.id = 1, t.ip = "localhost", t.name = "test", t.port = 12345, t.valid = 1;
         db.insert(t);
-        db.insert(t._id = 9, t._ip = "localhost", t._name = "test", t._port = 12345, t._valid = 1);
-        t_server t1;
-        auto r = db.update(t1._name = "test_update aadd").where(t._id == 9).where(t._id == 1).to_value();
+        db.insert(t.id = 9, t.ip = "localhost", t.name = "test", t.port = 12345, t.valid = 1);
+        t_server_query t1;
+        auto r = db.update(t1.name = "test_update aadd").where(t.id == 9).where(t.id == 1).to_value();
         cout << "update " << r << endl;
 
-        auto vr = db.query<t_server>().to_vector();
-        auto vr1 = db.query<t_server>().where(t._id == 9).to_vector();
-        auto vr2 = db.query<t_server>().where(t._id == 9).take(2).to_vector();
+        auto vr = db.query<t_server_query>().to_vector();
+        auto vr1 = db.query<t_server_query>().where(t.id == 9).to_vector();
+        auto vr2 = db.query<t_server_query>().where(t.id == 9).take(2).to_vector();
 
-        auto dr = db.delete_item<t_server>().where(t._id == 1).to_value();
+        auto dr = db.delete_item<t_server_query>().where(t.id == 1).to_value();
         cout << "delete " << dr << endl;
 
-        auto dr1 = db.delete_item<t_server>().where(t._id == 9).to_value();
+        auto dr1 = db.delete_item<t_server_query>().where(t.id == 9).to_value();
         cout << "delete " << dr1 << endl;
     }
     catch (mysql_exception& e)
