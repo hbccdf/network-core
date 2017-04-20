@@ -736,11 +736,10 @@ namespace cytx
         template<typename T>
         auto DeSerialize(T& t) -> std::enable_if_t<is_user_class<T>::value>
         {
-            for_each(get_meta(t), [](auto& v, size_t I, bool is_last)
+            for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)
             {
                 ReadTuplePair(v);
             });
-            ReadTuple(t.Meta());
         }
 
         bool empty()

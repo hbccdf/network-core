@@ -79,23 +79,6 @@ namespace cytx
             }
 
             auto node = nodes_.back();
-            /*for (auto& c : node.val)
-            {
-                if (c.first == "+" && c.second.data().empty())
-                {
-                    int count = 0;
-                    for (auto& c1 : c.second)
-                    {
-                        ++count;
-                    }
-                    if (count == 1)
-                    {
-                        node.val = c.second;
-                        break;
-                    }
-                }
-            }*/
-
             std::stringstream ss;
             T::write(ss, node.val);
             buf_ = ss.str();
@@ -332,7 +315,7 @@ namespace cytx {
         auto WriteObject(const T& t, bool is_last, BeginObjec) -> std::enable_if_t<is_reflection<T>::value && !enum_meta<T>::value>
         {
             adapter_begin_object();
-            for_each(get_meta(t), [](const auto& v, size_t I, bool is_last)
+            for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)
             {
                 WriteObject(v, is_last, std::false_type{});
             });
@@ -343,7 +326,7 @@ namespace cytx {
         auto WriteObject(T const& t, bool is_last, BeginObjec bo) -> std::enable_if_t<is_tuple<T>::value>
         {
             adapter_begin_fixed_array(std::tuple_size<T>::value);
-            for_each(t, [bo](const auto& v, size_t I, bool is_last)
+            for_each(t, [this, bo](auto& v, size_t I, bool is_last)
             {
                 WriteObject(v, is_last, bo);
             });

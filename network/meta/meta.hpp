@@ -148,6 +148,18 @@ namespace cytx
     {
     }
 
+    template<typename F, typename... Rest, std::size_t I0, std::size_t... I>
+    constexpr void apply_tuple(F&& f, const std::tuple<Rest...>& tp, std::index_sequence<I0, I...>)
+    {
+        apply_value<I0>(std::forward<F>(f), std::get<I0>(tp), sizeof...(I) == 0);
+        apply_tuple(std::forward<F>(f), tp, std::index_sequence<I...>{});
+    }
+
+    template<typename F, typename... Rest>
+    constexpr void apply_tuple(F&& f, const std::tuple<Rest...>&, std::index_sequence<>)
+    {
+    }
+
     template<size_t I, typename T>
     constexpr decltype(auto) get(T&& t)
     {
