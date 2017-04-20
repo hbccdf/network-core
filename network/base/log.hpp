@@ -1,7 +1,7 @@
 #pragma once
 #include <spdlog/spdlog.h>
 #include <memory>
-#include "../serialize/enum.hpp"
+#include "../meta/meta.hpp"
 
 namespace cytx
 {

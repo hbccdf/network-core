@@ -5,7 +5,6 @@
 #include <map>
 #include <memory>
 #include <cstdint>
-#include "../serialize/common.hpp"
 #include "../traits/traits.hpp"
 
 namespace cytx {

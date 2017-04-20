@@ -1,16 +1,11 @@
 #pragma once
 #include "common.h"
-#include "../serialize/common.hpp"
-#include "../serialize/enum.hpp"
+#include "../meta/meta.hpp"
 #include <boost/system/error_code.hpp>
-#include <fmt/format.h>
 
 namespace cytx {
     namespace rpc
     {
-        REG_ENUM(error_code, ok, unknown, fail, timeout, cancel, connect_fail, badconnect, codec_fail, invalid_header, be_disconnected,
-            repeat_connect, no_handler, remote_error);
-
         class application_category : public boost::system::error_category
         {
         public:

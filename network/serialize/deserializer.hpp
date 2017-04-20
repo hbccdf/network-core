@@ -1,6 +1,6 @@
 #pragma once
 #include "../traits/traits.hpp"
-#include "common.hpp"
+#include "../meta/meta.hpp"
 #include "json_util.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include "parser.hpp"
@@ -736,6 +736,10 @@ namespace cytx
         template<typename T>
         auto DeSerialize(T& t) -> std::enable_if_t<is_user_class<T>::value>
         {
+            for_each(get_meta(t), [](auto& v, size_t I, bool is_last)
+            {
+                ReadTuplePair(v);
+            });
             ReadTuple(t.Meta());
         }
 
@@ -745,18 +749,6 @@ namespace cytx
         }
 
     private:
-        template<std::size_t I = 0, typename Tuple>
-        auto ReadTuple(Tuple& t) -> std::enable_if_t<I == std::tuple_size<Tuple>::value>
-        {
-        }
-
-        template<std::size_t I = 0, typename Tuple>
-        auto ReadTuple(Tuple& t)->std::enable_if_t < I < std::tuple_size<Tuple>::value>
-        {
-            ReadTuplePair(std::get<I>(t));
-            ReadTuple<I + 1>(t);
-        }
-
         template<typename T>
         auto ReadTuplePair(T& p) -> std::enable_if_t<!std::is_same<bool, std::decay_t<decltype(p.second)>>::value>
         {

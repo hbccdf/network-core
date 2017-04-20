@@ -1,15 +1,208 @@
 #pragma once
-#include "common.hpp"
+#include "base_meta.hpp"
+#include "enum_meta.hpp"
+#include "db_meta.hpp"
+
+#include "../traits/traits.hpp"
+
 #include <fmt/format.h>
 #include <boost/optional.hpp>
 #include <vector>
 #include <map>
 #include <memory>
-#include "../traits/traits.hpp"
 #include <cstdint>
 
 template<typename T>
 struct enum_meta : public std::false_type {};
+
+namespace cytx
+{
+    HAS_FUNC(type_name);
+
+    template <typename T, class = std::void_t<>>
+    struct is_reflection : std::false_type
+    {
+    };
+
+    // this way of using SFINEA is type reference and cv qualifiers immuned
+    template <typename T>
+    struct is_reflection<T, std::void_t<std::enable_if_t<has_type_name_v<T>>>> : std::true_type
+    {
+    };
+
+    template <typename T>
+    struct is_reflection<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>> : std::true_type
+    {
+    };
+
+    template<typename T>
+    struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta<T>::value>>> : std::true_type
+    {};
+
+
+    template<typename T>
+    auto get_meta()
+    {
+        return get_meta_impl<T>::meta();
+    }
+
+    template<typename T>
+    auto get_meta(T&& t)
+    {
+        return get_meta_impl<T>::meta(std::forward<T>(t));
+    }
+
+    template<typename T, class = std::void_t<>>
+    struct get_meta_impl;
+
+    template<typename T>
+    struct get_meta_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
+    {
+        static auto meta(T&& t)
+        {
+            return t.Meta();
+        }
+    };
+
+    template<typename T>
+    struct get_meta_impl<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
+    {
+        static auto meta(T&& t)
+        {
+            return enum_meta<T>::Meta();
+        }
+
+        static auto meta()
+        {
+            return enum_meta<T>::Meta();
+        }
+    };
+
+    template<size_t I, typename F, typename T>
+    void apply_value(F&& f, T&& t, bool is_last)
+    {
+        std::forward<F>(f)(std::forward<T>(t), I, is_last);
+    };
+
+    template<size_t I, typename F, typename T>
+    constexpr void for_each_impl(F&& f, T&&t, bool is_last, std::void_t<std::enable_if_t<is_reflection<T>::value>> *)
+    {
+        apply(std::forward<F>(f), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
+    }
+
+    //-------------------------------------------------------------------------------------------------------------//
+    //-------------------------------------------------------------------------------------------------------------//
+    template<size_t I, typename F, typename F1, typename T>
+    std::enable_if_t<is_reflection<T>::value> apply_value(F&& f, F1&& f1, T&& t, bool is_last)
+    {
+        std::forward<F1>(f1)(std::forward<T>(t), I, is_last);
+    }
+
+    template<size_t I, typename F, typename F1, typename T>
+    std::enable_if_t<!is_reflection<T>::value> apply_value(F&& f, F1&& f1, T&& t, bool is_last)
+    {
+        std::forward<F>(f)(std::forward<T>(t), I, is_last);
+    }
+
+    template<size_t I, typename F, typename F1, typename T>
+    constexpr void for_each_impl(F&& f, F1&& f1, T&&t, bool is_last, std::void_t<std::enable_if_t<is_reflection<T>::value>> *)
+    {
+        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
+    }
+
+    template<typename F, typename F1, typename T, typename... Rest, std::size_t I0, std::size_t... I>
+    constexpr void apply(F&& f, F1&& f1, T&&t, std::tuple<Rest...>&& tp, std::index_sequence<I0, I...>)
+    {
+        apply_value<I0>(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t).*(std::get<I0>(tp)), sizeof...(I) == 0);
+        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), (std::tuple<Rest...>&&)tp, std::index_sequence<I...>{});
+    }
+
+    template<typename F, typename F1, typename T, typename... Rest>
+    constexpr void apply(F&& f, F1&&, T&& t, std::tuple<Rest...>&&, std::index_sequence<>)
+    {
+    }
+    //-------------------------------------------------------------------------------------------------------------//
+    //-------------------------------------------------------------------------------------------------------------//
+
+    template<typename F, typename T, typename... Rest, std::size_t I0, std::size_t... I>
+    constexpr void apply(F&& f, T&&t, std::tuple<Rest...>&& tp, std::index_sequence<I0, I...>)
+    {
+        apply_value<I0>(std::forward<F>(f), (std::get<I0>(tp)), sizeof...(I) == 0);
+        apply(std::forward<F>(f), std::forward<T>(t), (std::tuple<Rest...>&&)tp, std::index_sequence<I...>{});
+    }
+
+    template<typename F, typename T, typename... Rest>
+    constexpr void apply(F&& f, T&& t, std::tuple<Rest...>&&, std::index_sequence<>)
+    {
+    }
+
+    template<typename F, typename... Rest, std::size_t I0, std::size_t... I>
+    constexpr void apply_tuple(F&& f, std::tuple<Rest...>& tp, std::index_sequence<I0, I...>)
+    {
+        apply_value<I0>(std::forward<F>(f), std::get<I0>(tp), sizeof...(I) == 0);
+        apply_tuple(std::forward<F>(f), tp, std::index_sequence<I...>{});
+    }
+
+    template<typename F, typename... Rest>
+    constexpr void apply_tuple(F&& f, std::tuple<Rest...>&, std::index_sequence<>)
+    {
+    }
+
+    template<size_t I, typename T>
+    constexpr decltype(auto) get(T&& t)
+    {
+        return std::forward<T>(t).*(std::get<I>(get_meta(std::forward<T>(t))));
+    }
+
+    template<typename T, typename F>
+    constexpr auto for_each(T&& t, F&& f) -> std::enable_if_t<is_reflection<T>::value>
+    {
+        for_each_impl<0>(std::forward<F>(f), std::forward<T>(t), false, (void *)nullptr);
+    }
+
+    template<typename T, typename F, typename F1>
+    constexpr auto for_each(T&& t, F&& f, F1&& f1) -> std::enable_if_t<is_reflection<T>::value>
+    {
+        for_each_impl<0>(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), false, (void *)nullptr);
+    }
+
+    template<typename T, typename F>
+    constexpr auto for_each(T&& tp, F&& f) -> std::enable_if_t<!is_reflection<T>::value>
+    {
+        apply_tuple(std::forward<F>(f), std::forward<T>(tp), std::make_index_sequence<std::tuple_size<std::remove_reference_t <T>>::value>{});
+    }
+
+    template<typename T, size_t  I>
+    constexpr const char* get_name()
+    {
+        static_assert(I < get_value<T>(), "out of range");
+        return T::__arr[i];
+    }
+
+    template<typename T>
+    const char* get_name()
+    {
+        return T::type_name();
+    }
+
+    template<typename T>
+    const char* get_name(size_t i)
+    {
+        return i >= get_value<T>() ? "" : T::__arr[i];
+    }
+
+    template<typename T>
+    constexpr auto get_value() -> std::enable_if_t<is_reflection<T>::value, size_t>
+    {
+        return std::tuple_size<typename std::decay_t<T>::meta_type>::value;
+    }
+
+    template<typename T>
+    constexpr auto get_value() -> std::enable_if_t<!is_reflection<T>::value, size_t>
+    {
+        return 0;
+    }
+}
 
 namespace cytx
 {
@@ -84,7 +277,7 @@ namespace cytx
             {
                 return r;
             }
-            else if(has_enum_name)
+            else if (has_enum_name)
             {
                 auto r = split_enum_str(str, std::forward<std::vector<const char*>>(splits));
                 if (r && r->first == name_)
@@ -112,30 +305,14 @@ namespace cytx
         map_t map_;
     };
 
-    template<typename T>
-    void reg_vec_pair(std::vector<std::pair<const char*, T>>& vec, const std::pair<const char*, T>& p)
-    {
-        vec.push_back(p);
-    }
-
-    template<typename ENUM_T, size_t I, typename T>
-    auto reg_vec(std::vector<std::pair<const char*, ENUM_T>>& vec, const T& t)->std::enable_if_t < I < std::tuple_size<T>::value>
-    {
-        reg_vec_pair<ENUM_T>(vec, std::get<I>(t));
-        reg_vec<ENUM_T, I + 1, T>(vec, t);
-    }
-
-    template<typename ENUM_T, size_t I, typename T>
-    auto reg_vec(std::vector<std::pair<const char*, ENUM_T>>& vec, const T& t)->std::enable_if_t < I == std::tuple_size<T>::value>
-    {
-    }
-
-
     template< typename ENUM_T, typename T>
-    std::vector<std::pair<const char*, ENUM_T>> get_vec(const T& t)
+    std::vector<std::pair<const char*, ENUM_T>> get_vec(T& t)
     {
         vector<std::pair<const char*, ENUM_T>> vec;
-        reg_vec<ENUM_T, 0, T>(vec, t);
+        for_each(t, [&vec](const auto& p, size_t I, bool is_last)
+        {
+            vec.push_back(p);
+        });
         return std::move(vec);
     }
 
@@ -169,14 +346,13 @@ namespace cytx
         template<typename T>
         void reg()
         {
-            enum_meta<T> meta;
-            auto enum_vec = get_vec<T>(meta());
+            auto enum_vec = get_vec<T>(get_meta<T>());
             vec_t vec;
             for (auto& p : enum_vec)
             {
                 vec.push_back({ p.first, (uint32_t)p.second });
             }
-            reg(meta.name(), meta.alias_name(), std::move(vec));
+            reg(enum_meta<T>::name(), enum_meta<T>::alias_name(), std::move(vec));
         }
 
         void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
@@ -297,68 +473,5 @@ namespace cytx
     {
         return boost::optional<T>{};
     }
-
-#define PAIR_ENUM(name, t) std::make_pair(#t, name##::t)
-#define MAKE_ENUM_TUPLE(enum_name, ...) template<> struct enum_meta<enum_name>  : public std::true_type \
-    { auto operator() () { return std::make_tuple(__VA_ARGS__);  } \
-    const char* name() { return #enum_name; }
-
-#define MAKE_ENUM_ARG_LIST_1(name, op, arg, ...)   op(name, arg)
-#define MAKE_ENUM_ARG_LIST_2(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_1(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_3(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_2(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_4(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_3(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_5(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_4(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_6(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_5(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_7(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_6(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_8(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_7(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_9(name, op, arg, ...)   op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_8(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_10(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_9(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_11(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_10(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_12(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_11(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_13(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_12(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_14(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_13(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_15(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_14(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_16(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_15(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_17(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_16(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_18(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_17(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_19(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_18(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_20(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_19(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_21(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_20(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_22(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_21(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_23(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_22(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_24(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_23(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_25(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_24(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_26(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_25(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_27(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_26(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_28(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_27(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_29(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_28(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_30(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_29(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_31(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_30(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_32(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_31(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_33(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_32(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_34(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_33(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_35(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_34(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_36(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_35(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_37(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_36(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_38(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_37(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_39(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_38(name, op, __VA_ARGS__))
-#define MAKE_ENUM_ARG_LIST_40(name, op, arg, ...)  op(name, arg), MARCO_EXPAND(MAKE_ENUM_ARG_LIST_39(name, op, __VA_ARGS__))
-
-
-#define MAKE_ENUM_ARG_LIST(name, N, op, arg, ...) \
-        MACRO_CONCAT(MAKE_ENUM_ARG_LIST, N)(name, op, arg, __VA_ARGS__)
-
-#define EMMBED_ENUM_TUPLE(name, N, ...) \
-MAKE_ENUM_TUPLE(name, MAKE_ENUM_ARG_LIST(name, N, PAIR_ENUM, __VA_ARGS__))
-
-#define REG_ENUM(name, ...) EMMBED_ENUM_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__) \
-    const char* alias_name() { return nullptr; } \
-}; \
-namespace ___reg_enum_helper_value___ ## name ## __LINE__ { static int val = cytx::detail::reg_enum<name>(); }
-
-#define REG_ALIAS_ENUM(name, alias_name_str, ...) EMMBED_ENUM_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__) \
-    const char* alias_name() { return #alias_name_str; } \
-}; \
-namespace ___reg_enum_helper_value___ ## name ## __LINE__ { static int val = cytx::detail::reg_enum<name>(); }
 
 }

@@ -6,7 +6,6 @@
 #include <rapidjson/document.h>
 
 #include "../traits/traits.hpp"
-#include "common.hpp"
 
 namespace cytx {
     class json_util : boost::noncopyable

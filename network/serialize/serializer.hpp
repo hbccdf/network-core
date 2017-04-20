@@ -1,6 +1,6 @@
 #pragma once
 #include "../traits/traits.hpp"
-#include "common.hpp"
+#include "../meta/meta.hpp"
 #include <boost/lexical_cast.hpp>
 #include "json_util.hpp"
 #include <fmt/format.h>
@@ -8,7 +8,6 @@
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include "parser.hpp"
-#include "enum.hpp"
 
 namespace cytx
 {
@@ -330,10 +329,13 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto WriteObject(const T& t, bool is_last, BeginObjec) -> std::enable_if_t<is_user_class<T>::value>
+        auto WriteObject(const T& t, bool is_last, BeginObjec) -> std::enable_if_t<is_reflection<T>::value && !enum_meta<T>::value>
         {
             adapter_begin_object();
-            WriteTuple(((T&)t).Meta(), std::false_type{});
+            for_each(get_meta(t), [](const auto& v, size_t I, bool is_last)
+            {
+                WriteObject(v, is_last, std::false_type{});
+            });
             adapter_end_object(is_last);
         }
 
@@ -341,20 +343,11 @@ namespace cytx {
         auto WriteObject(T const& t, bool is_last, BeginObjec bo) -> std::enable_if_t<is_tuple<T>::value>
         {
             adapter_begin_fixed_array(std::tuple_size<T>::value);
-            WriteTuple(t, bo);
+            for_each(t, [bo](const auto& v, size_t I, bool is_last)
+            {
+                WriteObject(v, is_last, bo);
+            });
             adapter_end_fixed_array(is_last);
-        }
-
-        template<std::size_t I = 0, typename Tuple, typename BeginObjec>
-        auto WriteTuple(const Tuple& t, BeginObjec) -> std::enable_if_t<I == std::tuple_size<Tuple>::value>
-        {
-        }
-
-        template<std::size_t I = 0, typename Tuple, typename BeginObjec>
-        auto WriteTuple(const Tuple& t, BeginObjec bo)->std::enable_if_t < I < std::tuple_size<Tuple>::value>
-        {
-            WriteObject(std::get<I>(t), I + 1 == std::tuple_size<Tuple>::value, bo);
-            WriteTuple<I + 1>(t, bo);
         }
 
         template<typename T, typename BeginObjec>

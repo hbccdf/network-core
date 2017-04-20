@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "utils.hpp"
+#include "../meta/meta.hpp"
 
 namespace cytx {
     namespace rpc
@@ -528,6 +529,8 @@ namespace cytx {
             no_handler,
             remote_error,
         };
+        REG_ENUM(error_code, ok, unknown, fail, timeout, cancel, connect_fail, badconnect, codec_fail, invalid_header, be_disconnected,
+            repeat_connect, no_handler, remote_error);
     }
 }
 
