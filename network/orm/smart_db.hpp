@@ -238,7 +238,7 @@ namespace cytx
                     if (!item.second)
                         return;
 
-                    values_wr.write("{}={}", item.first, util::cast_string(item.second.value()), is_last ? "" : ",");
+                    values_wr.write("{}{}={}", is_first ? "" : ",", item.first, util::cast_string(item.second.value()));
                     is_first = false;
                 });
 

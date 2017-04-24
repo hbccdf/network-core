@@ -685,7 +685,7 @@ namespace cytx {
 
                 if (!error)
                 {
-                    auto header = get_read_header();
+                    header_t header = get_read_header();
                     recv_head();
                     router_.on_read(this->shared_from_this(), header);
                 }
