@@ -8,20 +8,6 @@
 #include "../base/cast.hpp"
 
 namespace cytx {
-    namespace util
-    {
-        template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type<T>::value && !std::is_same<std::string, T>::value, std::string>
-        {
-            return fmt::format("{}", t);
-        }
-
-        template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<std::string, T>::value, std::string>
-        {
-            return fmt::format("'{}'", t);
-        }
-    }
     namespace orm
     {
         struct set_expr
