@@ -227,7 +227,7 @@ namespace cytx
             template<typename T = int64_t>
             T execute_scalar(std::string sql_str, mysql_result& mr)
             {
-                T t;
+                T t = 0;
                 if (inter_query(conn_, sql_str.c_str()))
                 {
                     mr = mysql_result(conn_);

@@ -113,7 +113,7 @@ namespace cytx
                 return std::move(*this);
             }
 
-            inline query_proxy&& Skip(size_t count) &&
+            inline query_proxy&& skip(size_t count) &&
             {
                 if (sql_limit_.empty())
                     sql_limit_ = " limit ~0";  // ~0 is a trick :-)
@@ -242,7 +242,7 @@ namespace cytx
                     is_first = false;
                 });
 
-                string update_sql = fmt::format("UPDATE `{}` SET {}", std::decay_t<T>::type_name(), values_wr.str());
+                string update_sql = fmt::format("UPDATE `{}` SET {}", get_name<T>(), values_wr.str());
                 return update_proxy(this, update_sql);
             }
 
