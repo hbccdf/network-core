@@ -166,7 +166,7 @@ namespace cytx
             void create_table()
             {
                 std::string sql = table_factory::instance().create_table_sql_map_[get_name<T>()];
-                execute(sql);
+                execute_batch(sql);
             }
 
             template<typename T>
@@ -181,6 +181,19 @@ namespace cytx
                 execute(sql_str, mr);
                 if (mr)
                     throw mysql_exception(mr);
+            }
+
+            void execute_batch(std::string sql_str)
+            {
+                std::vector<std::string> sqls;
+                boost::algorithm::split(sqls, sql_str, boost::is_any_of(";"), boost::algorithm::token_compress_on);
+                for (const auto& s : sqls)
+                {
+                    if (!s.empty())
+                    {
+                        execute(s);
+                    }
+                }
             }
 
             void execute(std::string sql_str, mysql_result& mr)
