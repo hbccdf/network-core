@@ -15,7 +15,7 @@
 #define MAKE_DB_NAMES(db_name, ...)     __VA_ARGS__
 
 
-#define MAKE_FIELD_PROXY(name, t) cytx::orm::field_proxy<name, decltype(st_.##t)> t{ st_ptr_, &name::##t, #t }
+#define MAKE_FIELD_PROXY(name, t) cytx::orm::field_proxy<value_type, decltype(st_.##t)> t{ st_ptr_, &value_type::##t, #t }
 #define MAKE_FIELD_PROXY_TUPLE(db_name, ...) \
 static const char* meta_name() { return #db_name; } \
 __VA_ARGS__; \
@@ -38,7 +38,7 @@ public: \
     using value_type = name; \
     value_type& Value() { return st_; } \
     db_meta(){} \
-    db_meta(name& v) { st_ptr_ = &v; } \
+    db_meta(value_type& v) { st_ptr_ = &v; } \
 MAKE_DB_CONSTRACT(name, MAKE_GENERAL_SEM_ARG_LIST(name, N, MAKE_DB_CONSTRACT_FILED, __VA_ARGS__)) \
 MAKE_FIELD_PROXY_TUPLE(name, MAKE_GENERAL_SEM_ARG_LIST(name, N, MAKE_FIELD_PROXY, __VA_ARGS__)) \
 MAKE_DB_TUPLE(name, MAKE_GENERAL_ARG_LIST(name, N, DB_PAIR_OBJECT, __VA_ARGS__)) \
