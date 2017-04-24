@@ -380,7 +380,7 @@ namespace cytx
         using enum_helper_ptr = std::unique_ptr<enum_helper>;
         using value_t = std::vector<enum_helper_ptr>;
         using value_ptr = std::shared_ptr<value_t>;
-        using map_t = std::map<const char*, value_ptr>;
+        using map_t = std::map<std::string, value_ptr>;
 
         static enum_factory& instance()
         {
