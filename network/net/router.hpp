@@ -16,7 +16,7 @@ namespace cytx {
             using connection_t = ConnectType;
             using connection_ptr = std::shared_ptr<ConnectType>;
             using header_t = typename connection_t::header_t;
-            using invoker_t = std::function<void(connection_ptr, char const*, size_t)>;
+            using invoker_t = std::function<void(connection_ptr, header_t&, const char*)>;
             using invoker_container = std::unordered_map<uint64_t, invoker_t>;
             using on_read_func = std::function<void(connection_ptr, header_t&)>;
             using on_error_func = std::function<void(connection_ptr, rpc_result const& error)>;

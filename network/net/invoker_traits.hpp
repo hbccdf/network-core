@@ -74,19 +74,18 @@ namespace cytx {
             {
                 using connection_t = async_rpc_channel<ConnectCodecPolicy, header_type>;
                 using connection_ptr = std::shared_ptr<connection_t>;
-                using invoker_t = std::function<void(connection_ptr, char const*, size_t)>;
+                using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
 
                 using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler)]
-                (connection_ptr conn, char const* data, size_t size)
+                (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
                     invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
@@ -108,19 +107,18 @@ namespace cytx {
             {
                 using connection_t = async_rpc_channel<ConnectCodecPolicy, header_type>;
                 using connection_ptr = std::shared_ptr<connection_t>;
-                using invoker_t = std::function<void(connection_ptr, char const*, size_t)>;
+                using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
 
                 using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler), p = std::forward<PostFunc>(post_func)]
-                (connection_ptr conn, char const* data, size_t size)
+                (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
                     invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
@@ -148,19 +146,18 @@ namespace cytx {
             {
                 using connection_t = async_rpc_channel<ConnectCodecPolicy, header_type>;
                 using connection_ptr = std::shared_ptr<connection_t>;
-                using invoker_t = std::function<void(connection_ptr, char const*, size_t)>;
+                using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
 
                 using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler)]
-                (connection_ptr conn, char const* data, size_t size)
+                (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
@@ -183,19 +180,18 @@ namespace cytx {
             {
                 using connection_t = async_rpc_channel<ConnectCodecPolicy, header_type>;
                 using connection_ptr = std::shared_ptr<connection_t>;
-                using invoker_t = std::function<void(connection_ptr, char const*, size_t)>;
+                using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
 
                 using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler), p = std::forward<PostFunc>(post_func)]
-                (connection_ptr conn, char const* data, size_t size)
+                (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
-                    auto header = conn->get_read_header();
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, size, { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;

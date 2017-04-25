@@ -138,7 +138,7 @@ namespace cytx
                 {
                     if (invoker.func(header))
                     {
-                        invoker.invoker(conn, data, size);
+                        invoker.invoker(conn, header, data);
                         return;
                     }
                 }
@@ -168,7 +168,7 @@ namespace cytx
                         return;
                     }
 
-                    invoker(conn, data, size);
+                    invoker(conn, header, data);
                 }
             }
             catch (rpc_exception const& error)
