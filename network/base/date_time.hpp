@@ -224,8 +224,23 @@ namespace cytx
             }
             int total_seconds() const
             {
-                time_duration td = time_ - ptime(date(1970, 1, 1), time_duration(8, 0, 0));
-                return td.total_seconds();
+                return duration_now().total_seconds();
+            }
+            int64_t total_milliseconds() const
+            {
+                return duration_now().total_milliseconds();
+            }
+            int64_t total_microseconds() const
+            {
+                return duration_now().total_microseconds();
+            }
+            int64_t total_nanoseconds() const
+            {
+                return duration_now().total_nanoseconds();
+            }
+            int64_t ticks() const
+            {
+                return duration_now().ticks();
             }
 
             //返回指定年和月中的天数
@@ -268,6 +283,12 @@ namespace cytx
             bool operator != (const date_time &datetime)
             {
                 return time_ != datetime.time_;
+            }
+
+        private:
+            time_duration duration_now() const
+            {
+                return time_ - ptime(date(1970, 1, 1), time_duration(8, 0, 0));
             }
 
         private:
