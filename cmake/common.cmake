@@ -49,6 +49,7 @@ if(NOT INCLUDED_COMMON)
         ${ROOT}/third_party/rapidjson/include
         ${ROOT}/third_party/spdlog/include
         ${ROOT}/third_party/mysql/include
+        ${ROOT}/third_party/dir_monitor/src
         )
 
     link_directories(
