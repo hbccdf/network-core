@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 #include <memory>
 #include "../meta/meta.hpp"
+#include <boost/filesystem.hpp>
 
 namespace cytx
 {
@@ -16,6 +17,8 @@ namespace cytx
         off = 6
     };
     REG_ENUM(log_level_t, trace, debug, info, warn, err, critical, off);
+
+    namespace fs = boost::filesystem;
 
     class log
     {
@@ -37,6 +40,13 @@ namespace cytx
 
         void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
         {
+            fs::path dir = file_name;
+            dir = fs::complete(dir);
+            fs::path cur_dir = dir.parent_path();
+            if (!fs::exists(cur_dir))
+            {
+                fs::create_directories(cur_dir);
+            }
             auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 1000);
             log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, get_stdout_sink() });
             log_->set_level((spdlog::level::level_enum)lvl);
