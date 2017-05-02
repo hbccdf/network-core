@@ -70,6 +70,14 @@ namespace cytx
             log_->flush();
         }
 
+        void set_level(log_level_t lvl)
+        {
+            if (lvl >= log_level_t::trace && lvl <= log_level_t::off)
+            {
+                log_->set_level((spdlog::level::level_enum)lvl);
+            }
+        }
+
     private:
         static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> get_stdout_sink()
         {
