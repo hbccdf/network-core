@@ -25,7 +25,7 @@ namespace cytx
         public:
 
             date_time()
-                : time_(second_clock::local_time())
+                : time_(microsec_clock::local_time())
             {
             }
             date_time(time_t seconds)
@@ -68,7 +68,7 @@ namespace cytx
 
             static date_time now()
             {
-                return date_time(second_clock::local_time());
+                return date_time(microsec_clock::local_time());
             }
 
         public:
