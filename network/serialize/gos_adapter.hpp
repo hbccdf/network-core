@@ -5,7 +5,6 @@
 
 namespace cytx
 {
-    using namespace cytx::rpc;
     class gos_serialize_adapter
     {
     public:

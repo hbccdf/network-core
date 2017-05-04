@@ -62,7 +62,6 @@ namespace cytx {
                 boost::asio::buffer(&head, sizeof(head)),
                 boost::asio::buffer(send_msg.data(), send_msg.size()) })
             {
-                head.reply(true);
                 head.length(static_cast<uint32_t>(send_msg.size()));
             }
 
