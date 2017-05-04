@@ -342,14 +342,14 @@ template<typename T> struct is_##token : is_specialization_of<detail::decay_t<T>
         constexpr static int value = first_value < 0 || other_value < 0 ? -1 : first_value + other_value;
     };
 
-    template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<std::is_enum<T>::value>>>
+    template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<std::is_enum<std::decay_t<T>>::value>>>
     {
-        constexpr static int value = tuple_total_size<std::underlying_type_t<T>>::value;
+        constexpr static int value = tuple_total_size<std::underlying_type_t<std::decay_t<T>>>::value;
     };
 
-    template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<has_meta_macro<T>::value>>>
+    template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<has_meta_macro<std::decay_t<T>>::value>>>
     {
-        constexpr static int value = tuple_total_size<typename T::meta_type>::value;
+        constexpr static int value = tuple_total_size<typename std::decay_t<T>::meta_type>::value;
     };
 
     template<typename K, typename V>
