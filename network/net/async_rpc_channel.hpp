@@ -528,7 +528,7 @@ namespace cytx {
                 {
                     call_complete(call_ctx);
                 }
-                else if (head_.length() > 10240)
+                else if (head_.length() > 5 * 1024 * 1024)
                 {
                     on_error(rpc_result(error_code::invalid_header));
                 }
@@ -545,7 +545,7 @@ namespace cytx {
                     router_.on_read(this->shared_from_this(), header);
                     recv_head();
                 }
-                else if (head_.length() > 10240)
+                else if (head_.length() > 5 * 1024 * 1024)
                 {
                     on_error(rpc_result(error_code::invalid_header));
                 }
