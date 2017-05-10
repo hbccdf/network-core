@@ -59,6 +59,7 @@ namespace cytx
     public:
         void start();
         void stop();
+        void invoke();
         void close();
     private:
         void auto_start_timer();
@@ -196,6 +197,13 @@ namespace cytx
                 stop_timer(it->second);
         }
 
+        void invoke_timer(int32_t id)
+        {
+            auto it = timers_.find(id);
+            if (it != timers_.end())
+                invoke_timer(it->second);
+        }
+
         void close_timer(int32_t id)
         {
             auto it = timers_.find(id);
@@ -217,6 +225,18 @@ namespace cytx
             boost::system::error_code ec(1, boost::system::system_category());
             ti_ptr->timer->cancel(ec);
             ti_ptr->status = timer_status::canceled;
+        }
+
+        void invoke_timer(timer_info_ptr ti_ptr)
+        {
+            if (ti_ptr->timer_func)
+            {
+                ti_ptr->timer_func();
+            }
+            else if (itimer_)
+            {
+                itimer_->on_timer(ti_ptr->id, ti_ptr->user_data);
+            }
         }
 
         void timer_handler(const boost::system::error_code& ec, timer_info_ptr ti_ptr)
@@ -260,6 +280,14 @@ namespace cytx
         {
             need_start_ = false;
             timer_->stop_timer(id_);
+        }
+    }
+
+    inline void timer_proxy::invoke()
+    {
+        if (timer_)
+        {
+            timer_->invoke_timer(id_);
         }
     }
 
