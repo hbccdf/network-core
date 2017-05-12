@@ -20,6 +20,34 @@ namespace cytx
 
     namespace fs = boost::filesystem;
 
+    class my_formater : public spdlog::formatter
+    {
+        void format(spdlog::details::log_msg& msg) override
+        {
+            using namespace spdlog;
+            auto tm_time = details::os::localtime(log_clock::to_time_t(msg.time));
+            auto duration = msg.time.time_since_epoch();
+            auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
+
+            // Faster (albeit uglier) way to format the line (5.6 million lines/sec under 10 threads)
+            msg.formatted << '[' << static_cast<unsigned int>(tm_time.tm_year + 1900) << '-'
+                << fmt::pad(static_cast<unsigned int>(tm_time.tm_mon + 1), 2, '0') << '-'
+                << fmt::pad(static_cast<unsigned int>(tm_time.tm_mday), 2, '0') << ' '
+                << fmt::pad(static_cast<unsigned int>(tm_time.tm_hour), 2, '0') << ':'
+                << fmt::pad(static_cast<unsigned int>(tm_time.tm_min), 2, '0') << ':'
+                << fmt::pad(static_cast<unsigned int>(tm_time.tm_sec), 2, '0') << '.'
+                << fmt::pad(static_cast<unsigned int>(millis), 3, '0') << "] ";
+
+            msg.formatted.write("[{:05}] [{}] [{}] ", msg.thread_id, *msg.logger_name, level::to_str(msg.level));
+            /*msg.formatted << '[' << *msg.logger_name << "] ";
+
+            msg.formatted << '[' << level::to_str(msg.level) << "] ";*/
+            msg.formatted << fmt::StringRef(msg.raw.data(), msg.raw.size());
+            //write eol
+            msg.formatted.write(details::os::eol, details::os::eol_size);
+        }
+    };
+
     class log
     {
     public:
@@ -51,6 +79,7 @@ namespace cytx
             log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, get_stdout_sink() });
             log_->set_level((spdlog::level::level_enum)lvl);
             log_->flush_on(spdlog::level::level_enum::err);
+            log_->set_formatter(std::make_shared<my_formater>());
         }
 
         void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
@@ -58,6 +87,7 @@ namespace cytx
             log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ get_stdout_sink() });
             log_->set_level((spdlog::level::level_enum)lvl);
             log_->flush_on(spdlog::level::level_enum::err);
+            log_->set_formatter(std::make_shared<my_formater>());
         }
 
         std::shared_ptr<spdlog::logger> get_log()
