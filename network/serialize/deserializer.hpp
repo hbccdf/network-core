@@ -100,8 +100,8 @@ namespace cytx
             return val.to_iterator(it);
         }
 
-        template<typename T>
-        void read(T& t, value_t& val)
+        template<typename T1>
+        void read(T1& t, value_t& val)
         {
             auto& str = val.data();
             auto pos = val.data().find("$(");
@@ -119,11 +119,11 @@ namespace cytx
                         new_str = str;
                         new_str.replace(pos, end_pos - pos + 1, str_prop.c_str());
                     }
-                    t = util::cast<T>(new_str);
+                    t = util::cast<T1>(new_str);
                 }
             }
             else
-                t = val.get_value<T>();
+                t = val.get_value<T1>();
         }
 
         std::string first(member_iterator& it)
@@ -452,7 +452,8 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_user_class<T>::value>
         {
-            ReadTuple(t.Meta(), val, 0, std::false_type{});
+            auto m = t.Meta();
+            ReadTuple(m, val, 0, std::false_type{});
         }
 
         template<typename T, typename BeginObject>
@@ -608,7 +609,7 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-                typedef decltype((v)[0]) element_t;
+                typedef decltype((t)[0]) element_t;
                 using ele_t = std::remove_reference_t<element_t>;
                 ele_t el;
                 ReadObject(el, rd_.it_val(it), std::false_type{});
@@ -701,7 +702,11 @@ namespace cytx
             {
                 ops_.add(o);
             }
+#ifdef LINUX
+            vector<string> args = split_unix(cmd_line);
+#else
             vector<string> args = split_winmain(cmd_line);
+#endif
             store(command_line_parser(args).options(ops_).run(), vm_);
             notify(vm_);
         }
@@ -738,7 +743,7 @@ namespace cytx
         {
             for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)
             {
-                ReadTuplePair(v);
+                this->ReadTuplePair(v);
             });
         }
 

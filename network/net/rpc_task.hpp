@@ -164,27 +164,27 @@ namespace cytx
 
             typed_rpc_task&& reply(uint32_t reply_id) &&
             {
-                ctx_->reply_protocol_id = reply_id;
+                this->ctx_->reply_protocol_id = reply_id;
                 return std::move(*this);
             }
 
             template<typename T>
             auto reply(T reply_id) && -> std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&&>
             {
-                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                this->ctx_->reply_protocol_id = (uint32_t)reply_id;
                 return std::move(*this);
             }
 
             typed_rpc_task& reply(uint32_t reply_id) &
             {
-                ctx_->reply_protocol_id = reply_id;
+                this->ctx_->reply_protocol_id = reply_id;
                 return *this;
             }
 
             template<typename T>
             auto reply(T reply_id) & ->std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&>
             {
-                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                this->ctx_->reply_protocol_id = (uint32_t)reply_id;
                 return *this;
             }
 
@@ -219,8 +219,8 @@ namespace cytx
                     return std::move(*this);
 
                 if (!this->timer_ptr_)
-                    timer_ptr_ = std::make_shared<timer_t>(client_->get_io_service());
-                duration_ = duration;
+                    this->timer_ptr_ = std::make_shared<timer_t>(this->client_->get_io_service());
+                this->duration_ = duration;
                 return std::move(*this);
             }
 
@@ -320,27 +320,27 @@ namespace cytx
 
             typed_rpc_task&& reply(uint32_t reply_id) &&
             {
-                ctx_->reply_protocol_id = reply_id;
+                this->ctx_->reply_protocol_id = reply_id;
                 return std::move(*this);
             }
 
             template<typename T>
             auto reply(T reply_id) && ->std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&&>
             {
-                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                this->ctx_->reply_protocol_id = (uint32_t)reply_id;
                 return std::move(*this);
             }
 
             typed_rpc_task& reply(uint32_t reply_id) &
             {
-                ctx_->reply_protocol_id = reply_id;
+                this->ctx_->reply_protocol_id = reply_id;
                 return *this;
             }
 
             template<typename T>
             auto reply(T reply_id) & ->std::enable_if_t<std::is_enum<T>::value, typed_rpc_task&>
             {
-                ctx_->reply_protocol_id = (uint32_t)reply_id;
+                this->ctx_->reply_protocol_id = (uint32_t)reply_id;
                 return *this;
             }
 
@@ -364,8 +364,8 @@ namespace cytx
                     return std::move(*this);
 
                 if (!this->timer_ptr_)
-                    timer_ptr_ = std::make_shared<timer_t>(client_->get_io_service());
-                duration_ = duration;
+                    this->timer_ptr_ = std::make_shared<timer_t>(this->client_->get_io_service());
+                this->duration_ = duration;
                 return std::move(*this);
             }
 

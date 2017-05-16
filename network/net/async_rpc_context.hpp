@@ -235,6 +235,7 @@ namespace cytx {
             using result_barrier_t = ios_result_barrier;
             using context_t = server_rpc_context<buffer_t>;
             using header_t = msg_header;
+            using ios_t = ios_wrapper;
 
             using base_t::base_t;
             // for call
@@ -413,7 +414,7 @@ namespace cytx {
 
             void remove_call_from_map(uint32_t protocol_id)
             {
-                auto itr = call_map_.find(call_id);
+                auto itr = call_map_.find(protocol_id);
                 if (call_map_.end() != itr)
                 {
                     itr->second.pop();

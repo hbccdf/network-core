@@ -36,7 +36,7 @@ namespace cytx {
                     DeSerializer<json_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple));
                     dr.parse(data, length);
 
-                    return dr.GetTuple<T>();
+                    return dr.template GetTuple<T>();
                 }
                 catch (std::exception& e)
                 {

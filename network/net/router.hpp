@@ -67,17 +67,18 @@ namespace cytx {
         class router : public router_base<async_rpc_channel<CodecPolicy, header_type>>
         {
         public:
+            using base_t = router_base<async_rpc_channel<CodecPolicy, header_type>>;
             using codec_policy = CodecPolicy;
             using message_t = typename codec_policy::buffer_type;
-            using connection_t = typename router_base::connection_t;
-            using connection_ptr = typename router_base::connection_ptr;
-            using header_t = typename router_base::header_t;
-            using invoker_t = typename router_base::invoker_t;
-            using invoker_container = typename router_base::invoker_container;
-            using context_t = typename router_base::connection_t::context_t;
-            using on_read_func = typename router_base::on_read_func;
-            using on_error_func = typename router_base::on_error_func;
-            using proto_func = typename router_base::proto_func;
+            using connection_t = typename base_t::connection_t;
+            using connection_ptr = typename base_t::connection_ptr;
+            using header_t = typename base_t::header_t;
+            using invoker_t = typename base_t::invoker_t;
+            using invoker_container = typename base_t::invoker_container;
+            using context_t = typename base_t::connection_t::context_t;
+            using on_read_func = typename base_t::on_read_func;
+            using on_error_func = typename base_t::on_error_func;
+            using proto_func = typename base_t::proto_func;
 
         public:
             template <typename Handler, typename PostFunc>

@@ -4,6 +4,7 @@
 #include "async_rpc_context.hpp"
 #include "router.hpp"
 #include "irouter.hpp"
+#include "protocol.hpp"
 
 namespace cytx {
     namespace rpc
@@ -81,73 +82,73 @@ namespace cytx {
             template <typename Protocol, typename ... Args>
             auto call(Protocol const& protocol, Args&& ... args)
             {
-                return conn_->call_impl<codec_policy>(protocol, std::forward<Args>(args)...);
+                return conn_->template call_impl<codec_policy>(protocol, std::forward<Args>(args)...);
             }
 
             template <typename CallCodecPolicy, typename Protocol, typename ... Args>
             auto call(Protocol const& protocol, Args&& ... args)
             {
-                return conn_->call_impl<CallCodecPolicy>(protocol, std::forward<Args>(args)...);
+                return conn_->template call_impl<CallCodecPolicy>(protocol, std::forward<Args>(args)...);
             }
 
             template <typename result_type, typename ... Args>
             auto free_call(std::string name, Args&& ... args)
             {
-                return conn_->free_call_impl<codec_policy, result_type>(std::hash<string>{}(name), false, std::forward<Args>(args)...);
+                return conn_->template free_call_impl<codec_policy, result_type>(std::hash<string>{}(name), false, std::forward<Args>(args)...);
             }
 
             template <typename result_type, typename ... Args>
             auto free_call(uint32_t proto, Args&& ... args)
             {
-                return conn_->free_call_impl<codec_policy, result_type>(proto, true, std::forward<Args>(args)...);
+                return conn_->template free_call_impl<codec_policy, result_type>(proto, true, std::forward<Args>(args)...);
             }
 
             template <typename CallCodecPolicy, typename result_type, typename ... Args>
             auto free_call(std::string name, Args&& ... args)
             {
-                return conn_->free_call_impl<CallCodecPolicy, result_type>(std::hash<string>{}(name), false, std::forward<Args>(args)...);
+                return conn_->template free_call_impl<CallCodecPolicy, result_type>(std::hash<string>{}(name), false, std::forward<Args>(args)...);
             }
 
             template <typename CallCodecPolicy, typename result_type, typename ... Args>
             auto free_call(uint32_t proto, Args&& ... args)
             {
-                return conn_->free_call_impl<CallCodecPolicy, result_type>((uint64_t)proto, true, std::forward<Args>(args)...);
+                return conn_->template free_call_impl<CallCodecPolicy, result_type>((uint64_t)proto, true, std::forward<Args>(args)...);
             }
 
             template <typename CallCodecPolicy, typename ... Args>
             auto send(int conn_id, std::string name, Args&& ... args)
             {
-                return conn_->send_impl<CallCodecPolicy>(conn_id, std::hash<string>{}(name), false, std::forward<Args>(args)...);
+                return conn_->template send_impl<CallCodecPolicy>(conn_id, std::hash<string>{}(name), false, std::forward<Args>(args)...);
             }
 
             template <typename CallCodecPolicy, typename ... Args>
             auto send(int conn_id, uint32_t proto, Args&& ... args)
             {
-                return conn_->send_impl<CallCodecPolicy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
+                return conn_->template send_impl<CallCodecPolicy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
             }
 
             template <typename CallCodecPolicy, typename T, typename ... Args>
             auto send(int conn_id, T proto, Args&& ... args)
             {
-                return conn_->send_impl<CallCodecPolicy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
+                return conn_->template send_impl<CallCodecPolicy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
             }
 
             template <typename ... Args>
             auto send(int conn_id, std::string name, Args&& ... args)
             {
-                return conn_->send_impl<codec_policy>(conn_id, std::hash<string>{}(name), false, std::forward<Args>(args)...);
+                return conn_->template send_impl<codec_policy>(conn_id, std::hash<string>{}(name), false, std::forward<Args>(args)...);
             }
 
             template <typename ... Args>
             auto send(int conn_id, uint32_t proto, Args&& ... args)
             {
-                return conn_->send_impl<codec_policy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
+                return conn_->template send_impl<codec_policy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
             }
 
             template <typename T, typename ... Args>
             auto send(int conn_id, T proto, Args&& ... args)
             {
-                return conn_->send_impl<codec_policy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
+                return conn_->template send_impl<codec_policy>(conn_id, (uint64_t)proto, true, std::forward<Args>(args)...);
             }
         private:
             connect_ptr conn_;
@@ -164,12 +165,13 @@ namespace cytx {
             using codec_policy = CodecPolicy;
             using header_t = header_type;
             using connect_t = async_rpc_channel<codec_policy, header_t>;
+            using rpc_call_t = rpc_call<codec_policy, header_t>;
             using rpc_call_container_t = base_call_container<codec_policy, header_type>;
             using context_t = typename rpc_call_container_t::context_t;
             using context_ptr = typename rpc_call_container_t::context_ptr;
             using call_list_t = typename rpc_call_container_t::call_list_t;
             using call_map_t = typename rpc_call_container_t::call_map_t;
-            using router_t = typename router<codec_policy, header_t>;
+            using router_t = router<codec_policy, header_t>;
             using irouter_t = irouter<connect_t>;
             using irouter_ptr = irouter_t*;
             using on_error_func_t = std::function<void(const rpc_result&)>;
@@ -214,7 +216,7 @@ namespace cytx {
                 }
             }
 
-            void async_rpc_channel::set_no_delay()
+            void set_no_delay()
             {
                 boost::asio::ip::tcp::no_delay option(true);
                 boost::system::error_code ec;
@@ -385,7 +387,7 @@ namespace cytx {
                 call_context(ctx);
             }
 
-            using rpc_call::send;
+            using rpc_call_t::send;
 
             void send(header_t& header, const char* const data)
             {

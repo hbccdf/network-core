@@ -48,6 +48,12 @@ namespace cytx
         }
     };
 
+#ifdef LINUX
+    using color_out_t = spdlog::sinks::ansicolor_sink;
+#else
+    using color_out_t = spdlog::sinks::wincolor_stdout_sink_mt;
+#endif
+
     class log
     {
     public:
@@ -109,11 +115,17 @@ namespace cytx
         }
 
     private:
-        static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> get_stdout_sink()
+        static std::shared_ptr<color_out_t> get_stdout_sink()
         {
-            static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> out_sink_;
+            static std::shared_ptr<color_out_t> out_sink_;
             if (out_sink_ == nullptr)
-                out_sink_ = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
+            {
+#ifdef LINUX
+                out_sink_ = std::make_shared<color_out_t>(std::make_shared<spdlog::sinks::stdout_sink_mt>());
+#else
+                out_sink_ = std::make_shared<color_out_t>();
+#endif
+            }
             return out_sink_;
         }
 

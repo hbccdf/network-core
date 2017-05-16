@@ -80,7 +80,7 @@ namespace cytx
         template<typename T>
         T gos_hton(T t)
         {
-            return is_big_endian_ ? hton(t) : t;
+            return is_big_endian_ ? rpc::hton(t) : t;
         }
     private:
         GameObjectStream& gos_;
@@ -171,7 +171,7 @@ namespace cytx
         template<typename T>
         T gos_ntoh(T t)
         {
-            return is_big_endian_ ? ntoh(t) : t;
+            return is_big_endian_ ? rpc::ntoh(t) : t;
         }
     private:
         GameObjectStream& gos_;

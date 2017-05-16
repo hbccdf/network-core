@@ -163,8 +163,8 @@ namespace cytx
 
         void write_key_name(const std::string& str) { write_key(str); }
 
-        template<typename T>
-        void write_key(T&& t)
+        template<typename T1>
+        void write_key(T1&& t)
         {
             if (cur_node_.key.empty())
             {
@@ -187,8 +187,8 @@ namespace cytx
             }
         }
 
-        template<typename T>
-        void write(T&& t)
+        template<typename T1>
+        void write(T1&& t)
         {
             if (cur_node_.type == node_type::array)
             {
@@ -317,7 +317,7 @@ namespace cytx {
             adapter_begin_object();
             for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)
             {
-                WriteObject(v, is_last, std::false_type{});
+                this->WriteObject(v, is_last, std::false_type{});
             });
             adapter_end_object(is_last);
         }
@@ -328,7 +328,7 @@ namespace cytx {
             adapter_begin_fixed_array(std::tuple_size<T>::value);
             for_each(t, [this, bo](auto& v, size_t I, bool is_last)
             {
-                WriteObject(v, is_last, bo);
+                this->WriteObject(v, is_last, bo);
             });
             adapter_end_fixed_array(is_last);
         }

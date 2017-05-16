@@ -10,7 +10,7 @@ namespace cytx
         template<typename... Args>
         static void write(Args&&... args)
         {
-            auto setting = xml_writer_make_settings<std::string>(' ', 4);
+            auto setting = boost::property_tree::xml_parser::xml_writer_make_settings<std::string>(' ', 4);
             write_xml(std::forward<Args>(args)..., setting);
         }
 

@@ -11,6 +11,19 @@ struct function_traits_impl<ReturnType(ClassType::*)(Args...) __VA_ARGS__> : fun
     constexpr static bool is_class_member_func = true; \
 };\
 
+#ifdef LINUX
+namespace std
+{
+    template<typename ... Args>
+    struct voider
+    {
+        using type = void;
+    };
+    template <typename ... Args>
+    using void_t = typename voider<Args...>::type;
+}
+#endif
+
 namespace cytx
 {
     /*
@@ -121,11 +134,19 @@ namespace cytx
     template<typename Index_t, typename FuncArgs, int max_index>
     struct cat_impl;
 
+#ifdef LINUX
+    template<size_t ... Is, typename FuncArgs, int max_index>
+    struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
+    {
+        using type = std::tuple<std::_Placeholder<Is + max_index + 1> ...>;
+    };
+#else
     template<size_t ... Is, typename FuncArgs, int max_index>
     struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
     {
         using type = std::tuple<std::_Ph<Is + max_index + 1> ...>;
     };
+#endif
 
     template<bool IsMemberFunc, typename TupleArgs, typename FuncArgs>
     struct cat_helper
@@ -173,10 +194,11 @@ namespace cytx
         }
     };
 
-    template <typename F, typename ... Args>
-    auto bind(F&& f, Args&& ... args)
-    {
-        using args_tuple_t = typename cat<F, std::tuple<Args...>>::type;
-        return (function_traits<F>::stl_function_type)bind_help<args_tuple_t>::bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
-    }
+    //template <typename F, typename ... Args>
+    //auto bind(F&& f, Args&& ... args)
+    //{
+    //    using args_tuple_t = typename cat<F, std::tuple<Args...>>::type;
+    //    using help_t = bind_help<args_tuple_t>;
+    //    return /*static_cast<typename function_traits<F>::stl_function_type>*/(help_t::bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    //}
 }

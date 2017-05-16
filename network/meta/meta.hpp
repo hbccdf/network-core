@@ -12,11 +12,26 @@
 #include <memory>
 #include <cstdint>
 
-template<typename T>
-struct enum_meta : public std::false_type {};
-
 namespace cytx
 {
+    inline void to_enum_extend(...) {}
+
+    template<typename T>
+    struct get_enum_extend_type
+    {
+        using type = decltype(to_enum_extend((std::decay_t<T>*)nullptr));
+    };
+    
+    template<typename T>
+    using get_enum_extend_type_t = typename get_enum_extend_type<T>::type;
+
+    template<typename T, class = std::void_t<>>
+    struct enum_meta : public std::false_type {};
+
+    template<typename T>
+    struct enum_meta<T, std::void_t<std::enable_if_t<!std::is_same<get_enum_extend_type_t<T>, void>::value>>> : std::true_type
+    {};
+
     template<typename T> struct is_db_meta : is_specialization_of<std::decay_t<T>, db_meta> {};
 
     template <typename T, class = std::void_t<>>
@@ -63,6 +78,8 @@ namespace cytx
     template<typename T>
     using meta_t = typename get_meta_t<T>::type;
 
+    template<typename T, class = std::void_t<>>
+    struct get_meta_impl;
 
     template<typename T>
     auto get_meta()
@@ -75,9 +92,6 @@ namespace cytx
     {
         return get_meta_impl<T>::meta(std::forward<T>(t));
     }
-
-    template<typename T, class = std::void_t<>>
-    struct get_meta_impl;
 
     template<typename T>
     struct get_meta_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
@@ -93,12 +107,12 @@ namespace cytx
     {
         static auto meta(T&& t)
         {
-            return enum_meta<T>::Meta();
+            return get_enum_extend_type_t<T>::Meta();
         }
 
         static auto meta()
         {
-            return enum_meta<T>::Meta();
+            return get_enum_extend_type_t<T>::Meta();
         }
     };
 
@@ -110,6 +124,37 @@ namespace cytx
             return t.Meta();
         }
     };
+
+    template<typename T>
+    constexpr auto get_value() -> std::enable_if_t<is_reflection<T>::value, size_t>
+    {
+        return std::tuple_size<typename std::decay_t<T>::meta_type>::value;
+    }
+
+    template<typename T>
+    constexpr auto get_value() -> std::enable_if_t<!is_reflection<T>::value, size_t>
+    {
+        return 0;
+    }
+
+    template<typename T, size_t  I>
+    constexpr const char* get_name()
+    {
+        static_assert(I < get_value<T>(), "out of range");
+        return meta_t<T>::_arr[I];
+    }
+
+    template<typename T>
+    const char* get_name()
+    {
+        return meta_t<T>::meta_name();
+    }
+
+    template<typename T>
+    const char* get_name(size_t i)
+    {
+        return i >= get_value<T>() ? "" : meta_t<T>::_arr[i];
+    }
 
     template<size_t I, typename F, typename T>
     void apply_value(F&& f, T&& t, bool is_last)
@@ -215,37 +260,6 @@ namespace cytx
     constexpr auto for_each(T&& tp, F&& f) -> std::enable_if_t<!is_reflection<T>::value>
     {
         apply_tuple(std::forward<F>(f), std::forward<T>(tp), std::make_index_sequence<std::tuple_size<std::remove_reference_t <T>>::value>{});
-    }
-
-    template<typename T, size_t  I>
-    constexpr const char* get_name()
-    {
-        static_assert(I < get_value<T>(), "out of range");
-        return meta_t<T>::_arr[i];
-    }
-
-    template<typename T>
-    const char* get_name()
-    {
-        return meta_t<T>::meta_name();
-    }
-
-    template<typename T>
-    const char* get_name(size_t i)
-    {
-        return i >= get_value<T>() ? "" : meta_t<T>::_arr[i];
-    }
-
-    template<typename T>
-    constexpr auto get_value() -> std::enable_if_t<is_reflection<T>::value, size_t>
-    {
-        return std::tuple_size<typename std::decay_t<T>::meta_type>::value;
-    }
-
-    template<typename T>
-    constexpr auto get_value() -> std::enable_if_t<!is_reflection<T>::value, size_t>
-    {
-        return 0;
     }
 }
 
@@ -353,22 +367,12 @@ namespace cytx
     template< typename ENUM_T, typename T>
     std::vector<std::pair<const char*, ENUM_T>> get_vec(T& t)
     {
-        vector<std::pair<const char*, ENUM_T>> vec;
+        std::vector<std::pair<const char*, ENUM_T>> vec;
         for_each(t, [&vec](const auto& p, size_t I, bool is_last)
         {
             vec.push_back(p);
         });
         return std::move(vec);
-    }
-
-    namespace detail
-    {
-        template<typename T>
-        int reg_enum()
-        {
-            enum_factory::instance().reg<T>();
-            return 0;
-        }
     }
 
     class enum_factory
@@ -391,13 +395,14 @@ namespace cytx
         template<typename T>
         void reg()
         {
-            auto enum_vec = get_vec<T>(get_meta<T>());
+            auto m = get_meta<T>();
+            auto enum_vec = get_vec<T>(m);
             vec_t vec;
             for (auto& p : enum_vec)
             {
                 vec.push_back({ p.first, (uint32_t)p.second });
             }
-            reg(enum_meta<T>::name(), enum_meta<T>::alias_name(), std::move(vec));
+            reg(get_enum_extend_type_t<T>::name(), get_enum_extend_type_t<T>::alias_name(), std::move(vec));
         }
 
         void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
@@ -433,7 +438,7 @@ namespace cytx
         boost::optional<std::string> to_string(T t, const char* split_field = "::")
         {
             boost::optional<std::string> result;
-            auto name = enum_meta<T>().name();
+            auto name = get_enum_extend_type_t<T>::name();
             auto it = enums_.find(name);
             if (it != enums_.end())
             {
@@ -468,13 +473,13 @@ namespace cytx
         {
             boost::optional<T> result;
 
-            auto name = enum_meta<T>().name();
+            auto name = get_enum_extend_type_t<T>::name();
             auto it = enums_.find(name);
             if (it != enums_.end())
             {
                 for (auto& v : *it->second)
                 {
-                    auto r = v->to_enum<T>(str, has_enum_name, std::forward<vector<const char*>>(splits));
+                    auto r = v->to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
                     if (r)
                         return r;
                 }
@@ -519,4 +524,13 @@ namespace cytx
         return boost::optional<T>{};
     }
 
+    namespace detail
+    {
+        template<typename T>
+        int reg_enum()
+        {
+            cytx::enum_factory::instance().reg<T>();
+            return 0;
+        }
+    }
 }

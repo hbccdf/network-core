@@ -57,7 +57,7 @@ namespace cytx
                 return T();
             else
             {
-                return T(cast<std::decay_t<T::value_type>>(str));
+                return T(cast<std::decay_t<typename T::value_type>>(str));
             }
         }
 
