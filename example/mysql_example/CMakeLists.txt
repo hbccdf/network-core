@@ -1,5 +1,5 @@
-
-include_directories(${ROOT}/network)
+include(../../cmake/common.cmake)
+include_directories(${ROOT})
 
 add_executable(mysql_example mysql_example.cpp)
 set_target_properties(mysql_example PROPERTIES FOLDER "example")
