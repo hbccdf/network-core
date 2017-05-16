@@ -16,6 +16,10 @@ namespace cytx
 {
     inline void to_enum_extend(...) {}
 
+    inline void to_db_extend(...) {}
+
+    struct base_db_meta {};
+
     template<typename T>
     struct get_enum_extend_type
     {
@@ -25,6 +29,15 @@ namespace cytx
     template<typename T>
     using get_enum_extend_type_t = typename get_enum_extend_type<T>::type;
 
+    template<typename T>
+    struct get_db_extend_type
+    {
+        using type = decltype(to_db_extend((std::decay_t<T>*)nullptr));
+    };
+
+    template<typename T>
+    using get_db_extend_type_t = typename get_db_extend_type<T>::type;
+
     template<typename T, class = std::void_t<>>
     struct enum_meta : public std::false_type {};
 
@@ -32,7 +45,14 @@ namespace cytx
     struct enum_meta<T, std::void_t<std::enable_if_t<!std::is_same<get_enum_extend_type_t<T>, void>::value>>> : std::true_type
     {};
 
-    template<typename T> struct is_db_meta : is_specialization_of<std::decay_t<T>, db_meta> {};
+    template<typename T, class = std::void_t<>>
+    struct db_meta : public std::false_type {};
+
+    template<typename T>
+    struct db_meta<T, std::void_t<std::enable_if_t<!std::is_same<get_db_extend_type_t<T>, void>::value>>> : std::true_type
+    {};
+
+    template<typename T> struct is_db_meta : std::integral_constant<bool, std::is_base_of<base_db_meta, std::decay_t<T>>::value> {};
 
     template <typename T, class = std::void_t<>>
     struct is_reflection : std::false_type
@@ -41,7 +61,7 @@ namespace cytx
 
     // this way of using SFINEA is type reference and cv qualifiers immuned
     template <typename T>
-    struct is_reflection<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>> : std::true_type
+    struct is_reflection<T, std::void_t<std::enable_if_t<db_meta<T>::value>>> : std::true_type
     {
     };
 
@@ -58,15 +78,15 @@ namespace cytx
     struct get_meta_t { };
 
     template<typename T>
-    struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+    struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta<T>::value>>>
     {
-        using type = db_meta<std::decay_t<T>>;
+        using type = get_db_extend_type_t<T>;
     };
 
     template<typename T>
     struct get_meta_t<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
     {
-        using type = enum_meta<T>;
+        using type = get_enum_extend_type_t<T>;
     };
 
     template<typename T>
@@ -117,7 +137,7 @@ namespace cytx
     };
 
     template<typename T>
-    struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+    struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta<T>::value>>>
     {
         static auto meta(T&& t)
         {

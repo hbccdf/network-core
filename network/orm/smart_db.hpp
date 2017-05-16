@@ -202,7 +202,7 @@ namespace cytx
                     is_first = false;
                 });
 
-                string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", get_name<T>(), names_wr.str(), values_wr.str());
+                std::string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", get_name<T>(), names_wr.str(), values_wr.str());
                 execute_general(insert_sql);
             }
 
@@ -223,7 +223,7 @@ namespace cytx
                     values_wr.write("{}{}", is_first ? "" : ",", util::cast_string(item.value()));
                     is_first = false;
                 });
-                string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", arg0.table_name(), names_wr.str(), values_wr.str());
+                std::string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", arg0.table_name(), names_wr.str(), values_wr.str());
                 execute_general(insert_sql);
             }
 
@@ -242,7 +242,7 @@ namespace cytx
                     is_first = false;
                 });
 
-                string update_sql = fmt::format("UPDATE `{}` SET {}", get_name<T>(), values_wr.str());
+                std::string update_sql = fmt::format("UPDATE `{}` SET {}", get_name<T>(), values_wr.str());
                 return update_proxy(this, update_sql);
             }
 
@@ -259,7 +259,7 @@ namespace cytx
                     is_first = false;
                 });
 
-                string update_sql = fmt::format("UPDATE `{}` SET {}", arg0.table_name(), values_wr.str());
+                std::string update_sql = fmt::format("UPDATE `{}` SET {}", arg0.table_name(), values_wr.str());
                 return update_proxy(this, update_sql);
             }
 
@@ -267,7 +267,7 @@ namespace cytx
             auto delete_item()
                 -> std::enable_if_t<is_reflection<std::decay_t<T>>::value, delete_proxy>
             {
-                string delete_sql = fmt::format("DELETE FROM `{}`", get_name<T>());
+                std::string delete_sql = fmt::format("DELETE FROM `{}`", get_name<T>());
                 return delete_proxy(this, delete_sql);
             }
 

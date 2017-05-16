@@ -45,12 +45,12 @@ namespace cytx {
         struct field_proxy : public select_able<T>, public set_expr
         {
             using parent_t = P;
+            using value_type = typename parent_t::value_type;
             using val_t = T;
-            using val_ptr = T P::*;
-            using meta_t = db_meta<parent_t>;
+            using val_ptr = T value_type::*;
 
-            field_proxy(parent_t* p, val_ptr v, const char* name)
-                : select_able<T>(name, meta_t::meta_name())
+            field_proxy(value_type* p, val_ptr v, const char* name)
+                : select_able<T>(name, parent_t::meta_name())
                 , set_expr("")
                 , p_(p)
                 , val_(v), is_init_(false) {}
@@ -71,8 +71,8 @@ namespace cytx {
                 return !is_init_;
             }
 
-            const char* name() const { return field_name_.c_str(); }
-            const char* table_name() const { return table_name_; }
+            const char* name() const { return this->field_name_.c_str(); }
+            const char* table_name() const { return this->table_name_; }
 
             val_t value()
             {
@@ -124,7 +124,7 @@ namespace cytx {
                 return *this;
             }
         private:
-            parent_t* p_;
+            value_type* p_;
             val_ptr val_;
             bool is_init_;
         };
@@ -133,12 +133,12 @@ namespace cytx {
         struct field_proxy<P, std::string> : public select_able<std::string>, public set_expr
         {
             using parent_t = P;
+            using value_type = typename parent_t::value_type;
             using val_t = std::string;
-            using val_ptr = std::string P::*;
-            using meta_t = db_meta<parent_t>;
+            using val_ptr = std::string value_type::*;
 
-            field_proxy(parent_t* p, val_ptr v, const char* name)
-                : select_able(name, meta_t::meta_name())
+            field_proxy(value_type* p, val_ptr v, const char* name)
+                : select_able(name, parent_t::meta_name())
                 , set_expr("")
                 , p_(p)
                 , val_(v), is_init_(false) {}
@@ -183,7 +183,7 @@ namespace cytx {
             }
           
         private:
-            parent_t* p_;
+            value_type* p_;
             val_ptr val_;
             bool is_init_;
         };
