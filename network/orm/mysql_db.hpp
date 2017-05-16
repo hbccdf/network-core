@@ -1,9 +1,15 @@
 #pragma once
 #include "db_common.hpp"
+#include <errmsg.h>
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include "../base/log.hpp"
-#include <errmsg.h>
 
 namespace cytx
 {
@@ -78,6 +84,11 @@ namespace cytx
                 {
                     db_name_ = it->second;
                 }
+
+                if (args.find("unix_socket") != args.end())
+                {
+                    unix_socket_ = args["unix_socket"];
+                }
             }
 
             ~mysql_db()
@@ -105,7 +116,7 @@ namespace cytx
                     return;
                 }
 
-                if (mysql_real_connect(conn_, ip_.c_str(), user_.c_str(), pwd_.c_str(), nullptr, port_, nullptr, 0) == nullptr)
+                if (mysql_real_connect(conn_, ip_.c_str(), user_.c_str(), pwd_.c_str(), nullptr, port_, unix_socket_.empty() ? nullptr : unix_socket_.c_str(), 0) == nullptr)
                 {
                     if (log_)
                         log_->error("connect mysql failed, code:{}, msg:{}", mysql_errno(conn_), mysql_error(conn_));
@@ -352,6 +363,7 @@ namespace cytx
             std::string pwd_;
             int query_id_ = 0;
             std::string db_name_;
+            std::string unix_socket_;
         };
     }
 }

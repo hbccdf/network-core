@@ -34,7 +34,6 @@ if(NOT INCLUDED_COMMON)
         
         include(thrift)
         set(THRIFT_LIB_NAME libthrift)
-        set(MYSQL_LIB_NAME libmysql)
         
         # generator .brc file, to analize code graph
         #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FR")
@@ -72,9 +71,16 @@ if(NOT INCLUDED_COMMON)
         ${ROOT}/third_party/fmt
         ${ROOT}/third_party/rapidjson/include
         ${ROOT}/third_party/spdlog/include
-        ${ROOT}/third_party/mysql/include
         ${ROOT}/third_party/dir_monitor/src
         )
+        
+    if(MSVC)
+        set(MYSQL_LIB_NAME libmysql)
+        include_directories(${ROOT}/third_party/mysql/include)
+    else()
+        include(FindMySQL)
+        set(MYSQL_LIB_NAME mysqlclient)
+    endif()
 
     link_directories(
         ${LIB_OUTPUT_DIR}
