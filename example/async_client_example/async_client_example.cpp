@@ -1,7 +1,7 @@
-#include <client.hpp>
-#include <codec/codec.hpp>
-#include <base/utils.hpp>
-#include <base/log.hpp>
+#include <network/client.hpp>
+#include <network/codec/codec.hpp>
+#include <network/base/utils.hpp>
+#include <network/base/log.hpp>
 #include <iostream>
 
 namespace client

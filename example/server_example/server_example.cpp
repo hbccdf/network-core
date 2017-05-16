@@ -1,7 +1,7 @@
-#include <server.hpp>
-#include <codec/codec.hpp>
-#include <base/utils.hpp>
-#include <base/log.hpp>
+#include <network/server.hpp>
+#include <network/codec/codec.hpp>
+#include <network/base/utils.hpp>
+#include <network/base/log.hpp>
 #include <iostream>
 
 uint16_t port = 9000;
