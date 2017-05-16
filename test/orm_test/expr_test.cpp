@@ -14,50 +14,50 @@ struct st
     string name;
     short port;
     double val;
-    DB_META(st, id, name, port, val);
 };
+DB_META(st, id, name, port, val);
 
 TEST(field_proxy, assign)
 {
-    st v;
-    v._id = 3;
-    assert_streq(v._id.str().c_str(), "st.id=3");
+    st_query v;
+    v.id = 3;
+    assert_streq(v.id.str().c_str(), "st.id=3");
 
-    v._id = v._id + 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id+3");
+    v.id = v.id + 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id+3");
 }
 
 TEST(field_proxy, operator)
 {
-    st v;
-    v._id = v._id + 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id+3");
+    st_query v;
+    v.id = v.id + 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id+3");
 
-    v._id = v._id - 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id-3");
+    v.id = v.id - 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id-3");
 
-    v._id = v._id * 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id*3");
+    v.id = v.id * 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id*3");
 
-    v._id = v._id / 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id/3");
+    v.id = v.id / 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id/3");
 
-    v._id = v._id % 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id%3");
+    v.id = v.id % 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id%3");
 
 
-    v._id += 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id+3");
+    v.id += 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id+3");
 
-    v._id -= 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id-3");
+    v.id -= 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id-3");
 
-    v._id *= 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id*3");
+    v.id *= 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id*3");
 
-    v._id /= 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id/3");
+    v.id /= 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id/3");
 
-    v._id %= 3;
-    assert_streq(v._id.str().c_str(), "st.id=st.id%3");
+    v.id %= 3;
+    assert_streq(v.id.str().c_str(), "st.id=st.id%3");
 }

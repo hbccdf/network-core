@@ -26,9 +26,9 @@ DB_META(t_server, id, name, ip, port, valid);
 
 int main(int argc, char **argv)
 {
-    cout << db_meta<t_server>::value << endl;
+    /*cout << db_meta<t_server>::value << endl;
     cout << db_meta<t_server>::meta_name() << endl;
-    cout << get_name<t_server>() << endl;
+    cout << get_name<t_server>() << endl;*/
 
     auto t_server_size = sizeof(t_server);
     auto str_size = sizeof(string);
