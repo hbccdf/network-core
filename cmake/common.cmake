@@ -1,14 +1,14 @@
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-  message("finded ccahce")
-  set(CMAKE_C_COMPILER "ccache")
-  set(CMAKE_C_COMPILER_ARG1 "gcc")
-
-  set(CMAKE_CXX_COMPILER "ccache")
-  set(CMAKE_CXX_COMPILER_ARG1 "g++")
-endif(CCACHE_FOUND)
-
 if(NOT IN_BATCH)
+    find_program(CCACHE_FOUND ccache)
+    if(CCACHE_FOUND)
+        message("finded ccahce")
+        set(CMAKE_C_COMPILER "ccache")
+        set(CMAKE_C_COMPILER_ARG1 "gcc")
+
+        set(CMAKE_CXX_COMPILER "ccache")
+        set(CMAKE_CXX_COMPILER_ARG1 "g++")
+    endif(CCACHE_FOUND)
+        
     set(CMAKE_SKIP_BUILD_RPATH TRUE)
     get_filename_component(THIS_ROOT ${CMAKE_CURRENT_LIST_FILE} PATH)
     set(ROOT ${THIS_ROOT}/..)
@@ -72,6 +72,7 @@ if(NOT INCLUDED_COMMON)
         ${ROOT}/third_party/rapidjson/include
         ${ROOT}/third_party/spdlog/include
         ${ROOT}/third_party/dir_monitor/src
+        ${ROOT}/third_party/Boost.Application/include
         )
         
     if(MSVC)

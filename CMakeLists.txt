@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(netrowk-core)
-
-#set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
-set(CMAKE_BUILD_TYPE DEBUG)
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
-
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
   message("finded ccahce")
@@ -15,6 +9,12 @@ if(CCACHE_FOUND)
   set(CMAKE_CXX_COMPILER "ccache")
   set(CMAKE_CXX_COMPILER_ARG1 "g++")
 endif(CCACHE_FOUND)
+
+project(netrowk-core)
+
+#set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
+set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
 # set build output path
 #set(CMAKE_SKIP_BUILD_RPATH TRUE)
