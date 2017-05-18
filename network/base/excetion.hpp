@@ -21,25 +21,25 @@ namespace cytx {
                 if (it != messages_.end())
                     return it->second;
                 else
-                    return fmt::format("code: {}, msg: 未知错误", ev);
+                    return fmt::format("code: {}, msg: unknown error", ev);
             }
 
         private:
             void init()
             {
-                add_msg(error_code::ok, "操作成功");
-                add_msg(error_code::unknown, "未知错误");
-                add_msg(error_code::fail, "操作失败");
-                add_msg(error_code::timeout, "操作超时");
-                add_msg(error_code::cancel, "操作被取消");
-                add_msg(error_code::connect_fail, "连接失败");
-                add_msg(error_code::badconnect, "无效的连接");
-                add_msg(error_code::codec_fail, "编码解码失败");
-                add_msg(error_code::invalid_header, "无效的消息头");
-                add_msg(error_code::be_disconnected, "主动断开连接");
-                add_msg(error_code::repeat_connect, "重复连接");
-                add_msg(error_code::no_handler, "没有对应的handler");
-                add_msg(error_code::remote_error, "远端出现错误");
+                add_msg(error_code::ok, "success");
+                add_msg(error_code::unknown, "unknown error");
+                add_msg(error_code::fail, "operation failed");
+                add_msg(error_code::timeout, "operation timeout");
+                add_msg(error_code::cancel, "operation be canceled");
+                add_msg(error_code::connect_fail, "connect failed");
+                add_msg(error_code::badconnect, "invalid connection");
+                add_msg(error_code::codec_fail, "codec failed");
+                add_msg(error_code::invalid_header, "invalid header");
+                add_msg(error_code::be_disconnected, "disconnected by self");
+                add_msg(error_code::repeat_connect, "repeat do connect");
+                add_msg(error_code::no_handler, "has no handler");
+                add_msg(error_code::remote_error, "remote has an error");
             }
 
             void add_msg(error_code ec, std::string msg)
@@ -125,7 +125,7 @@ namespace cytx {
             std::string message() const
             {
                 if (is_success())
-                    return "成功";
+                    return "success";
                 else if (sys_ec_)
                 {
                     return fmt::format("{}, {}", app_ec_.message(), sys_ec_.message());
