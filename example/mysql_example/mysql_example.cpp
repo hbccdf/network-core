@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     table_factory::instance().register_table<t_server>(sql);
 
 #ifdef LINUX
-    smart_db db("ip=localhost;port=3306;user=root;pwd=123456;unix_socket=/data/lib/mysql/mysql.sock");
+    smart_db db("ip=localhost;port=3306;user=root;pwd=123456");
 #else
     smart_db db("ip=localhost;port=3306;user=root;pwd=123456");
 #endif
