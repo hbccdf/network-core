@@ -43,11 +43,11 @@ namespace cytx {
             inline void set_before_invoker(before_invoke_func&& before_invoker);
             void set_before_send_func(before_send_func&& before_send)
             {
-                before_send_func_ = std::move(before_send);
+                before_send_func_ = std::forward<before_send_func>(before_send);
             }
             void set_after_send_func(after_send_func&& after_send)
             {
-                after_send_func_ = std::move(after_send);
+                after_send_func_ = std::forward<after_send_func>(after_send);
             }
         protected:
             invoker_container invokers_;

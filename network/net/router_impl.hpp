@@ -34,19 +34,19 @@ namespace cytx
         template<typename T>
         void router_base<T>::set_on_read(on_read_func&& on_read)
         {
-            on_read_ = std::move(on_read);
+            on_read_ = std::forward<on_read_func>(on_read);
         }
 
         template<typename T>
         void router_base<T>::set_on_error(on_error_func&& on_error)
         {
-            on_error_ = std::move(on_error);
+            on_error_ = std::forward<on_error_func>(on_error);
         }
 
         template<typename T>
         void router_base<T>::set_before_invoker(before_invoke_func&& before_invoker)
         {
-            before_invoker_ = std::move(before_invoker);
+            before_invoker_ = std::forward<before_invoke_func>(before_invoker);
         }
 
         template<typename T, typename H>
