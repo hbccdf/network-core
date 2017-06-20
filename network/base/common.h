@@ -163,6 +163,11 @@ namespace cytx {
             {
                 return protocol_id;
             }
+
+            void set_conn_id(int conn_id)
+            {
+
+            }
         };
 
         // 24 byte
