@@ -1,0 +1,28 @@
+#pragma once
+
+#include "base/channel.h"
+
+namespace cytx
+{
+
+/// RAII thread
+class thread_guard
+{
+private:
+  std::thread& m_thread;
+
+public:
+  explicit thread_guard(std::thread& thread)
+  : m_thread(thread) {}
+
+  thread_guard(const thread_guard&) = delete;
+  thread_guard& operator=(const thread_guard&) = delete;
+
+  ~thread_guard()
+  {
+    if (m_thread.joinable())
+      m_thread.join();
+  }
+};
+
+}
