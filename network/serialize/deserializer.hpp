@@ -685,18 +685,46 @@ namespace cytx
         bool enum_with_str() { return enum_with_str_; }
         void enum_with_str(bool val) { enum_with_str_ = val; }
 
-        void parse(size_t argc, const char* const argv[], const options_description& op)
+        void init(const options_description& op)
         {
             for (auto& o : op.options())
             {
                 ops_.add(o);
             }
+        }
+
+        void parse(size_t argc, const char* const argv[])
+        {
+            vm_.clear();
+            store(parse_command_line((int)argc, argv, ops_), vm_);
+            notify(vm_);
+        }
+
+        void parse(const char* cmd_line)
+        {
+            vm_.clear();
+            vector<string> args = split_winmain(cmd_line);
+            store(command_line_parser(args).options(ops_).run(), vm_);
+            notify(vm_);
+        }
+
+        void parse(const vector<string>& args)
+        {
+            vm_.clear();
+            store(command_line_parser(args).options(ops_).run(), vm_);
+            notify(vm_);
+        }
+
+        void parse(size_t argc, const char* const argv[], const options_description& op)
+        {
+            vm_.clear();
             store(parse_command_line((int)argc, argv, ops_), vm_);
             notify(vm_);
         }
 
         void parse(const char* cmd_line, const options_description& op)
         {
+            vm_.clear();
             for (auto& o : op.options())
             {
                 ops_.add(o);
@@ -708,6 +736,7 @@ namespace cytx
 
         void parse(const vector<string>& args, const options_description& op)
         {
+            vm_.clear();
             store(command_line_parser(args).options(ops_).run(), vm_);
             notify(vm_);
         }
@@ -746,6 +775,8 @@ namespace cytx
         {
             return vm_.empty();
         }
+
+        const variables_map& vm() const { return vm_; }
 
     private:
         template<typename T>
