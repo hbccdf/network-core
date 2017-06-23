@@ -1,12 +1,12 @@
 [submodule "third_party/boost_1_61_0"]
 	path = third_party/boost_1_61_0
-	url = http://gitlab.cytxcn.com/gameserver/boost_1_61_0
+	url = git@gitlab.cytxcn.com:gameserver/boost_1_61_0.git
 [submodule "third_party/thrift-0.10.0"]
 	path = third_party/thrift-0.10.0
-	url = http://gitlab.cytxcn.com/gameserver/thrift-0.10.0
+	url = git@gitlab.cytxcn.com:gameserver/thrift-0.10.0.git
 [submodule "libs64/boost_1_61_0"]
 	path = libs64/boost_1_61_0
-	url = http://gitlab.cytxcn.com/gameserver/boost_1_61_0_libs
+	url = git@gitlab.cytxcn.com:gameserver/boost_1_61_0_libs.git
 [submodule "libs64/thrift-0.10.0"]
 	path = libs64/thrift-0.10.0
-	url = http://gitlab.cytxcn.com/gameserver/thrift-0.10.0_lib
+	url = git@gitlab.cytxcn.com:gameserver/thrift-0.10.0_lib.git
