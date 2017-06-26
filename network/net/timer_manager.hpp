@@ -1,6 +1,7 @@
 #pragma once
 #include "schedule_timer.hpp"
 #include "../traits/traits.hpp"
+#include "../base/date_time.hpp"
 namespace cytx
 {
     using namespace rpc;
@@ -85,6 +86,7 @@ namespace cytx
             int32_t id;
             timer_status status;
             int milliseconds;
+            int64_t next_time;
             const void* user_data; //if needed, you must take the responsibility to manage this memory
             timer_ptr timer;
             timer_func_t timer_func;
@@ -112,6 +114,7 @@ namespace cytx
             ti_ptr->id = id;
             ti_ptr->status = timer_status::ok;
             ti_ptr->milliseconds = milliseconds;
+            ti_ptr->next_time = 0;
             ti_ptr->user_data = user_data;
             ti_ptr->timer = std::make_shared<timer_t>(ios_);
             ti_ptr->timer_func = nullptr;
@@ -136,6 +139,7 @@ namespace cytx
             ti_ptr->id = id;
             ti_ptr->status = timer_status::ok;
             ti_ptr->milliseconds = milliseconds;
+            ti_ptr->next_time = 0;
             ti_ptr->user_data = nullptr;
             ti_ptr->timer = std::make_shared<timer_t>(ios_);
             ti_ptr->timer_func = func;
@@ -150,6 +154,38 @@ namespace cytx
                 timers_.emplace(id, ti_ptr);
             }
             return timer_proxy(this, id);
+        }
+
+        timer_proxy set_fix_timer(int milliseconds, timer_func_t func)
+        {
+            auto id = ++timer_id_;
+            timer_info_ptr ti_ptr = std::make_shared<timer_info>();
+            ti_ptr->id = id;
+            ti_ptr->status = timer_status::ok;
+            ti_ptr->milliseconds = milliseconds;
+            ti_ptr->next_time = date_time::now().total_milliseconds();
+            ti_ptr->user_data = nullptr;
+            ti_ptr->timer = std::make_shared<timer_t>(ios_);
+            ti_ptr->timer_func = func;
+
+            auto it = timers_.find(id);
+            if (it != timers_.end())
+            {
+                it->second = ti_ptr;
+            }
+            else
+            {
+                timers_.emplace(id, ti_ptr);
+            }
+            return timer_proxy(this, id);
+        }
+
+        timer_proxy set_fix_timer(int milliseconds, std::function<void()> func)
+        {
+            return set_fix_timer(milliseconds, (timer_func_t)[f = std::move(func)]()->bool{
+                f();
+                return true;
+            });
         }
 
         timer_proxy set_once_timer(int milliseconds, std::function<void()> func)
@@ -217,7 +253,16 @@ namespace cytx
         void start_timer(timer_info_ptr ti_ptr)
         {
             ti_ptr->status = timer_status::ok;
-            ti_ptr->timer->async_wait(ti_ptr->milliseconds, boost::bind(&this_t::timer_handler, this, boost::asio::placeholders::error, ti_ptr));
+            auto func = boost::bind(&this_t::timer_handler, this, boost::asio::placeholders::error, ti_ptr);
+            if (ti_ptr->next_time != 0)
+            {
+                calc_next_time(ti_ptr);
+                ti_ptr->timer->async_wait_at_time(ti_ptr->next_time, func);
+            }
+            else
+            {
+                ti_ptr->timer->async_wait(ti_ptr->milliseconds, func);
+            }
         }
 
         void stop_timer(timer_info_ptr ti_ptr)
@@ -253,9 +298,18 @@ namespace cytx
                     is_continue = itimer_->on_timer(ti_ptr->id, ti_ptr->user_data);
                 }
 
-                if(is_continue)
+                if(is_continue || ti_ptr->next_time > 0)
                     start_timer(ti_ptr->id);
             }
+        }
+
+        void calc_next_time(timer_info_ptr ti_ptr)
+        {
+            if (ti_ptr->next_time == 0)
+            {
+                ti_ptr->next_time = date_time::now().total_milliseconds();
+            }
+            ti_ptr->next_time += ti_ptr->milliseconds;
         }
 
     protected:

@@ -30,9 +30,24 @@ namespace cytx
             });
         }
 
+        void async_wait_func_at_time(int64_t timestamp, std::function<void()> func)
+        {
+            expires_at_ms(timestamp);
+            base_t::async_wait([f = std::move(func)](const boost::system::error_code& ec){
+                if (!ec)
+                    f();
+            });
+        }
+
         void async_wait(int milliseconds, std::function<void(const boost::system::error_code&)> func)
         {
             expires(milliseconds);
+            base_t::async_wait(func);
+        }
+
+        void async_wait_at_time(int64_t timestamp, std::function<void(const boost::system::error_code&)> func)
+        {
+            expires_at_ms(timestamp);
             base_t::async_wait(func);
         }
 
