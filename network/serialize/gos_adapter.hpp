@@ -80,7 +80,7 @@ namespace cytx
         template<typename T>
         T gos_hton(T t)
         {
-            return is_big_endian_ ? hton(t) : t;
+            return is_big_endian_ ? cytx::rpc::hton(t) : t;
         }
     private:
         GameObjectStream& gos_;
@@ -96,10 +96,10 @@ namespace cytx
         void end_deserialize() {}
         void begin_object() {  }
         void end_object() {  }
-        void begin_array(size_t& array_size) 
-        { 
-            int length = 0; 
-            gos_.getInt(length); 
+        void begin_array(size_t& array_size)
+        {
+            int length = 0;
+            gos_.getInt(length);
             length = gos_ntoh(length);
             array_size = length;
         }
@@ -171,7 +171,7 @@ namespace cytx
         template<typename T>
         T gos_ntoh(T t)
         {
-            return is_big_endian_ ? ntoh(t) : t;
+            return is_big_endian_ ? cytx::rpc::ntoh(t) : t;
         }
     private:
         GameObjectStream& gos_;

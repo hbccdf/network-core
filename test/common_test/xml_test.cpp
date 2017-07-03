@@ -174,6 +174,18 @@ TEST_F(xml_type, array_int)
     assert_equal(v);
 }
 
+TEST_F(xml_type, array_with_xml)
+{
+    struct st
+    {
+        int v[2];
+        META(v);
+    };
+    st v{ { 1, 2 } };
+    auto dv = get_de<decltype(v)>(R"(<+><v>1,2</v></+>)");
+    assert_val_equal(v.v, dv.v);
+}
+
 TEST_F(xml_type, array_char)
 {
     char v[10] = { "hello" };

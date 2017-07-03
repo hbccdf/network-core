@@ -141,6 +141,24 @@ namespace cytx
             return it->second;
         }
 
+        void process_array(value_t& val)
+        {
+            if (val.data().empty())
+                return;
+
+            std::string str_val = val.data();
+            vector<std::string> values;
+            boost::algorithm::split(values, str_val, boost::is_any_of(",;"), boost::algorithm::token_compress_on);
+            if (values.empty())
+                return;
+
+            val.put_value("");
+            for (auto& s : values)
+            {
+                val.add("+", s);
+            }
+        }
+
     private:
         void init()
         {
@@ -438,6 +456,9 @@ namespace cytx {
         template<typename T>
         auto get_tuple_elem(size_t& index, val_t& val) -> std::enable_if_t<!tuple_contains<T, OtherTuple>::value, T>
         {
+            if (index == 0)
+                process_array<T>(val);
+
             T t;
             auto array_size = rd_.array_size(val);
             if (array_size <= index)
@@ -477,6 +498,7 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
         {
+            process_array<T>(val);
             auto it = rd_.array_begin(val);
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
@@ -492,6 +514,7 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_back_insert<T>::value>
         {
+            process_array<T>(val);
             auto it = rd_.array_begin(val);
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
@@ -524,8 +547,8 @@ namespace cytx {
         template<std::size_t I = 0, typename Tuple>
         auto ReadTuple(Tuple& t, val_t& val, size_t, std::false_type bo)->std::enable_if_t < I < std::tuple_size<Tuple>::value>
         {
-            auto array_size = rd_.member_size(val);
-            if (array_size <= 0)
+            auto mb_size = rd_.member_size(val);
+            if (mb_size <= 0)
                 return;
             auto it = rd_.member_it(val, I);
             ReadObject(std::get<I>(t), val, bo);
@@ -548,6 +571,9 @@ namespace cytx {
         template<typename T>
         auto ReadTupleVal(T& t, val_t& val, size_t& index) -> std::enable_if_t<!tuple_contains<T, OtherTuple>::value>
         {
+            if (index == 0)
+                process_array<T>(val);
+
             auto array_size = rd_.array_size(val);
             if (array_size <= index)
                 return;
@@ -604,12 +630,15 @@ namespace cytx {
         template<typename Array>
         inline void ReadArray(Array & t, val_t& val)
         {
+            typedef decltype((t)[0]) element_t;
+            using ele_t = std::remove_reference_t<element_t>;
+
+            process_array<ele_t>(val);
             auto it = rd_.array_begin(val);
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-                typedef decltype((v)[0]) element_t;
-                using ele_t = std::remove_reference_t<element_t>;
+
                 ele_t el;
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 t.emplace_back(el);
@@ -619,6 +648,7 @@ namespace cytx {
         template<typename Array>
         inline void ReadFixedLengthArray(Array & v, size_t array_size, val_t& val)
         {
+            process_array<decltype((v)[0])>(val);
             auto it = rd_.array_begin(val);
             auto it_end = rd_.array_end(val);
             for (size_t i = 0; i < array_size && it != it_end; ++i, ++it)
@@ -652,6 +682,17 @@ namespace cytx {
                 if (enum_val)
                     t = enum_val.value();
             }
+        }
+
+        template<typename T>
+        auto process_array(val_t& val) -> std::enable_if_t<is_basic_type<std::decay_t<T>>::value && !std::is_same<std::decay_t<T>, std::string>::value>
+        {
+            rd_.process_array(val);
+        }
+
+        template<typename T>
+        auto process_array(val_t& val) -> std::enable_if_t<!is_basic_type<std::decay_t<T>>::value || std::is_same<std::decay_t<T>, std::string>::value>
+        {
         }
 
     private:
