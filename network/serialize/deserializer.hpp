@@ -498,13 +498,14 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
         {
-            process_array<T>(val);
+            typedef decltype(*t.begin()) element_t;
+            using ele_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
+
+            process_array<ele_t>(val);
             auto it = rd_.array_begin(val);
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-                typedef decltype(*t.begin()) element_t;
-                using ele_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
                 ele_t el;
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 std::fill_n(std::inserter(t, t.end()), 1, std::move(el));
@@ -514,13 +515,15 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_back_insert<T>::value>
         {
-            process_array<T>(val);
+            typedef decltype(*t.begin()) element_t;
+            using ele_t = std::remove_reference_t<element_t>;
+
+            process_array<ele_t>(val);
             auto it = rd_.array_begin(val);
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-                typedef decltype(*t.begin()) element_t;
-                using ele_t = std::remove_reference_t<element_t>;
+
                 ele_t el;
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 std::fill_n(std::back_inserter(t), 1, std::move(el));
@@ -685,13 +688,14 @@ namespace cytx {
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<is_basic_type<std::decay_t<T>>::value && !std::is_same<std::decay_t<T>, std::string>::value>
+        auto process_array(val_t& val) -> std::enable_if_t<(is_basic_type<std::decay_t<T>>::value && !std::is_same<std::decay_t<T>, std::string>::value)
+                                            || std::is_enum<std::decay_t<T>>::value>
         {
             rd_.process_array(val);
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<!is_basic_type<std::decay_t<T>>::value || std::is_same<std::decay_t<T>, std::string>::value>
+        auto process_array(val_t& val) -> std::enable_if_t<(!is_basic_type<std::decay_t<T>>::value && !std::is_enum<std::decay_t<T>>::value) || std::is_same<std::decay_t<T>, std::string>::value>
         {
         }
 
