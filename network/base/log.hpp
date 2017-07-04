@@ -48,6 +48,8 @@ namespace cytx
         }
     };
 
+    using log_ptr_t = std::shared_ptr<spdlog::logger>;
+
     class log
     {
     public:
@@ -55,6 +57,29 @@ namespace cytx
         {
             static log _log;
             return _log;
+        }
+
+        static log_ptr_t get_log(const std::string& log_name)
+        {
+            return spdlog::get(log_name);
+        }
+
+        static log_ptr_t force_get_log(const std::string& log_name)
+        {
+            auto ptr = get_log(log_name);
+            if (!ptr)
+            {
+                ptr = spdlog::stdout_logger_mt(log_name);
+                ptr->set_level(spdlog::level::level_enum::off);
+            }
+            return ptr;
+        }
+
+        static log_ptr_t init_log(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
+        {
+            log l(false);
+            l.init(file_name, lvl, logger_name, console_log);
+            return l.get_log();
         }
 
         log(bool auto_init = true)
@@ -66,7 +91,7 @@ namespace cytx
             }
         }
 
-        void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
+        void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
         {
             fs::path dir = file_name;
             dir = fs::complete(dir);
@@ -76,7 +101,14 @@ namespace cytx
                 fs::create_directories(cur_dir);
             }
             auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 1000);
-            log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, get_stdout_sink() });
+            if (console_log)
+            {
+                log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, get_stdout_sink() });
+            }
+            else
+            {
+                log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating });
+            }
             log_->set_level((spdlog::level::level_enum)lvl);
             log_->flush_on(spdlog::level::level_enum::err);
             log_->set_formatter(std::make_shared<my_formater>());
@@ -90,7 +122,7 @@ namespace cytx
             log_->set_formatter(std::make_shared<my_formater>());
         }
 
-        std::shared_ptr<spdlog::logger> get_log()
+        log_ptr_t get_log()
         {
             return log_;
         }
@@ -120,7 +152,7 @@ namespace cytx
         log(const log&) = delete;
         log(log&&) = delete;
 
-        std::shared_ptr<spdlog::logger> log_;
+        log_ptr_t log_;
     };
 
 
