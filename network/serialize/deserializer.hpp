@@ -488,7 +488,7 @@ namespace cytx {
                 using first_type = std::remove_cv_t<typename pair_t::first_type>;
                 using second_type = typename pair_t::second_type;
 
-                first_type f = boost::lexical_cast<first_type>(rd_.first(it));
+                first_type f = cytx::util::cast<first_type>(rd_.first(it));
                 second_type s;
                 ReadObject(s, rd_.second(it), bo);
                 t[f] = s;

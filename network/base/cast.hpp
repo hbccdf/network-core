@@ -39,7 +39,17 @@ namespace cytx
         }
 
         template<typename T>
-        auto cast(const std::string& str) -> std::enable_if_t<!std::is_same<T, bool>::value && is_basic_type<T>::value, T>
+        auto cast(const std::string& str) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value, T>
+        {
+            auto ret = cytx::to_enum<T>(str.c_str(), true);
+            if (ret)
+                return ret.value();
+            else
+                return T{};
+        }
+
+        template<typename T>
+        auto cast(const std::string& str) -> std::enable_if_t<!std::is_same<T, bool>::value && !std::is_enum<std::decay_t<T>>::value && is_basic_type<T>::value, T>
         {
             return boost::lexical_cast<T>(str);
         }
