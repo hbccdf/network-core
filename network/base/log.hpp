@@ -50,6 +50,56 @@ namespace cytx
 
     using log_ptr_t = std::shared_ptr<spdlog::logger>;
 
+    using file_sink_t = spdlog::sinks::rotating_file_sink_mt;
+    using file_sink_ptr_t = std::shared_ptr<file_sink_t>;
+
+    using console_sink_t = spdlog::sinks::wincolor_stdout_sink_mt;
+    using console_sink_ptr_t = std::shared_ptr<console_sink_t>;
+
+    class log_sink_manager
+    {
+    public:
+        log_sink_manager()
+        {
+            console_sink_ = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
+        }
+    public:
+        static console_sink_ptr_t get_console_sink()
+        {
+            return instance().console_sink_;
+        }
+        static file_sink_ptr_t get_file_sink(std::string file_name)
+        {
+            auto it = instance().file_sinks_.find(file_name);
+            if (it != instance().file_sinks_.end())
+            {
+                return it->second;
+            }
+            else
+            {
+                fs::path dir = file_name;
+                dir = fs::complete(dir);
+                fs::path cur_dir = dir.parent_path();
+                if (!fs::exists(cur_dir))
+                {
+                    fs::create_directories(cur_dir);
+                }
+                auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 1000);
+                instance().file_sinks_[file_name] = rotating;
+                return rotating;
+            }
+        }
+    private:
+        static log_sink_manager& instance()
+        {
+            static log_sink_manager l;
+            return l;
+        }
+
+        std::map<std::string, file_sink_ptr_t> file_sinks_;
+        console_sink_ptr_t console_sink_;
+    };
+
     class log
     {
     public:
@@ -86,24 +136,17 @@ namespace cytx
         {
             if (auto_init)
             {
-                log_ = spdlog::stdout_logger_mt("init");
+                log_ = spdlog::stdout_logger_mt("___auto_init_log");
                 log_->set_level(spdlog::level::level_enum::off);
             }
         }
 
         void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
         {
-            fs::path dir = file_name;
-            dir = fs::complete(dir);
-            fs::path cur_dir = dir.parent_path();
-            if (!fs::exists(cur_dir))
-            {
-                fs::create_directories(cur_dir);
-            }
-            auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 1000);
+            auto rotating = log_sink_manager::get_file_sink(file_name);
             if (console_log)
             {
-                log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, get_stdout_sink() });
+                log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, log_sink_manager::get_console_sink() });
             }
             else
             {
@@ -116,7 +159,7 @@ namespace cytx
 
         void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
         {
-            log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ get_stdout_sink() });
+            log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ log_sink_manager::get_console_sink() });
             log_->set_level((spdlog::level::level_enum)lvl);
             log_->flush_on(spdlog::level::level_enum::err);
             log_->set_formatter(std::make_shared<my_formater>());
@@ -141,14 +184,6 @@ namespace cytx
         }
 
     private:
-        static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> get_stdout_sink()
-        {
-            static std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt> out_sink_;
-            if (out_sink_ == nullptr)
-                out_sink_ = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
-            return out_sink_;
-        }
-
         log(const log&) = delete;
         log(log&&) = delete;
 
