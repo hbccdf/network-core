@@ -37,3 +37,18 @@ function(optimize_target)
     # generator .brc file, to analize code graph
     #target_compile_options(${ARGV0} PUBLIC "/FR")
 endfunction()
+
+macro(add_files)
+    file(GLOB NEW_FILES "${ARGV1}/*")
+    #message("${NEW_FILES}")
+    list(APPEND ${ARGV0} ${NEW_FILES})
+    #message("${${ARGV1}}")
+    source_group("${ARGV1}" FILES ${NEW_FILES})
+endmacro()
+
+macro(add_more_files arg name)
+    #message("${name}")
+    file(GLOB NEW_FILES ${ARGN})
+    list(APPEND ${arg} ${NEW_FILES})
+    source_group("${name}" FILES ${NEW_FILES})
+endmacro()
