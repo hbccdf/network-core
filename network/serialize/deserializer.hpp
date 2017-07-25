@@ -128,11 +128,20 @@ namespace cytx
 
         std::string first(member_iterator& it)
         {
-            if(it->first != "@key")
+            if(it->first != "@key" && it->first != "+")
                 return it->first;
-            auto name = (it->second).get_optional<std::string>("<xmlattr>.name");
-            if (name)
-                return name.value();
+            if (it->first == "@key")
+            {
+                auto name = (it->second).get_optional<std::string>("<xmlattr>.name");
+                if (name)
+                    return name.value();
+            }
+            else
+            {
+                auto name = (it->second).get_optional<std::string>("<xmlattr>.key");
+                if (name)
+                    return name.value();
+            }
             return it->first;
         }
 
@@ -191,7 +200,7 @@ namespace cytx
                         it = tmp_pt.erase(it);
                         for (auto& op : other_pt.begin()->second)
                         {
-                            it = tmp_pt.push_back(op);
+                            tmp_pt.push_back(op);
                         }
                         continue;
                     }
