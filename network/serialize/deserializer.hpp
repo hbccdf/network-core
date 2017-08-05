@@ -197,11 +197,12 @@ namespace cytx
                         std::string path;
                         read<std::string>(path, second(mb_it));
                         T::read_file(path, other_pt);
-                        it = tmp_pt.erase(it);
+
                         for (auto& op : other_pt.begin()->second)
                         {
                             tmp_pt.push_back(op);
                         }
+                        it = tmp_pt.erase(it);
                         continue;
                     }
                 }
