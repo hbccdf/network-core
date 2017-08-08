@@ -312,7 +312,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto WriteObject(const T& t, bool is_last, BeginObjec) -> std::enable_if_t<is_reflection<T>::value && !enum_meta<T>::value>
+        auto WriteObject(const T& t, bool is_last, BeginObjec) -> std::enable_if_t<is_reflection<T>::value && !std::is_enum<T>::value>
         {
             adapter_begin_object();
             for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)

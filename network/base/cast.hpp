@@ -14,7 +14,7 @@ namespace cytx
     namespace util
     {
         template<typename T>
-        auto to_str(T t, const char* split_str = "::") -> std::enable_if_t<enum_meta<T>::value, std::string>
+        auto to_str(T t, const char* split_str = "::") -> std::enable_if_t<std::is_enum<T>::value, std::string>
         {
             boost::optional<std::string> v = cytx::to_string(t, split_str);
             if (v)

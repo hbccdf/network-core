@@ -489,7 +489,7 @@ namespace cytx
     };
 
     template<typename T>
-    auto to_string(T t, const char* split_str = "::")  -> std::enable_if_t<enum_meta<T>::value, boost::optional<std::string>>
+    auto to_string(T t, const char* split_str = "::")  -> std::enable_if_t<std::is_enum<T>::value, boost::optional<std::string>>
     {
         return enum_factory::instance().to_string<T>(t, split_str);
     }
@@ -501,20 +501,20 @@ namespace cytx
 
     template<typename T>
     auto to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
-        -> std::enable_if_t<enum_meta<T>::value, boost::optional<T>>
+        -> std::enable_if_t<std::is_enum<T>::value, boost::optional<T>>
     {
         return enum_factory::instance().to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
     }
 
     template<typename T>
-    auto to_string(T t, const char* split_str = "::") -> std::enable_if_t<!enum_meta<T>::value, boost::optional<std::string>>
+    auto to_string(T t, const char* split_str = "::") -> std::enable_if_t<!std::is_enum<T>::value, boost::optional<std::string>>
     {
         return boost::optional<std::string>{};
     }
 
     template<typename T>
     auto to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
-        -> std::enable_if_t<!enum_meta<T>::value, boost::optional<T>>
+        -> std::enable_if_t<!std::is_enum<T>::value, boost::optional<T>>
     {
         return boost::optional<T>{};
     }
