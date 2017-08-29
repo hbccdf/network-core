@@ -773,6 +773,10 @@ namespace cytx
         void parse(size_t argc, const char* const argv[], const options_description& op)
         {
             vm_.clear();
+            for (auto& o : op.options())
+            {
+                ops_.add(o);
+            }
             store(parse_command_line((int)argc, argv, ops_), vm_);
             notify(vm_);
         }
@@ -792,6 +796,10 @@ namespace cytx
         void parse(const vector<string>& args, const options_description& op)
         {
             vm_.clear();
+            for (auto& o : op.options())
+            {
+                ops_.add(o);
+            }
             store(command_line_parser(args).options(ops_).run(), vm_);
             notify(vm_);
         }
