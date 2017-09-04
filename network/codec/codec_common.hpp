@@ -13,8 +13,8 @@ namespace cytx
             gos_buffer(gos_buffer&& gos)
             {
                 data_ = gos.data_;
-                gos.data_ = nullptr;
                 size_ = gos.size_;
+                gos.data_ = nullptr;
                 gos.size_ = 0;
             }
             gos_buffer(const char* const begin, const char* const end)

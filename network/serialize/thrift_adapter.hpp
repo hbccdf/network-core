@@ -65,6 +65,34 @@ namespace cytx
             gos.pushBinary((char*)body_buf_ptr, length);
             return gos;
         }
+
+        template<typename T>
+        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<is_tuple<T>::value>
+        {
+            auto mem_buf = boost::make_shared<TMemoryBuffer>();
+            auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
+            std::get<0>(t).write(compct_proto.get());
+
+            uint32_t length = 0;
+            uint8_t* body_buf_ptr = nullptr;
+            mem_buf->getBuffer(&body_buf_ptr, &length);
+
+            gos.pushBinary((char*)body_buf_ptr, length);
+        }
+
+        template<typename T>
+        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<!is_tuple<T>::value>
+        {
+            auto mem_buf = boost::make_shared<TMemoryBuffer>();
+            auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
+            t.write(compct_proto.get());
+
+            uint32_t length = 0;
+            uint8_t* body_buf_ptr = nullptr;
+            mem_buf->getBuffer(&body_buf_ptr, &length);
+
+            gos.pushBinary((char*)body_buf_ptr, length);
+        }
     };
 
     template<typename OtherTuple>

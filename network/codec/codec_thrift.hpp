@@ -43,6 +43,38 @@ namespace cytx {
                 }
             }
 
+            template<typename T>
+            T unpack(GameObjectStream& gos)
+            {
+                try
+                {
+                    DeSerializer<thrift_deserialize_adapter> dr(gos);
+
+                    T t;
+                    dr.DeSerialize(t);
+                    return t;
+                }
+                catch (std::exception& e)
+                {
+                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                }
+            }
+
+            template<typename T, typename Tuple>
+            T unpack(GameObjectStream& gos, Tuple&& tuple)
+            {
+                try
+                {
+                    DeSerializer<thrift_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple), gos);
+
+                    return dr.GetTuple<T>();
+                }
+                catch (std::exception& e)
+                {
+                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                }
+            }
+
             using buffer_type = gos_buffer;
 
             template <typename ... Args>
@@ -64,6 +96,27 @@ namespace cytx {
                     buffer.size_ = gos.length();
                     gos.alloc_type_ = 0;
                     return std::move(buffer);
+                }
+                catch (std::exception& e)
+                {
+                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                }
+            }
+
+            template <typename ... Args>
+            void pack_args(GameObjectStream& gos, Args&& ... args) const
+            {
+                auto args_tuple = std::make_tuple(std::forward<Args>(args)...);
+                pack(gos, std::move(args_tuple));
+            }
+
+            template <typename T>
+            void pack(GameObjectStream& gos, T&& t) const
+            {
+                try
+                {
+                    Serializer<thrift_serialize_adapter> sr;
+                    sr.Serialize(gos, std::forward<T>(t));
                 }
                 catch (std::exception& e)
                 {
