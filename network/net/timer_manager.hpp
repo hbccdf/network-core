@@ -305,11 +305,12 @@ namespace cytx
 
         void calc_next_time(timer_info_ptr ti_ptr)
         {
-            if (ti_ptr->next_time == 0)
-            {
-                ti_ptr->next_time = date_time::now().total_milliseconds();
-            }
             ti_ptr->next_time += ti_ptr->milliseconds;
+            int64_t now_time = date_time::now().total_milliseconds();
+            if (ti_ptr->next_time < now_time)
+            {
+                ti_ptr->next_time = now_time;
+            }
         }
 
     protected:
