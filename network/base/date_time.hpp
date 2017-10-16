@@ -29,9 +29,8 @@ namespace cytx
             {
             }
             date_time(time_t seconds)
-                : time_(from_time_t(seconds))
+                : date_time(seconds, 0)
             {
-                time_ += hours(8);
             }
             date_time(int year, int month, int day)
                 : time_(date(year, month, day))
@@ -42,10 +41,15 @@ namespace cytx
             {
             }
 
-            date_time(time_t seconds, time_t ms)
-                : time_(from_time_t(seconds) + millisec(ms))
+            date_time(time_t second, time_t ms)
             {
-                time_ += hours(8);
+                long neg_val = 0;
+                if (second < 0)
+                {
+                    neg_val = -1;
+                    second = 0;
+                }
+                time_ = ptime_from_tm(*localtime(&second)) + millisec(ms) + seconds(neg_val);
             }
             date_time(ptime time)
                 : time_(time)
@@ -68,52 +72,46 @@ namespace cytx
 
             static date_time now()
             {
-                return date_time(microsec_clock::local_time());
+                return date_time();
             }
 
         public:
-            date_time add_ms(int ms)
+            date_time add_ms(int ms) const
             {
                 return time_ + millisec(ms);
             }
 
-            date_time add_seconds(int second)
+            date_time add_seconds(int second) const
             {
-                time_iterator t_iter(time_, seconds(second));
-                ++t_iter;
-                return date_time(*t_iter);
+                return time_ + seconds(second);
             }
 
-            date_time add_minutes(int minute)
+            date_time add_minutes(int minute) const
             {
-                time_iterator t_iter(time_, minutes(minute));
-                ++t_iter;
-                return date_time(*t_iter);
+                return time_ + minutes(minute);
             }
 
-            date_time add_hours(int hour)
+            date_time add_hours(int hour) const
             {
-                time_iterator t_iter(time_, hours(hour));
-                ++t_iter;
-                return date_time(*t_iter);
+                return time_ + hours(hour);
             }
 
-            date_time add_days(int day)
+            date_time add_days(int day) const
             {
                 return time_ + days(day);
             }
 
-            date_time add_weeks(const int week)
+            date_time add_weeks(int week) const
             {
                 return time_ + weeks(week);
             }
 
-            date_time add_months(const int month)
+            date_time add_months(int month) const
             {
                 return time_ + months(month);
             }
 
-            date_time add_years(const int year)
+            date_time add_years(int year) const
             {
                 return time_ + years(year);
             }
@@ -167,21 +165,6 @@ namespace cytx
             tm get_tm() const
             {
                 return to_tm(time_);
-            }
-
-            //format = "%Y-%m-%d %H:%M:%S" %Y=年 %m=月 %d=日 %H=时 %M=分 %S=秒
-            std::string to_string(std::string format) const
-            {
-                boost::gregorian::date_facet df(format.c_str());
-                std::stringstream is;
-                is.imbue(std::locale(is.getloc(), &df));
-                is << time_ << std::endl;
-                return is.str();
-            }
-            //将当前 DateTime 对象的值转换为其等效的短日期字符串表示形式。
-            std::string to_short_string() const
-            {
-                return to_string("%Y-%m-%d");
             }
 
         public:
@@ -243,6 +226,29 @@ namespace cytx
                 return duration_now().ticks();
             }
 
+            int utc_seconds() const
+            {
+                return total_seconds() - inter_zone_seconds();
+            }
+            int64_t utc_milliseconds() const
+            {
+                return total_milliseconds() - inter_zone_seconds() * 1000;
+            }
+            int64_t utc_nanoseconds() const
+            {
+                return total_nanoseconds() - inter_zone_seconds() * 1000 * 1000;
+            }
+
+            static int zone_seconds()
+            {
+                return date_time::now().inter_zone_seconds();
+            }
+
+            static int zone_hours()
+            {
+                return zone_seconds() / 3600;
+            }
+
             //返回指定年和月中的天数
             static int day_in_month(int year, int month)
             {
@@ -260,27 +266,27 @@ namespace cytx
                 }
             }
         public:
-            bool operator == (const date_time &datetime)
+            bool operator == (const date_time &datetime) const
             {
                 return time_ == datetime.time_;
             }
-            bool operator > (const date_time &datetime)
+            bool operator > (const date_time &datetime) const
             {
                 return time_ > datetime.time_;
             }
-            bool operator < (const date_time &datetime)
+            bool operator < (const date_time &datetime) const
             {
                 return time_ < datetime.time_;
             }
-            bool operator >= (const date_time &datetime)
+            bool operator >= (const date_time &datetime) const
             {
                 return time_ >= datetime.time_;
             }
-            bool operator <= (const date_time &datetime)
+            bool operator <= (const date_time &datetime) const
             {
                 return time_ <= datetime.time_;
             }
-            bool operator != (const date_time &datetime)
+            bool operator != (const date_time &datetime) const
             {
                 return time_ != datetime.time_;
             }
@@ -288,7 +294,11 @@ namespace cytx
         private:
             time_duration duration_now() const
             {
-                return time_ - ptime(date(1970, 1, 1), time_duration(8, 0, 0));
+                return time_ - ptime(date(1970, 1, 1));
+            }
+            int inter_zone_seconds() const
+            {
+                return total_seconds() - static_cast<int>(get_time_t());
             }
 
         private:
