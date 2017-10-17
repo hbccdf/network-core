@@ -357,7 +357,10 @@ namespace cytx {
             return it->value;
         }
 
+        void process_array(value_t& val)
+        {
 
+        }
     public:
         json_util json_;
     };
@@ -651,7 +654,6 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-
                 ele_t el;
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 t.emplace_back(el);

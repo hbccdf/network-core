@@ -66,6 +66,7 @@ namespace cytx {
 
             void stop()
             {
+                base_t::stop();
                 ios_.stop();
             }
 
