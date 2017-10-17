@@ -253,6 +253,7 @@ void test_timeout_func()
 
 int main()
 {
+    cytx::MemoryPoolManager::get_mutable_instance().init();
     cytx::log::get().init("async_client_example.lg");
     /* async_client_rpc_example();
      test_timeout();*/

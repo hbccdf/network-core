@@ -45,6 +45,7 @@ void print(std::index_sequence<Is...>)
 
 int main()
 {
+    cytx::MemoryPoolManager::get_mutable_instance().init();
     cytx::log::get().init("rest_rpc_server.lg");
     using server_t = cytx::rpc::server<cytx::rpc::json_codec>;
     using connection_ptr = server_t::connection_ptr;
