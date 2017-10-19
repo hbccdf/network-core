@@ -357,6 +357,9 @@ namespace cytx {
             return it->value;
         }
 
+        void process_array(value_t& val)
+        {
+        }
 
     public:
         json_util json_;
