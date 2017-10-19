@@ -5,8 +5,6 @@
 #include <boost/algorithm/string.hpp>
 #include <time.h>
 #include <fmt/format.h>
-#include <sstream>
-#include <locale>
 
 namespace cytx
 {
@@ -28,10 +26,7 @@ namespace cytx
                 : time_(microsec_clock::local_time())
             {
             }
-            date_time(time_t seconds)
-                : date_time(seconds, 0)
-            {
-            }
+
             date_time(int year, int month, int day)
                 : time_(date(year, month, day))
             {
@@ -41,16 +36,6 @@ namespace cytx
             {
             }
 
-            date_time(time_t second, time_t ms)
-            {
-                long neg_val = 0;
-                if (second < 0)
-                {
-                    neg_val = -1;
-                    second = 0;
-                }
-                time_ = ptime_from_tm(*localtime(&second)) + millisec(ms) + seconds(neg_val);
-            }
             date_time(ptime time)
                 : time_(time)
             {
@@ -73,6 +58,26 @@ namespace cytx
             static date_time now()
             {
                 return date_time();
+            }
+
+            static date_time from_local(time_t second, int ms = 0)
+            {
+                return date_time(second, ms, false);
+            }
+
+            static date_time from_utc(time_t second, int ms = 0)
+            {
+                return date_time(second, ms, true);
+            }
+
+            static date_time from_local_milliseconds(int64_t milliseconds)
+            {
+                return date_time(milliseconds / 1000, milliseconds % 1000, false);
+            }
+
+            static date_time from_utc_milliseconds(int64_t milliseconds)
+            {
+                return date_time(milliseconds / 1000, milliseconds % 1000, true);
             }
 
         public:
@@ -154,17 +159,6 @@ namespace cytx
                     << fmt::pad(static_cast<unsigned int>(tm_time.tm_sec), 2, '0');
 
                 return ss.str();
-            }
-
-            time_t get_time_t() const
-            {
-                tm t = get_tm();
-                return mktime(&t);
-            }
-
-            tm get_tm() const
-            {
-                return to_tm(time_);
             }
 
         public:
@@ -291,7 +285,30 @@ namespace cytx
                 return time_ != datetime.time_;
             }
 
+            operator ptime() const
+            {
+                return time_;
+            }
+
         private:
+            date_time(time_t second, int ms, bool is_utc)
+            {
+                long neg_val = 0;
+                if (second < 0)
+                {
+                    neg_val = -1;
+                    second = 0;
+                }
+                if (is_utc)
+                {
+                    time_ = ptime_from_tm(*localtime(&second)) + millisec(ms) + seconds(neg_val);
+                }
+                else
+                {
+                    time_ = from_time_t(second) + millisec(ms) + seconds(neg_val);
+                }
+            }
+
             time_duration duration_now() const
             {
                 return time_ - ptime(date(1970, 1, 1));
@@ -299,6 +316,16 @@ namespace cytx
             int inter_zone_seconds() const
             {
                 return total_seconds() - static_cast<int>(get_time_t());
+            }
+            time_t get_time_t() const
+            {
+                tm t = get_tm();
+                return mktime(&t);
+            }
+
+            tm get_tm() const
+            {
+                return to_tm(time_);
             }
 
         private:
