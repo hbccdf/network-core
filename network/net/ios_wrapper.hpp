@@ -11,9 +11,6 @@ namespace cytx {
     {
         using io_service_t = boost::asio::io_service;
         using tcp = boost::asio::ip::tcp;
-        using inter_server_ptr = std::shared_ptr<io_service_t>;
-        using work_ptr = std::unique_ptr<io_service_t::work>;
-        using lock_t = std::unique_lock<std::mutex>;
         using deadline_timer_t = boost::asio::deadline_timer;
         using steady_timer_t = boost::asio::steady_timer;
         using duration_t = steady_timer_t::duration;
@@ -21,6 +18,9 @@ namespace cytx {
         class ios_wrapper
         {
             using this_t = ios_wrapper;
+            using inter_server_ptr = std::shared_ptr<io_service_t>;
+            using work_ptr = std::unique_ptr<io_service_t::work>;
+            using lock_t = std::unique_lock<std::mutex>;
         public:
             using io_service_t = boost::asio::io_service;
         public:

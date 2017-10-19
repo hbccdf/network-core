@@ -1,21 +1,18 @@
 #pragma once
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include "base/date_time.hpp"
-#include "ios_wrapper.hpp"
+#include "../base/date_time.hpp"
 namespace cytx
 {
-    using namespace rpc;
     class schedule_timer : public boost::asio::deadline_timer
     {
         using base_t = boost::asio::deadline_timer;
-        using ios_t = ios_wrapper;
+        using io_service_t = boost::asio::io_service;
     public:
         using duration_t = std::chrono::milliseconds;
     public:
-        schedule_timer(ios_t& ios)
-            : base_t(ios.service())
-            , ios_(ios)
+        schedule_timer(io_service_t& ios)
+            : base_t(ios)
         {
         }
 
@@ -78,7 +75,5 @@ namespace cytx
         {
             base_t::expires_at(date_time::from_local_milliseconds(timestamp));
         }
-    protected:
-        ios_t& ios_;
     };
 }

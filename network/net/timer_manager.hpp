@@ -1,21 +1,10 @@
 #pragma once
+#include <boost/asio.hpp>
 #include "schedule_timer.hpp"
 #include "../traits/traits.hpp"
 #include "../base/date_time.hpp"
 namespace cytx
 {
-    using namespace rpc;
-
-    class itimer
-    {
-    public:
-        //return true to continue the timer, or the timer will stop
-        virtual bool on_timer(int32_t id, const void* user_data) { return false; }
-    };
-
-    using itimer_t = itimer;
-    using itimer_ptr = itimer_t*;
-
     class timer_manager;
 
     class timer_proxy
@@ -72,7 +61,7 @@ namespace cytx
 
     class timer_manager
     {
-        using ios_t = ios_wrapper;
+        using io_service_t = boost::asio::io_service;
         using timer_t = schedule_timer;
         using timer_ptr = std::shared_ptr<timer_t>;
         using this_t = timer_manager;
@@ -87,7 +76,6 @@ namespace cytx
             timer_status status;
             int milliseconds;
             int64_t next_time;
-            const void* user_data; //if needed, you must take the responsibility to manage this memory
             timer_ptr timer;
             timer_func_t timer_func;
 
@@ -98,86 +86,25 @@ namespace cytx
         using timer_map_t = std::map<int32_t, timer_info_ptr>;
 
     public:
-        timer_manager(ios_t& ios, itimer_ptr itimer)
+        timer_manager(io_service_t& ios)
             : ios_(ios)
-            , itimer_(itimer)
             , timer_id_(0)
         {
         }
 
         ~timer_manager() { stop_all_timer(); }
     public:
-        timer_proxy set_timer(int milliseconds, const void* user_data)
-        {
-            auto id = ++timer_id_;
-            timer_info_ptr ti_ptr = std::make_shared<timer_info>();
-            ti_ptr->id = id;
-            ti_ptr->status = timer_status::ok;
-            ti_ptr->milliseconds = milliseconds;
-            ti_ptr->next_time = 0;
-            ti_ptr->user_data = user_data;
-            ti_ptr->timer = std::make_shared<timer_t>(ios_);
-            ti_ptr->timer_func = nullptr;
-
-            auto it = timers_.find(id);
-            if (it != timers_.end())
-            {
-                it->second->timer->cancel();
-                it->second = ti_ptr;
-            }
-            else
-            {
-                timers_.emplace(id, ti_ptr);
-            }
-            return timer_proxy(this, id);
-        }
-
         timer_proxy set_timer(int milliseconds, timer_func_t func)
         {
-            auto id = ++timer_id_;
-            timer_info_ptr ti_ptr = std::make_shared<timer_info>();
-            ti_ptr->id = id;
-            ti_ptr->status = timer_status::ok;
-            ti_ptr->milliseconds = milliseconds;
-            ti_ptr->next_time = 0;
-            ti_ptr->user_data = nullptr;
-            ti_ptr->timer = std::make_shared<timer_t>(ios_);
-            ti_ptr->timer_func = func;
-
-            auto it = timers_.find(id);
-            if (it != timers_.end())
-            {
-                it->second = ti_ptr;
-            }
-            else
-            {
-                timers_.emplace(id, ti_ptr);
-            }
-            return timer_proxy(this, id);
+            timer_info_ptr ti_ptr = create_timer(milliseconds, func);
+            return timer_proxy(this, ti_ptr->id);
         }
 
         timer_proxy set_fix_timer(int milliseconds, timer_func_t func)
         {
-            auto id = ++timer_id_;
-            timer_info_ptr ti_ptr = std::make_shared<timer_info>();
-            ti_ptr->id = id;
-            ti_ptr->status = timer_status::ok;
-            ti_ptr->milliseconds = milliseconds;
+            timer_info_ptr ti_ptr = create_timer(milliseconds, func);
             ti_ptr->next_time = date_time::now().total_milliseconds();
-            ti_ptr->user_data = nullptr;
-            ti_ptr->timer = std::make_shared<timer_t>(ios_);
-            ti_ptr->timer_func = func;
-
-            auto it = timers_.find(id);
-            if (it != timers_.end())
-            {
-                it->second = ti_ptr;
-            }
-            else
-            {
-                timers_.emplace(id, ti_ptr);
-            }
-            return timer_proxy(this, id);
+            return timer_proxy(this, ti_ptr->id);
         }
 
         timer_proxy set_fix_timer(int milliseconds, std::function<void()> func)
@@ -278,10 +205,6 @@ namespace cytx
             {
                 ti_ptr->timer_func();
             }
-            else if (itimer_)
-            {
-                itimer_->on_timer(ti_ptr->id, ti_ptr->user_data);
-            }
         }
 
         void timer_handler(const boost::system::error_code& ec, timer_info_ptr ti_ptr)
@@ -292,10 +215,6 @@ namespace cytx
                 if (ti_ptr->timer_func)
                 {
                     is_continue = ti_ptr->timer_func();
-                }
-                else if (itimer_)
-                {
-                    is_continue = itimer_->on_timer(ti_ptr->id, ti_ptr->user_data);
                 }
 
                 if(is_continue || ti_ptr->next_time > 0)
@@ -313,9 +232,32 @@ namespace cytx
             }
         }
 
+    private:
+        timer_info_ptr create_timer(int milliseconds, timer_func_t func)
+        {
+            auto id = ++timer_id_;
+            timer_info_ptr ti_ptr = std::make_shared<timer_info>();
+            ti_ptr->id = id;
+            ti_ptr->status = timer_status::ok;
+            ti_ptr->milliseconds = milliseconds;
+            ti_ptr->next_time = date_time::now().total_milliseconds();
+            ti_ptr->timer = std::make_shared<timer_t>(ios_);
+            ti_ptr->timer_func = func;
+
+            auto it = timers_.find(id);
+            if (it != timers_.end())
+            {
+                it->second = ti_ptr;
+            }
+            else
+            {
+                timers_.emplace(id, ti_ptr);
+            }
+            return ti_ptr;
+        }
+
     protected:
-        ios_t& ios_;
-        itimer_ptr itimer_;
+        io_service_t& ios_;
         timer_map_t timers_;
         int32_t timer_id_;
     };
@@ -359,7 +301,9 @@ namespace cytx
     inline void timer_proxy::auto_start_timer()
     {
         if (need_start_ && timer_)
+        {
             timer_->auto_start_timer(id_);
+        }
         need_start_ = false;
     }
 }
