@@ -2,10 +2,37 @@
 #include "../net/router_register.hpp"
 #include "../net/rpc_task.hpp"
 #include "../net/ios_wrapper.hpp"
+#include "../net/ios_pool.hpp"
 
 namespace cytx {
     namespace rpc
     {
+        enum class server_thread_mode : uint8_t
+        {
+            no_io_thread,
+            one_io_thread,
+            more_io_thread,
+        };
+        struct server_options
+        {
+            server_thread_mode thread_mode;
+        };
+
+        inline uint32_t get_thread_count(server_thread_mode thread_mode)
+        {
+            switch (thread_mode)
+            {
+            case server_thread_mode::no_io_thread:
+                return 0;
+            case server_thread_mode::one_io_thread:
+                return 1;
+            case server_thread_mode::more_io_thread:
+                return std::thread::hardware_concurrency();
+            default:
+                return 0;
+            }
+        }
+
         template <typename CodecPolicy, typename header_type = msg_header>
         class server : public router_register<CodecPolicy, header_type>
         {
@@ -25,14 +52,16 @@ namespace cytx {
         public:
             server(const std::string& ip, uint16_t port, irouter_ptr irouter = nullptr)
                 : base_t()
-                , ios_()
+                , ios_pool_(0)
+                , ios_(ios_pool_.get_main_service())
                 , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
                 , irouter_(irouter)
             {
             }
             server(uint16_t port, irouter_ptr irouter = nullptr)
                 : base_t()
-                , ios_()
+                , ios_pool_(0)
+                , ios_(ios_pool_.get_main_service())
                 , acceptor_(ios_.service(), tcp::endpoint{ tcp::v4(), port }, true)
                 , irouter_(irouter)
             {
@@ -40,15 +69,35 @@ namespace cytx {
 
             server(io_service_t& ios, const std::string& ip, uint16_t port, irouter_ptr irouter = nullptr)
                 : base_t()
-                , ios_(ios)
+                , ios_pool_(ios, 0)
+                , ios_(ios_pool_.get_main_service())
                 , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
                 , irouter_(irouter)
             {
             }
             server(io_service_t& ios, uint16_t port, irouter_ptr irouter = nullptr)
                 : base_t()
-                , ios_(ios)
+                , ios_pool_(ios, 0)
+                , ios_(ios_pool_.get_main_service())
                 , acceptor_(ios_.service(), tcp::endpoint{ tcp::v4(), port }, true)
+                , irouter_(irouter)
+            {
+            }
+
+            server(const std::string& ip, uint16_t port, const server_options& options, irouter_ptr irouter = nullptr)
+                : base_t()
+                , ios_pool_(get_thread_count(options.thread_mode))
+                , ios_(ios_pool_.get_main_service())
+                , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
+                , irouter_(irouter)
+            {
+            }
+
+            server(io_service_t& ios, const std::string& ip, uint16_t port, const server_options& options, irouter_ptr irouter = nullptr)
+                : base_t()
+                , ios_pool_(ios, get_thread_count(options.thread_mode))
+                , ios_(ios_pool_.get_main_service())
+                , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
                 , irouter_(irouter)
             {
             }
@@ -75,6 +124,11 @@ namespace cytx {
                 return ios_;
             }
 
+            io_service_t& get_io_service()
+            {
+                return ios_pool_.get_main_service();
+            }
+
           private:
             void do_accept()
             {
@@ -99,6 +153,7 @@ namespace cytx {
             }
 
         private:
+            ios_pool ios_pool_;
             ios_t ios_;
             tcp::acceptor acceptor_;
             mutable std::mutex mutex_;
