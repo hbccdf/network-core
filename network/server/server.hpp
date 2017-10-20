@@ -110,13 +110,13 @@ namespace cytx {
             void start()
             {
                 do_accept();
-                ios_.start();
+                ios_pool_.run();
             }
 
             void stop()
             {
                 base_t::stop();
-                ios_.stop();
+                ios_pool_.stop();
             }
 
             ios_t& ios()
@@ -132,7 +132,7 @@ namespace cytx {
           private:
             void do_accept()
             {
-                auto new_connection = std::make_shared<connection_t>(ios_, this->router_, irouter_);
+                auto new_connection = std::make_shared<connection_t>(ios_pool_.get_io_service(), this->router_, irouter_);
 
                 acceptor_.async_accept(new_connection->socket(),
                     [this, new_connection](boost::system::error_code const& error)

@@ -161,6 +161,7 @@ namespace cytx {
         public:
             using base_t = rpc_call<CodecPolicy, header_type>;
             using ios_t = ios_wrapper;
+            using io_service_t = boost::asio::io_service;
             using codec_policy = CodecPolicy;
             using header_t = header_type;
             using connect_t = async_rpc_channel<codec_policy, header_t>;
@@ -184,6 +185,7 @@ namespace cytx {
         public:
             async_rpc_channel(ios_t& ios, tcp::endpoint const& endpoint, router_t& router, irouter_ptr irptr = nullptr)
                 : base_t(this)
+                , ios_ptr_(nullptr)
                 , ios_(ios)
                 , connection_(ios.service(), endpoint)
                 , status_(status_t::disconnected)
@@ -196,8 +198,35 @@ namespace cytx {
 
             async_rpc_channel(ios_t& ios, router_t& router, irouter_ptr irptr = nullptr)
                 : base_t(this)
+                , ios_ptr_(nullptr)
                 , ios_(ios)
                 , connection_(ios.service())
+                , status_(status_t::disconnected)
+                , read_buffer_(1024)
+                , router_(router)
+                , is_client_(false)
+                , irptr_(irptr)
+            {
+            }
+
+            async_rpc_channel(io_service_t& ios, tcp::endpoint const& endpoint, router_t& router, irouter_ptr irptr = nullptr)
+                : base_t(this)
+                , ios_ptr_(std::make_shared<ios_t>(ios))
+                , ios_(*ios_ptr_)
+                , connection_(ios_.service(), endpoint)
+                , status_(status_t::disconnected)
+                , read_buffer_(1024)
+                , router_(router)
+                , is_client_(true)
+                , irptr_(irptr)
+            {
+            }
+
+            async_rpc_channel(io_service_t& ios, router_t& router, irouter_ptr irptr = nullptr)
+                : base_t(this)
+                , ios_ptr_(std::make_shared<ios_t>(ios))
+                , ios_(*ios_ptr_)
+                , connection_(ios_.service())
                 , status_(status_t::disconnected)
                 , read_buffer_(1024)
                 , router_(router)
@@ -728,6 +757,7 @@ namespace cytx {
             bool is_client() const { return is_client_; }
 
         private:
+            std::shared_ptr<ios_t> ios_ptr_;
             ios_t& ios_;
             async_connection connection_;
             rpc_call_container_t calls_;
