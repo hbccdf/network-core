@@ -121,6 +121,11 @@ namespace cytx
                 return time_ + years(year);
             }
 
+            date_time to_utc() const
+            {
+                return date_time(time_ - seconds(zone_seconds()));
+            }
+
         public:
 
             static int compare(const date_time &time1, const date_time &time2)

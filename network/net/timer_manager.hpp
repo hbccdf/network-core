@@ -103,7 +103,7 @@ namespace cytx
         timer_proxy set_fix_timer(int milliseconds, timer_func_t func)
         {
             timer_info_ptr ti_ptr = create_timer(milliseconds, func);
-            ti_ptr->next_time = date_time::now().total_milliseconds();
+            ti_ptr->next_time = date_time::now().utc_milliseconds();
             return timer_proxy(this, ti_ptr->id);
         }
 
@@ -225,7 +225,7 @@ namespace cytx
         void calc_next_time(timer_info_ptr ti_ptr)
         {
             ti_ptr->next_time += ti_ptr->milliseconds;
-            int64_t now_time = date_time::now().total_milliseconds();
+            int64_t now_time = date_time::now().utc_milliseconds();
             if (ti_ptr->next_time < now_time)
             {
                 ti_ptr->next_time = now_time;

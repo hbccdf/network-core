@@ -1,7 +1,8 @@
 #pragma once
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include "../base/date_time.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 namespace cytx
 {
     class schedule_timer : public boost::asio::deadline_timer
@@ -69,11 +70,12 @@ namespace cytx
         }
         void expires_at(int timestamp)
         {
-            base_t::expires_at(date_time::from_local(timestamp));
+            base_t::expires_at(boost::posix_time::from_time_t(timestamp));
         }
         void expires_at_ms(int64_t timestamp)
         {
-            base_t::expires_at(date_time::from_local_milliseconds(timestamp));
+            auto t = boost::posix_time::from_time_t(timestamp / 1000) + boost::posix_time::milliseconds(timestamp % 1000);
+            base_t::expires_at(t);
         }
     };
 }
