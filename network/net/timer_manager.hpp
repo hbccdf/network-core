@@ -163,7 +163,7 @@ namespace cytx
             ti_ptr->id = id;
             ti_ptr->status = timer_status::ok;
             ti_ptr->milliseconds = milliseconds;
-            ti_ptr->next_time = date_time::now().total_milliseconds();
+            ti_ptr->next_time = date_time::now().utc_milliseconds();
             ti_ptr->user_data = nullptr;
             ti_ptr->timer = std::make_shared<timer_t>(ios_);
             ti_ptr->timer_func = func;
@@ -306,7 +306,7 @@ namespace cytx
         void calc_next_time(timer_info_ptr ti_ptr)
         {
             ti_ptr->next_time += ti_ptr->milliseconds;
-            int64_t now_time = date_time::now().total_milliseconds();
+            int64_t now_time = date_time::now().utc_milliseconds();
             if (ti_ptr->next_time < now_time)
             {
                 ti_ptr->next_time = now_time;
