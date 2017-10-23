@@ -1,6 +1,6 @@
 #pragma once
-#include "../base/GameObjectStream.h"
 #include <fmt/format.h>
+#include "../base/GameObjectStream.h"
 #include "../base/utils.hpp"
 #include "serializer.hpp"
 #include "deserializer.hpp"

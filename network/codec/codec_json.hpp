@@ -2,6 +2,7 @@
 #include "../traits/traits.hpp"
 #include "../serialize/serializer.hpp"
 #include "../serialize/deserializer.hpp"
+#include "../serialize/json_adapter.hpp"
 #include "../base/excetion.hpp"
 
 namespace cytx {

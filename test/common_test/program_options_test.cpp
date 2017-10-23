@@ -3,6 +3,7 @@
 #include <network/base/auto_mocker.h>
 
 #include <network/serialize.hpp>
+#include <network/serialize/bpo_adapter.hpp>
 using namespace cytx;
 using namespace std;
 using namespace boost::program_options;

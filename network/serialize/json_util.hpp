@@ -5,10 +5,8 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/document.h>
 
-#include "../traits/traits.hpp"
-
 namespace cytx {
-    class json_util : boost::noncopyable
+    class json_util
     {
         typedef rapidjson::Writer<rapidjson::StringBuffer> json_writer_t;
     public:

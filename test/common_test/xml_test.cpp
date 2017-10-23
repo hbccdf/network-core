@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <network/base/auto_mocker.h>
 
+#define ENUM_META_RALAX_CHECK
 #include <network/serialize.hpp>
+#include <network/serialize/xml_adapter.hpp>
 using namespace cytx;
 using namespace std;
 

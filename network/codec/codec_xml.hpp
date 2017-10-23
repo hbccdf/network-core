@@ -2,6 +2,7 @@
 #include "../traits/traits.hpp"
 #include "../serialize/serializer.hpp"
 #include "../serialize/deserializer.hpp"
+#include "../serialize/xml_adapter.hpp"
 
 namespace cytx {
     namespace codec {

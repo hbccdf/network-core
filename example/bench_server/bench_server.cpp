@@ -1,4 +1,5 @@
 #include <network/server.hpp>
+#include <network/serialize/xml_adapter.hpp>
 
 namespace cytx
 {

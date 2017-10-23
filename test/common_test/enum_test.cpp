@@ -3,6 +3,7 @@
 #include <network/base/auto_mocker.h>
 
 #include <network/serialize.hpp>
+#include <network/serialize/json_adapter.hpp>
 
 using namespace cytx;
 
@@ -55,7 +56,7 @@ TEST(enum, spe)
     p v{ test_mode::remote, 1 };
     se.Serialize(v);
     auto str = se.get_adapter().str();
-    
+
     DeSerializer<json_deserialize_adapter> de;
     de.enum_with_str(true);
 
