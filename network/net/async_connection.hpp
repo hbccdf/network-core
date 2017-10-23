@@ -1,23 +1,18 @@
 #pragma once
 #include "../base/excetion.hpp"
 #include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <thread>
 #include <mutex>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 namespace cytx {
     namespace rpc
     {
-        using tcp = boost::asio::ip::tcp;
-        using io_service_t = boost::asio::io_service;
-        using lock_t = std::unique_lock<std::mutex>;
         static const auto asio_error = boost::asio::placeholders::error;
 
         class async_connection
         {
+            using tcp = boost::asio::ip::tcp;
+            using io_service_t = boost::asio::io_service;
         public:
             async_connection(
                 io_service_t& ios,

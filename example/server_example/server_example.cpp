@@ -47,7 +47,7 @@ int main()
 {
     cytx::MemoryPoolManager::get_mutable_instance().init();
     cytx::log::get().init("rest_rpc_server.lg");
-    using server_t = cytx::rpc::server<cytx::rpc::json_codec>;
+    using server_t = cytx::rpc::server<cytx::codec::json_codec>;
     using connection_ptr = server_t::connection_ptr;
     server_t server{ port };
     client::foo foo{};
@@ -67,7 +67,7 @@ int main()
 
     server.register_handler("time_consuming", client::some_task_takes_a_lot_of_time, [](auto conn) { std::cout << "acomplished!" << std::endl; });
 
-    server.register_codec_handler<cytx::rpc::xml_codec>("xml_add", client::add);
+    server.register_codec_handler<cytx::codec::xml_codec>("xml_add", client::add);
 
     server.register_handler("ping", []() ->std::string { std::cout << "ping" << std::endl;  return "pong"; });
 
@@ -83,7 +83,7 @@ int main()
                 auto result = task.get();
                 std::cout << "client sub result = " << result << std::endl;
             }
-            catch (cytx::rpc::rpc_exception& e)
+            catch (cytx::net_exception& e)
             {
                 std::cout << "client sub failed, " << e.message() << std::endl;
             }

@@ -13,7 +13,7 @@ namespace client
 }
 
 using tcp = boost::asio::ip::tcp;
-using async_client_t = cytx::rpc::async_client<cytx::rpc::json_codec>;
+using async_client_t = cytx::rpc::async_client<cytx::codec::json_codec>;
 using connect_ptr = async_client_t::connection_ptr;
 using router_t = typename async_client_t::router_t;
 using irouter_t = typename async_client_t::irouter_t;
@@ -22,7 +22,7 @@ using irouter_ptr = typename async_client_t::irouter_ptr;
 class client_router : public irouter_t
 {
 public:
-    void connection_incoming(const cytx::rpc::rpc_result& err, connection_ptr conn_ptr) override
+    void connection_incoming(const cytx::net_result& err, connection_ptr conn_ptr) override
     {
         std::cout << "on connect" << std::endl;
     }
@@ -30,7 +30,7 @@ public:
     {
         std::cout << "on msg" << std::endl;
     }
-    void connection_terminated(const cytx::rpc::rpc_result& err, connection_ptr conn_ptr) override
+    void connection_terminated(const cytx::net_result& err, connection_ptr conn_ptr) override
     {
         std::cout << "on disconnect" << std::endl;
     }
@@ -39,7 +39,7 @@ public:
 client_router _router;
 
 // create the client
-async_client_t asy_client(cytx::rpc::get_tcp_endpoint("127.0.0.1", 9000), &_router);
+async_client_t asy_client(cytx::util::get_tcp_endpoint("127.0.0.1", 9000), &_router);
 
 void async_client_rpc_example()
 {
@@ -53,7 +53,7 @@ void async_client_rpc_example()
 
     asy_client.call(client::add_with_conn, 9, 10);
 
-    asy_client.call<cytx::rpc::xml_codec>(client::xml_add, 1, 2).on_ok([](auto r)
+    asy_client.call<cytx::codec::xml_codec>(client::xml_add, 1, 2).on_ok([](auto r)
     {
         std::cout << "xml " << r << std::endl;
     }).on_error([](auto const& error)
@@ -77,7 +77,7 @@ void async_client_rpc_example()
         auto const& result = task.get();
         std::cout << result << std::endl;
     }
-    catch (cytx::rpc::rpc_exception const& e)
+    catch (cytx::net_exception const& e)
     {
         std::cout << e.message() << std::endl;
     }
@@ -110,7 +110,7 @@ void test_timeout()
 
 void test_connect();
 
-void on_connect(const cytx::rpc::rpc_result& ec)
+void on_connect(const cytx::net_result& ec)
 {
     using namespace std::chrono_literals;
     if (!ec)
@@ -168,14 +168,14 @@ void test_connect()
                 auto r1 = t1.get();
                 std::cout << r1 << std::endl;
             }
-            catch (cytx::rpc::rpc_exception& e)
+            catch (cytx::net_exception& e)
             {
                 std::cout << e.message() << std::endl;
             }
 
             using namespace std::chrono_literals;
             auto task = asy_client.call(client::add, 66, 23);
-            cytx::rpc::rpc_result e;
+            cytx::net_result e;
             auto r = task.get(e);
             if (r)
                 std::cout << "add, " << r.value() << std::endl;
@@ -193,7 +193,7 @@ void test_connect()
             {
                 std::cout << e.what() << std::endl;
             }
-            catch (cytx::rpc::rpc_exception& e)
+            catch (cytx::net_exception& e)
             {
                 std::cout << "on error, " << e.message() << std::endl;
             }
@@ -204,7 +204,7 @@ void test_connect()
 void test_delay()
 {
     asy_client.connect().on_ok([] {
-        on_connect(cytx::rpc::rpc_result());
+        on_connect(cytx::net_result());
         test_call();
     })
      .on_error([](auto& ec) {
@@ -231,7 +231,7 @@ void test_timeout_func()
             auto r2 = t2.get(std::chrono::milliseconds(1));
             std::cout << r2 << std::endl;
         }
-        catch (cytx::rpc::rpc_exception& e)
+        catch (cytx::net_exception& e)
         {
             std::cout << e.message() << std::endl;
         }

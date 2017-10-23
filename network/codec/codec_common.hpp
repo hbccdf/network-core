@@ -2,7 +2,7 @@
 #include "../base/GameObjectStream.h"
 namespace cytx
 {
-    namespace rpc
+    namespace codec
     {
         struct gos_buffer
         {

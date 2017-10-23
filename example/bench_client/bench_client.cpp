@@ -38,7 +38,7 @@ namespace bench
 
     void bench_async(boost::asio::ip::tcp::endpoint const& endpoint)
     {
-        using client_t = cytx::rpc::async_client<cytx::rpc::gos_codec>;
+        using client_t = cytx::rpc::async_client<cytx::codec::gos_codec>;
 
         auto client = std::make_shared<client_t>(endpoint);
 
@@ -81,7 +81,7 @@ namespace bench
 
     void bench_sync(boost::asio::ip::tcp::endpoint const& endpoint)
     {
-        using client_t = cytx::rpc::sync_client<cytx::rpc::gos_codec>;
+        using client_t = cytx::rpc::sync_client<cytx::codec::gos_codec>;
 
         std::thread{ []
         {
@@ -107,7 +107,7 @@ namespace bench
                     client.call(client::add, a, b++);
                     ++success_count;
                 }
-                catch (cytx::rpc::rpc_exception& e)
+                catch (cytx::net_exception& e)
                 {
                     std::cout << e.message() << std::endl;
                 }
@@ -125,7 +125,7 @@ namespace bench
 int main(int argc, char *argv[])
 {
     using namespace cytx;
-    using namespace cytx::rpc; 
+    using namespace cytx::rpc;
     MemoryPoolManager::get_mutable_instance().init();
     config c;
     DeSerializer<xml_deserialize_adapter> de;
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     de.parse_file("bench.xml");
     de.DeSerialize(c, "config.client");
 
-    auto endpoint = cytx::rpc::get_tcp_endpoint(c.ip, c.port);
+    auto endpoint = cytx::util::get_tcp_endpoint(c.ip, c.port);
     if (c.sync_type == sync_t::async)
     {
         bench::bench_async(endpoint);

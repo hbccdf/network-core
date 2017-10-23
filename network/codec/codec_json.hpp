@@ -5,7 +5,7 @@
 #include "../base/excetion.hpp"
 
 namespace cytx {
-    namespace rpc {
+    namespace codec {
         struct json_codec
         {
             json_codec(bool) {}
@@ -24,7 +24,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -40,7 +40,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -64,7 +64,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
         };

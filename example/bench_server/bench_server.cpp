@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     using namespace std::chrono_literals;
     using namespace cytx;
     using namespace cytx::rpc;
-    using server_t = cytx::rpc::server<cytx::rpc::gos_codec>;
+    using server_t = cytx::rpc::server<cytx::codec::gos_codec>;
     MemoryPoolManager::get_mutable_instance().init();
     config c;
     DeSerializer<xml_deserialize_adapter> de;

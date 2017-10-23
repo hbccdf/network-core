@@ -14,9 +14,9 @@ namespace cytx
             using connection_ptr = std::shared_ptr<connect_type>;
             using header_t = typename connection_t::header_t;
 
-            virtual void connection_incoming(const rpc_result& err, connection_ptr conn_ptr) {};
+            virtual void connection_incoming(const net_result& err, connection_ptr conn_ptr) {};
             virtual void message_received(connection_ptr& ptr, header_t& header, char* data, size_t size) = 0;
-            virtual void connection_terminated(const rpc_result& err, connection_ptr conn_ptr) {};
+            virtual void connection_terminated(const net_result& err, connection_ptr conn_ptr) {};
         };
     }
 }

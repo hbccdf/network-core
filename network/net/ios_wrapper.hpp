@@ -9,20 +9,14 @@
 namespace cytx {
     namespace rpc
     {
-        using io_service_t = boost::asio::io_service;
-        using tcp = boost::asio::ip::tcp;
-        using deadline_timer_t = boost::asio::deadline_timer;
-        using steady_timer_t = boost::asio::steady_timer;
-        using duration_t = steady_timer_t::duration;
-
         class ios_wrapper
         {
+        public:
+            using io_service_t = boost::asio::io_service;
+        private:
             using this_t = ios_wrapper;
             using inter_server_ptr = std::shared_ptr<io_service_t>;
             using work_ptr = std::unique_ptr<io_service_t::work>;
-            using lock_t = std::unique_lock<std::mutex>;
-        public:
-            using io_service_t = boost::asio::io_service;
         public:
             ios_wrapper()
                 : is_owner_(true)

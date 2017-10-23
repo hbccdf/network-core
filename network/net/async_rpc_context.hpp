@@ -1,12 +1,13 @@
 #pragma once
 #include <functional>
 #include <vector>
+#include <queue>
 #include <boost/asio.hpp>
 #include <boost/make_unique.hpp>
 #include "../base/excetion.hpp"
+#include "../timer/schedule_timer.hpp"
+#include "msg_header.hpp"
 #include "wait_barrier.hpp"
-#include <queue>
-#include "schedule_timer.hpp"
 
 namespace cytx {
     namespace rpc
@@ -19,7 +20,7 @@ namespace cytx {
         {
             using buffer_t = buffer_type;
             using success_function_t = std::function<void(char const*, size_t)>;
-            using on_error_function_t = std::function<void(rpc_result const&)>;
+            using on_error_function_t = std::function<void(net_result const&)>;
             using asio_buffers = std::vector<boost::asio::const_buffer>;
             using post_func_t = std::function<void()>;
             using message_t = std::vector<char>;
@@ -140,7 +141,7 @@ namespace cytx {
                 }
             }
 
-            void error(const rpc_result& recv_error)
+            void error(const net_result& recv_error)
             {
                 err = recv_error;
                 post_error();
@@ -172,7 +173,7 @@ namespace cytx {
                     barrier_ptr->wait();
 
                 if (err)
-                    throw rpc_exception(err);
+                    throw net_exception(err);
             }
 
             void apply_post_func() const
@@ -208,7 +209,7 @@ namespace cytx {
             header_t head;
             std::vector<char> recv_msg;
             asio_buffers send_buffer;
-            rpc_result err;
+            net_result err;
             success_function_t on_ok;
             on_error_function_t on_error;
             post_func_t post_func;
@@ -228,7 +229,7 @@ namespace cytx {
             using base_t = base_rpc_context<buffer_type, msg_header>;
             using buffer_t = buffer_type;
             using success_function_t = std::function<void(char const*, size_t)>;
-            using on_error_function_t = std::function<void(rpc_result const&)>;
+            using on_error_function_t = std::function<void(net_result const&)>;
             using asio_buffers = std::vector<boost::asio::const_buffer>;
             using post_func_t = std::function<void()>;
             using message_t = std::vector<char>;

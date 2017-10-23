@@ -151,7 +151,7 @@ namespace cytx {
                 router_.set_on_read([this](connection_ptr conn_ptr, header_t& header)
                 {
                     auto read_buffer = conn_ptr->get_read_buffer();
-                    auto gos_ptr = std::make_shared<gos_buffer>(read_buffer.data(), read_buffer.data() + read_buffer.size());
+                    auto gos_ptr = std::make_shared<cytx::codec::gos_buffer>(read_buffer.data(), read_buffer.data() + read_buffer.size());
 
                     msg_ios_.service().post([conn_ptr, header, this, gos_ptr] () mutable
                     {

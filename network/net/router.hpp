@@ -19,7 +19,7 @@ namespace cytx {
             using invoker_t = std::function<void(connection_ptr, header_t&, const char*)>;
             using invoker_container = std::unordered_map<uint64_t, invoker_t>;
             using on_read_func = std::function<void(connection_ptr, header_t&)>;
-            using on_error_func = std::function<void(connection_ptr, rpc_result const& error)>;
+            using on_error_func = std::function<void(connection_ptr, net_result const& error)>;
             using before_invoke_func = std::function<bool(connection_ptr, const header_t&, const char*, size_t)>;
             using before_send_func = std::function<bool(connection_ptr, const header_t&)>;
             using after_send_func = std::function<void(connection_ptr, const header_t&)>;
@@ -37,7 +37,7 @@ namespace cytx {
             inline bool has_invoker(uint64_t name) noexcept;
 
             inline void on_read(connection_ptr const& conn_ptr, header_t& header);
-            inline void on_error(connection_ptr const& conn_ptr, rpc_result const& error);
+            inline void on_error(connection_ptr const& conn_ptr, net_result const& error);
             inline void set_on_read(on_read_func&& on_read);
             inline void set_on_error(on_error_func&& on_error);
             inline void set_before_invoker(before_invoke_func&& before_invoker);

@@ -11,6 +11,7 @@ namespace cytx {
             using async_client_t = async_client<codec_policy, header_type>;
             using async_client_ptr = std::shared_ptr<async_client_t>;
             using header_t = header_type;
+            using tcp = boost::asio::ip::tcp;
 
         public:
             sync_client(tcp::endpoint const& endpoint)

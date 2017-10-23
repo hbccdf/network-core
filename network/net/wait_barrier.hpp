@@ -8,6 +8,7 @@ namespace cytx {
     {
         class ios_result_barrier
         {
+            using lock_t = std::unique_lock<std::mutex>;
         public:
             using ios_t = ios_wrapper;
             ios_result_barrier(ios_t& ios)

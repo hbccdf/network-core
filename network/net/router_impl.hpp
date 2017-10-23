@@ -25,7 +25,7 @@ namespace cytx
         }
 
         template<typename T>
-        void router_base<T>::on_error(connection_ptr const& conn_ptr, rpc_result const& error)
+        void router_base<T>::on_error(connection_ptr const& conn_ptr, net_result const& error)
         {
             if (on_error_)
                 on_error_(conn_ptr, error);
@@ -171,7 +171,7 @@ namespace cytx
                     invoker(conn, header, data);
                 }
             }
-            catch (rpc_exception const& error)
+            catch (net_exception const& error)
             {
                 if (!header.need_reply())
                     return;

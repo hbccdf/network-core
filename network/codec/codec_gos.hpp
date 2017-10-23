@@ -5,7 +5,7 @@
 #include "codec_common.hpp"
 
 namespace cytx {
-    namespace rpc {
+    namespace codec {
         struct gos_codec
         {
             gos_codec(bool big_endian) : is_big_endian_(big_endian) {}
@@ -24,7 +24,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -40,7 +40,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -57,7 +57,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -72,7 +72,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -111,7 +111,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -132,7 +132,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::rpc_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 

@@ -21,6 +21,7 @@ namespace cytx {
             using irouter_t = typename connection_t::irouter_t;
             using irouter_ptr = typename connection_t::irouter_ptr;
             using rpc_call_t = rpc_call<codec_policy, header_t>;
+            using tcp = boost::asio::ip::tcp;
 
         public:
             async_client(tcp::endpoint endpoint, irouter_ptr irouter = nullptr)

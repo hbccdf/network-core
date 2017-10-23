@@ -24,7 +24,7 @@
               ( ((l) << 56) & 0xFF00000000000000LL ) )
 
 namespace cytx {
-    namespace rpc
+    namespace util
     {
         inline std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string_list)
         {

@@ -48,13 +48,14 @@ namespace cytx {
             using io_service_t = typename ios_t::io_service_t;
             using irouter_t = typename connection_t::irouter_t;
             using irouter_ptr = typename connection_t::irouter_ptr;
+            using tcp = boost::asio::ip::tcp;
 
         public:
             server(const std::string& ip, uint16_t port, irouter_ptr irouter = nullptr)
                 : base_t()
                 , ios_pool_(0)
                 , ios_(ios_pool_.get_main_service())
-                , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
+                , acceptor_(ios_.service(), cytx::util::get_tcp_endpoint(ip, port), true)
                 , irouter_(irouter)
             {
             }
@@ -71,7 +72,7 @@ namespace cytx {
                 : base_t()
                 , ios_pool_(ios, 0)
                 , ios_(ios_pool_.get_main_service())
-                , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
+                , acceptor_(ios_.service(), cytx::util::get_tcp_endpoint(ip, port), true)
                 , irouter_(irouter)
             {
             }
@@ -88,7 +89,7 @@ namespace cytx {
                 : base_t()
                 , ios_pool_(get_thread_count(options.thread_mode))
                 , ios_(ios_pool_.get_main_service())
-                , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
+                , acceptor_(ios_.service(), cytx::util::get_tcp_endpoint(ip, port), true)
                 , irouter_(irouter)
             {
             }
@@ -97,7 +98,7 @@ namespace cytx {
                 : base_t()
                 , ios_pool_(ios, get_thread_count(options.thread_mode))
                 , ios_(ios_pool_.get_main_service())
-                , acceptor_(ios_.service(), get_tcp_endpoint(ip, port), true)
+                , acceptor_(ios_.service(), cytx::util::get_tcp_endpoint(ip, port), true)
                 , irouter_(irouter)
             {
             }

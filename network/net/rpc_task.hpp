@@ -1,7 +1,6 @@
 #pragma once
 #include "async_rpc_channel.hpp"
 #include <boost/optional.hpp>
-#include "schedule_timer.hpp"
 
 namespace cytx
 {
@@ -55,7 +54,7 @@ namespace cytx
                         auto on_ok_func = [c = client_, ctx = ctx_]() mutable {
                             if (c->irouter())
                             {
-                                c->irouter()->connection_incoming(rpc_result(), c);
+                                c->irouter()->connection_incoming(net_result(), c);
                             }
                             c->call_context(ctx);
                         };
@@ -104,7 +103,7 @@ namespace cytx
                         }
                         else
                         {
-                            throw cytx::rpc::rpc_exception(ec);
+                            throw cytx::net_exception(ec);
                         }
                     }
                     else
@@ -259,13 +258,13 @@ namespace cytx
                 this->do_call_and_wait();
             }
 
-            void wait(cytx::rpc::rpc_result& ec, duration_t const& duration = duration_t::max()) &
+            void wait(cytx::net_result& ec, duration_t const& duration = duration_t::max()) &
             {
                 try
                 {
                     wait(duration);
                 }
-                catch(cytx::rpc::rpc_exception& e)
+                catch(cytx::net_exception& e)
                 {
                     ec = e.result();
                 }
@@ -277,7 +276,7 @@ namespace cytx
                 return *result_;
             }
 
-            boost::optional<result_type> get(cytx::rpc::rpc_result& ec, duration_t const& duration = duration_t::max()) &
+            boost::optional<result_type> get(cytx::net_result& ec, duration_t const& duration = duration_t::max()) &
             {
                 boost::optional<result_type> r;
                 try
@@ -285,7 +284,7 @@ namespace cytx
                     wait(duration);
                     r = *result_;
                 }
-                catch (cytx::rpc::rpc_exception& e)
+                catch (cytx::net_exception& e)
                 {
                     ec = e.result();
                 }
@@ -396,13 +395,13 @@ namespace cytx
                 this->do_call_and_wait();
             }
 
-            void wait(cytx::rpc::rpc_result& ec, duration_t const& duration = duration_t::max()) &
+            void wait(cytx::net_result& ec, duration_t const& duration = duration_t::max()) &
             {
                 try
                 {
                     wait(duration);
                 }
-                catch (cytx::rpc::rpc_exception& e)
+                catch (cytx::net_exception& e)
                 {
                     ec = e.result();
                 }
@@ -417,7 +416,7 @@ namespace cytx
             using client_private_t = async_rpc_channel<codec_policy, header_type>;
             using client_private_ptr = std::shared_ptr<client_private_t>;
             using on_ok_func_t = std::function<void()>;
-            using on_error_func_t = std::function<void(const rpc_result&)>;
+            using on_error_func_t = std::function<void(const net_result&)>;
             using timer_t = schedule_timer;
             using duration_t = typename timer_t::duration_t;
             using timer_ptr = std::shared_ptr<timer_t>;
@@ -488,7 +487,7 @@ namespace cytx
                 return std::move(*this).delay(duration_t(milliseconds));
             }
 
-            rpc_result wait(duration_t const& duration = duration_t::max()) &
+            net_result wait(duration_t const& duration = duration_t::max()) &
             {
                 if (!this->dismiss_)
                 {
@@ -499,7 +498,7 @@ namespace cytx
 
                     if (nullptr == result_)
                     {
-                        result_ = std::make_shared<rpc_result>();
+                        result_ = std::make_shared<net_result>();
                     }
 
                     create_barrier();
@@ -561,7 +560,7 @@ namespace cytx
                             }
                             else
                             {
-                                *r = rpc_result(error_code::timeout);
+                                *r = net_result(error_code::timeout);
                             }
                             b->notify();
                         };
@@ -589,7 +588,7 @@ namespace cytx
             on_ok_func_t on_ok_;
             on_error_func_t on_error_;
             std::shared_ptr<ios_result_barrier> barrier_ptr_;
-            std::shared_ptr<rpc_result> result_;
+            std::shared_ptr<net_result> result_;
             timer_ptr timer_ptr_;
             duration_t duration_;
             timer_ptr timer_timeout_ptr_;
