@@ -32,7 +32,7 @@ namespace cytx {
             {
                 try
                 {
-                    DeSerializer<json_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple));
+                    DeSerializer<xml_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple));
                     dr.parse(data, length);
 
                     return dr.GetTuple<T>();
