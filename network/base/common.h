@@ -69,8 +69,10 @@ namespace cytx {
         repeat_connect,
         no_handler,
         remote_error,
+        recv_error,
+        send_error,
     };
     REG_ENUM(error_code, ok, unknown, fail, timeout, cancel, connect_fail, badconnect, codec_fail, invalid_header, be_disconnected,
-        repeat_connect, no_handler, remote_error);
+        repeat_connect, no_handler, remote_error, recv_error, send_error);
 }
 
