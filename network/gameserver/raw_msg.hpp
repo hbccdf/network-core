@@ -7,6 +7,8 @@
 namespace cytx {
     namespace gameserver {
 
+        using stream_t = cytx::GameObjectStream;
+
         struct msg_header
         {
             using this_t = msg_header;
@@ -149,6 +151,17 @@ namespace cytx {
                 data_ = NEW_ARRAY_MP(char, length_);
             }
 
+            void reset(char* data_ptr, int data_size)
+            {
+                if (data_)
+                {
+                    DELETE_ARRAY_MP(char, data_, length_);
+                }
+                data_ = data_ptr;
+                length_ = data_size;
+                offset_ = 0;
+            }
+
             char* raw_data() const
             {
                 return data_;
@@ -193,6 +206,12 @@ namespace cytx {
                 }
             }
 
+            void reset(char* data_ptr, int data_size)
+            {
+                header_.length = (uint32_t)data_size;
+                body_.reset(data_ptr, data_size);
+            }
+
             char* raw_data() const
             {
                 return body_.raw_data();
@@ -202,6 +221,12 @@ namespace cytx {
             {
                 return body_.data();
             }
+
+            uint32_t raw_length() const { return body_.raw_length(); }
+            uint32_t length() const { return body_.length(); }
+
+            const header_t& header() const { return header_; }
+            header_t& header() { return header_; }
 
             void hton()
             {
@@ -228,6 +253,12 @@ namespace cytx {
             uint32_t total_length() const
             {
                 return (uint32_t)sizeof(header_t) + header_.length;
+            }
+
+            stream_t get_stream() const
+            {
+                stream_t gos(data(), (int)length(), 0);
+                return gos;
             }
         };
 

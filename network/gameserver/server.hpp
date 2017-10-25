@@ -12,10 +12,12 @@ namespace cytx
             one_io_thread,
             more_io_thread,
         };
+
         struct server_options
         {
             server_thread_mode thread_mode;
             int32_t disconnect_interval;
+            bool batch_send_msg;
         };
 
         inline uint32_t get_thread_count(server_thread_mode thread_mode)
@@ -42,6 +44,7 @@ namespace cytx
             using connection_t = tcp_connection<msg_t>;
             using connection_ptr = std::shared_ptr<tcp_connection>;
             using msg_ptr = typename connection_t::msg_ptr;
+            using irouter_t = typename connection_t::irouter_t;
             using irouter_ptr = typename connection_t::irouter_ptr;
             using io_service_t = boost::asio::io_service;
             using ec_t = boost::system::error_code;
@@ -77,7 +80,11 @@ namespace cytx
             void do_accept()
             {
                 ++cur_conn_id_;
-                auto new_connection = std::make_shared<connection_t>(ios_pool_.get_io_service(), router_ptr_, cur_conn_id_, options_.disconnect_interval);
+                connection_options conn_options;
+                conn_options.batch_send_msg = options_.batch_send_msg;
+                conn_options.disconnect_interval = options_.disconnect_interval;
+
+                auto new_connection = std::make_shared<connection_t>(ios_pool_.get_io_service(), router_ptr_, cur_conn_id_, conn_options);
 
                 acceptor_.async_accept(new_connection->socket(),
                     [this, new_connection](const ec_t& err)

@@ -148,6 +148,11 @@ namespace cytx
             };
         }
 
+        struct connection_options
+        {
+            int32_t disconnect_interval;
+            bool batch_send_msg;
+        };
 
         template<typename MSG>
         class tcp_connection : public std::enable_shared_from_this<tcp_connection<MSG>>
@@ -170,11 +175,11 @@ namespace cytx
             using batch_msg_ptr = std::shared_ptr<batch_msg_t>;
 
         public:
-            tcp_connection(io_service_t& ios, irouter_ptr router, int32_t conn_id, int32_t disconnect_interval)
+            tcp_connection(io_service_t& ios, irouter_ptr router, int32_t conn_id, const connection_options& options)
                 : ios_(ios)
                 , router_ptr_(router)
                 , conn_id_(conn_id)
-                , disconnect_interval_(disconnect_interval)
+                , options_(options)
                 , timer_mgr_(ios_)
             {
 
@@ -245,7 +250,11 @@ namespace cytx
             }
             void start_timer()
             {
-                timer_mgr_.set_auto_timer(disconnect_interval_ * 1000, cytx::bind(&this_t::handle_timer, shared_from_this()));
+                int32_t timeout = options_.disconnect_interval;
+                if (timeout > 0)
+                {
+                    timer_mgr_.set_auto_timer(timeout * 1000, cytx::bind(&this_t::handle_timer, shared_from_this()));
+                }
             }
             void stop_timer()
             {
@@ -331,7 +340,7 @@ namespace cytx
 
                 using namespace boost::asio;
 
-                if (write_msg_queue_.size() == 1)
+                if (!options_.batch_send_msg || write_msg_queue_.size() == 1)
                 {
                     msg_ptr msgp = write_msg_queue_.front();
                     msgp->hton();
@@ -419,11 +428,11 @@ namespace cytx
             io_service_t& ios_;
             int32_t conn_id_ = 0;
             bool received_msg_ = false;
-            int32_t disconnect_interval_ = 0;
 
             std::atomic<bool> is_running_{ false };
             std::atomic<bool> force_close_error_{ false };
             irouter_ptr router_ptr_ = nullptr;
+            connection_options options_;
 
             socket_t socket_;
             std::string host_;

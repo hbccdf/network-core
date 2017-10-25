@@ -1,21 +1,12 @@
 #pragma once
-#include <spdlog/spdlog.h>
 #include <memory>
-#include "../meta/meta.hpp"
+#include <spdlog/spdlog.h>
 #include <boost/filesystem.hpp>
+#include "../meta/meta.hpp"
 
 namespace cytx
 {
-    enum class log_level_t
-    {
-        trace = 0,
-        debug = 1,
-        info = 2,
-        warn = 3,
-        err = 4,
-        critical = 5,
-        off = 6
-    };
+    using log_level_t = spdlog::level::level_enum;
     REG_ENUM(log_level_t, trace, debug, info, warn, err, critical, off);
 
     namespace fs = boost::filesystem;
@@ -120,7 +111,7 @@ namespace cytx
             if (!ptr)
             {
                 ptr = spdlog::stdout_logger_mt(log_name);
-                ptr->set_level(spdlog::level::level_enum::off);
+                ptr->set_level(log_level_t::off);
             }
             return ptr;
         }
@@ -137,7 +128,7 @@ namespace cytx
             if (auto_init)
             {
                 log_ = spdlog::stdout_logger_mt("___auto_init_log");
-                log_->set_level(spdlog::level::level_enum::off);
+                log_->set_level(log_level_t::off);
             }
         }
 
@@ -152,16 +143,16 @@ namespace cytx
             {
                 log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating });
             }
-            log_->set_level((spdlog::level::level_enum)lvl);
-            log_->flush_on(spdlog::level::level_enum::err);
+            log_->set_level(lvl);
+            log_->flush_on(log_level_t::err);
             log_->set_formatter(std::make_shared<my_formater>());
         }
 
         void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
         {
             log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ log_sink_manager::get_console_sink() });
-            log_->set_level((spdlog::level::level_enum)lvl);
-            log_->flush_on(spdlog::level::level_enum::err);
+            log_->set_level(lvl);
+            log_->flush_on(log_level_t::err);
             log_->set_formatter(std::make_shared<my_formater>());
         }
 
@@ -179,7 +170,7 @@ namespace cytx
         {
             if (lvl >= log_level_t::trace && lvl <= log_level_t::off)
             {
-                log_->set_level((spdlog::level::level_enum)lvl);
+                log_->set_level(lvl);
             }
         }
 

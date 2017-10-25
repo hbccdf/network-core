@@ -22,6 +22,10 @@ namespace cytx
 
         void init()
         {
+            if (is_init_)
+                return;
+
+            is_init_ = true;
             std::set_new_handler(malloc_faild);
 
             std::size_t memory_pool_size = 1;
@@ -318,6 +322,6 @@ namespace cytx
         std::map<const std::size_t, std::vector<void*> > debug_map_memory_pool;
 #endif
 
-
+        bool is_init_ = false;
     };
 }

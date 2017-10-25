@@ -23,20 +23,33 @@ namespace cytx
                 data_ = NEW_ARRAY_MP(char, (int)size_);
                 memcpy(data_, begin, size_);
             }
+            gos_buffer(const char* const begin, size_t size)
+            {
+                size_ = size;
+                data_ = NEW_ARRAY_MP(char, (int)size_);
+                memcpy(data_, begin, size_);
+            }
             ~gos_buffer()
             {
                 if (data_)
                     DELETE_ARRAY_MP(char, data_, (int)size_);
             }
 
+            char* data() const { return data_; }
+            size_t size() const { return size_; }
+
+            char* begin() const { return data_; }
+            char* end() const { return data_ + size_; }
+
+            void reset()
+            {
+                data_ = nullptr;
+                size_ = 0;
+            }
+
+        private:
             char* data_;
             size_t size_;
-
-            char* data() { return data_; }
-            size_t size() { return size_; }
-
-            char* begin() { return data_; }
-            char* end() { return data_ + size_; }
         };
     }
 }
