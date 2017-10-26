@@ -10,6 +10,7 @@
 #include "../timer/timer_manager.hpp"
 #include "raw_msg.hpp"
 #include "irouter_base.hpp"
+#include "async_func.hpp"
 
 #define CLIENT_MSG_BUFF_MAX 1024 * 100 //100K
 
@@ -123,7 +124,6 @@ namespace cytx
                 const std::vector<msg_ptr>& get_msgs() const { return msg_list_; }
 
             private:
-                template<typename T>
                 bool parse_header(const void* src)
                 {
                     memcpy(&header_, src, header_length_);
@@ -139,9 +139,9 @@ namespace cytx
                 }
             private:
                 const size_t header_length_ = sizeof(header_t);
-                std::array<char, CLIENT_MSG_BUFF_MAX> buff_;
+                boost::array<char, CLIENT_MSG_BUFF_MAX> buff_;
                 header_t header_;
-                size_t cur_len_ = 0;
+                size_t cur_len_ = -1;
                 size_t remain_len_ = 0; //half_baked_msg
                 size_t cur_index_ = 0;
                 std::vector<msg_ptr> msg_list_;
@@ -166,13 +166,15 @@ namespace cytx
             using irouter_ptr = irouter_t*;
             using io_service_t = boost::asio::io_service;
             using connection_t = this_t;
-            using connection_ptr = std::shared_ptr<connection_ptr>;
+            using connection_ptr = std::shared_ptr<connection_t>;
             using socket_t = boost::asio::ip::tcp::socket;
             using endpoint_t = boost::asio::ip::tcp::endpoint;
-            using reader_t = connection_reader<msg_t>;
+            using reader_t = detail::connection_reader<msg_t>;
             using ec_t = boost::system::error_code;
             using batch_msg_t = batch_msg<msg_t>;
             using batch_msg_ptr = std::shared_ptr<batch_msg_t>;
+            //using call_manager_t = call_manager<msg_t>;
+            using handler_t = detail::handler_t<msg_ptr>;
 
         public:
             tcp_connection(io_service_t& ios, irouter_ptr router, int32_t conn_id, const connection_options& options)
@@ -180,7 +182,9 @@ namespace cytx
                 , router_ptr_(router)
                 , conn_id_(conn_id)
                 , options_(options)
+                , socket_(ios_)
                 , timer_mgr_(ios_)
+                //, call_mgr_(ios_)
             {
 
             }
@@ -230,15 +234,31 @@ namespace cytx
                 if (!is_running_)
                     return;
 
-                ios_.post(cytx::bind(&this_t::do_write, shared_from_this(), msgp));
+                ios_.post(std::bind(&this_t::do_write, shared_from_this(), msgp));
             }
+
+            msg_ptr await_write(msg_ptr msgp)
+            {
+                if (!is_running_)
+                    return nullptr;
+
+                io_service_t& ios = get_current_ios();
+                return detail::async_await(ios, [this, msgp] (handler_t handler)
+                {
+                    ios_.post(std::bind(&this_t::do_await_write, shared_from_this(), msgp, handler));
+                });
+            }
+
+            io_service_t& get_io_service() { return ios_; }
+
+            socket_t& socket() { return socket_; }
 
         private:
             void reset_state()
             {
                 ec_t ec;
                 socket_.set_option(boost::asio::ip::tcp::no_delay(true), ec);
-                is_running_ = false;
+                is_running_ = true;
                 force_close_error_ = false;
                 write_msg_queue_.clear();
                 received_msg_ = false;
@@ -268,7 +288,7 @@ namespace cytx
 
                 stop_timer();
                 ec_t ec;
-                socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+                socket_.shutdown(socket_t::shutdown_both, ec);
                 socket_.close(ec);
                 write_msg_queue_.clear();
                 force_close_error_ = true;
@@ -288,6 +308,20 @@ namespace cytx
                     return;
 
                 async_write_msg();
+            }
+            void do_await_write(msg_ptr msgp, handler_t handler)
+            {
+                if (!is_running_)
+                    return;
+
+                uint32_t& call_id = msgp->header().call_id;
+                if (call_id <= 0)
+                {
+                    call_id = ++cur_call_id_;
+                }
+                calls_.emplace(call_id, handler);
+
+                do_write(msgp);
             }
 
             void handle_connect(const ec_t& err)
@@ -327,7 +361,7 @@ namespace cytx
             }
             void handle_timer()
             {
-                if (!receive_msg_)
+                if (!received_msg_)
                 {
                     on_error(cytx::error_code::timeout);
                 }
@@ -399,7 +433,7 @@ namespace cytx
                 bool has_msg = reader_.parse(bytes_transfered);
                 if (has_msg)
                 {
-                    router_ptr_->message_received(shared_from_this(), reader_.get_msgs());
+                    on_receive_msgs(reader_.get_msgs());
                 }
                 else
                 {
@@ -418,11 +452,35 @@ namespace cytx
                     return;
 
                 is_running_ = false;
-                router_ptr_.connection_terminated(shared_from_this(), err);
+                router_ptr_->on_disconnect(shared_from_this(), err);
             }
-            void on_error(const ec_t& ec, cytx::error_code)
+            void on_error(const ec_t& ec, cytx::error_code err)
             {
                 on_error(net_result(err, ec));
+            }
+
+            void on_receive_msgs(const std::vector<msg_ptr>& msg_list)
+            {
+                auto conn_ptr = shared_from_this();
+                for (auto& msgp : msg_list)
+                {
+                    uint32_t call_id = msgp->header().call_id;
+                    if (call_id > 0)
+                    {
+                        auto it = calls_.find(call_id);
+                        if (it != calls_.end())
+                        {
+                            handler_t handler = it->second;
+                            calls_.erase(it);
+
+                            using boost::asio::asio_handler_invoke;
+                            asio_handler_invoke(std::bind(handler, msgp), &handler);
+                            continue;
+                        }
+                    }
+
+                    router_ptr_->on_receive(conn_ptr, msgp);
+                }
             }
         private:
             io_service_t& ios_;
@@ -444,6 +502,9 @@ namespace cytx
             reader_t reader_;
 
             timer_manager timer_mgr_;
+            //call_manager_t call_mgr_;
+            uint32_t cur_call_id_ = 0;
+            std::map<uint32_t, handler_t> calls_;
         };
     }
 }

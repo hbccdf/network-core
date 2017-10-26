@@ -13,7 +13,7 @@ namespace cytx
             using namespace cytx;
             using namespace cytx::gameserver;
 
-            using msg_t = server_msg<msg_body>;
+            using msg_t = cytx::gameserver::server_msg<cytx::gameserver::msg_body>;
             using header_t = typename msg_t::header_t;
             using server_t = tcp_server<msg_t>;
             using server_ptr = std::unique_ptr<server_t>;
@@ -39,6 +39,8 @@ namespace cytx
                 {
                     //初始化内存池
                     MemoryPoolManager::get_mutable_instance().init();
+
+                    cytx::log::get().init(log_level_t::debug);
                     //读取配置文件
                     config_mgr_.init(config_file_name);
                     config_mgr_.parse_real_ip(cytx::util::domain2ip);
@@ -82,20 +84,7 @@ namespace cytx
                 template<typename MSG_ID, typename T>
                 void send_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
                 {
-                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
-                    if (!conn_ptr)
-                    {
-                        //TODO log error
-                        return;
-                    }
-
-                    msg_ptr msgp = pack_msg(t, header_t::big_endian());
-                    auto& header = msgp->header();
-                    header.protocol_id = (uint32_t)msg_id;
-                    header.from_unique_id = (uint16_t)unique_id_;
-                    header.to_unique_id = (uint16_t)unique_id;
-
-                    send_raw_msg(conn_ptr, msgp);
+                    inter_send_msg(unique_id, msg_id, t);
                 }
 
                 template<typename MSG_ID, typename T>
@@ -138,18 +127,60 @@ namespace cytx
 
                     send_raw_msg(conn_ptr, msgp);
                 }
+
+            public:
+                template<typename RETURN_T, typename MSG_ID, typename T>
+                RETURN_T async_await_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
+                {
+                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
+                    if (!conn_ptr)
+                    {
+                        //TODO log error
+                        return nullptr;
+                    }
+
+                    msg_ptr send_msgp = pack_msg(t, header_t::big_endian());
+                    auto& header = send_msgp->header();
+                    header.protocol_id = (uint32_t)msg_id;
+                    header.from_unique_id = (uint16_t)unique_id_;
+                    header.to_unique_id = (uint16_t)unique_id;
+
+                    msg_ptr msgp = conn_ptr->await_write(send_msgp);
+                    return unpack<RETURN_T>(msgp);
+                }
             private:
-                void on_connect(connection_ptr& conn_ptr, const net_result& err)
+                void on_connect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-
+                    LOG_DEBUG("new conenct {}", err.message());
                 }
-                void on_disconnect(connection_ptr& conn_ptr, const net_result& err)
+                void on_disconnect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-
+                    LOG_DEBUG("new disconnect {}", err.message());
                 }
-                void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp)
+                void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
                 {
+                    uint32_t protocol_id = msgp->header().protocol_id;
+                    LOG_DEBUG("receive msg {}", protocol_id);
+                }
 
+                template<typename MSG_ID, typename T>
+                msg_ptr inter_send_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
+                {
+                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
+                    if (!conn_ptr)
+                    {
+                        //TODO log error
+                        return nullptr;
+                    }
+
+                    msg_ptr msgp = pack_msg(t, header_t::big_endian());
+                    auto& header = msgp->header();
+                    header.protocol_id = (uint32_t)msg_id;
+                    header.from_unique_id = (uint16_t)unique_id_;
+                    header.to_unique_id = (uint16_t)unique_id;
+
+                    send_raw_msg(conn_ptr, msgp);
+                    return msgp;
                 }
 
                 void send_raw_msg(connection_ptr& conn_ptr, msg_ptr& msgp)
@@ -180,6 +211,8 @@ namespace cytx
                 server_config_manager config_mgr_;
                 server_ptr server_;
                 timer_manager_ptr timer_mgr_;
+                //call_manager_ptr call_mgr_;
+
                 std::vector<log_ptr_t> logs_;
                 timer_t flush_log_timer_;
 
@@ -191,5 +224,6 @@ namespace cytx
                 //其他服务不确定
             };
         }
+        using game_server = detail::game_server;
     }
 }

@@ -29,6 +29,12 @@ namespace cytx
                 data_ = NEW_ARRAY_MP(char, (int)size_);
                 memcpy(data_, begin, size_);
             }
+            gos_buffer(GameObjectStream& gos)
+            {
+                data_ = gos.data_;
+                size_ = gos.length();
+                gos.alloc_type_ = 0;
+            }
             ~gos_buffer()
             {
                 if (data_)

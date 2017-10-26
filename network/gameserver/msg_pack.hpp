@@ -20,7 +20,7 @@ namespace cytx
             };
 
             template<typename T>
-            struct is_thrift_msg<std::void_t<std::enable_if_t<std::is_base_of<std::decay_t<T>, thrift_base_t>::value>>> : std::true_type
+            struct is_thrift_msg<T, std::void_t<std::enable_if_t<std::is_base_of<T, thrift_base_t>::value>>> : std::true_type
             {
 
             };
@@ -31,7 +31,7 @@ namespace cytx
             };
 
             template<typename T>
-            struct is_gos_msg<std::void_t<std::enable_if_t<has_meta_macro<T>::value>>> : std::true_type
+            struct is_gos_msg<T, std::void_t<std::enable_if_t<cytx::has_meta_macro<T>::value>>> : std::true_type
             {
 
             };
@@ -69,6 +69,11 @@ namespace cytx
             }
 
             template<typename T>
+            auto pack_msg_impl(gos_t& gos, const T& t, bool is_big_endian) -> std::enable_if_t<!is_gos_msg<T>::value && !is_thrift_msg<T>::value>
+            {
+            }
+
+            template<typename T>
             auto pack_msg_impl(const T& t, bool is_big_endian) -> std::enable_if_t<is_thrift_msg<T>::value, buffer_t>
             {
                 cytx::codec::thrift_codec codec{ is_big_endian };
@@ -81,8 +86,17 @@ namespace cytx
                 cytx::codec::gos_codec codec{ is_big_endian };
                 return codec.pack(t);
             }
+
+            template<typename T>
+            auto pack_msg_impl(const T& t, bool is_big_endian) -> std::enable_if_t<!is_gos_msg<T>::value && !is_thrift_msg<T>::value, buffer_t>
+            {
+                buffer_t buffer;
+                return buffer;
+            }
         }
 
+        using msg_t = cytx::gameserver::server_msg<cytx::gameserver::msg_body>;
+        using msg_ptr = std::shared_ptr<msg_t>;
         template<typename T>
         msg_ptr pack_msg(const T& t, bool is_big_endian = true)
         {
@@ -95,7 +109,7 @@ namespace cytx
         }
 
         template<typename T>
-        void pack_msg(gos_t& gos, const T& t, bool is_big_endian = true)
+        void pack_msg(detail::gos_t& gos, const T& t, bool is_big_endian = true)
         {
             pack_msg_impl<T>(gos, t, is_big_endian);
         }
@@ -112,6 +126,13 @@ namespace cytx
             msg->reset(gos.data_, gos.length());
             gos.alloc_type_ = 0;
             return msg;
+        }
+
+        template<typename T>
+        T unpack(msg_ptr msgp)
+        {
+            T t;
+            return t;
         }
     }
 }

@@ -40,9 +40,9 @@ namespace cytx
         {
         public:
             using msg_t = MSG;
-            using acceptor_t = boost::asio::tcp::acceptor;
+            using acceptor_t = boost::asio::ip::tcp::acceptor;
             using connection_t = tcp_connection<msg_t>;
-            using connection_ptr = std::shared_ptr<tcp_connection>;
+            using connection_ptr = std::shared_ptr<connection_t>;
             using msg_ptr = typename connection_t::msg_ptr;
             using irouter_t = typename connection_t::irouter_t;
             using irouter_ptr = typename connection_t::irouter_ptr;
@@ -87,13 +87,13 @@ namespace cytx
                 auto new_connection = std::make_shared<connection_t>(ios_pool_.get_io_service(), router_ptr_, cur_conn_id_, conn_options);
 
                 acceptor_.async_accept(new_connection->socket(),
-                    [this, new_connection](const ec_t& err)
+                    [this, new_connection](const ec_t& err) mutable
                 {
                     if (!err)
                     {
                         new_connection->start();
                         if (router_ptr_)
-                            router_ptr_->connection_incoming(new_connection, err);
+                            router_ptr_->on_connect(new_connection, err);
                     }
                     else
                     {

@@ -356,7 +356,7 @@ namespace cytx
     template< typename ENUM_T, typename T>
     std::vector<std::pair<const char*, ENUM_T>> get_vec(T& t)
     {
-        vector<std::pair<const char*, ENUM_T>> vec;
+        std::vector<std::pair<const char*, ENUM_T>> vec;
         for_each(t, [&vec](const auto& p, size_t I, bool is_last)
         {
             vec.push_back(p);
@@ -442,9 +442,9 @@ namespace cytx
             {
                 for (auto& v : *it->second)
                 {
-                    auto r = v->to_string(t, split_field);
-                    if (r)
-                        return r;
+                    result = v->to_string(t, split_field);
+                    if (result)
+                        return result;
                 }
             }
             return result;
@@ -458,9 +458,9 @@ namespace cytx
             {
                 for (auto& v : *it->second)
                 {
-                    auto r = v->to_string(t, split_field);
-                    if (r)
-                        return r;
+                    result = v->to_string(t, split_field);
+                    if (result)
+                        return result;
                 }
             }
             return result;
@@ -477,9 +477,9 @@ namespace cytx
             {
                 for (auto& v : *it->second)
                 {
-                    auto r = v->to_enum<T>(str, has_enum_name, std::forward<vector<const char*>>(splits));
-                    if (r)
-                        return r;
+                    result = v->to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
+                    if (result)
+                        return result;
                 }
             }
             return result;

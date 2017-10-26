@@ -103,10 +103,7 @@ namespace cytx {
                     GameObjectStream gos(total_size);
                     Serializer<gos_serialize_adapter> sr(gos, is_big_endian_);
                     sr.Serialize(std::forward<T>(t));
-                    gos_buffer buffer;
-                    buffer.data_ = gos.data_;
-                    buffer.size_ = gos.length();
-                    gos.alloc_type_ = 0;
+                    gos_buffer buffer(gos);
                     return std::move(buffer);
                 }
                 catch (std::exception& e)

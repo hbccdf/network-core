@@ -16,9 +16,9 @@ namespace cytx
 
     struct server_cfg
     {
-        std::vector<server_info> servers;
+        std::vector<server_info> server;
         common_info common;
-        META(servers, common);
+        META(server, common);
     };
 
     class server_config_manager
@@ -28,25 +28,25 @@ namespace cytx
         {
             de_.enum_with_str(true);
             de_.parse_file(config_file);
-            de_.DeSerialize(server_, "config");
-            for (auto& config : server_.servers)
+            de_.DeSerialize(config_, "config");
+            for (auto& config : config_.server)
             {
                 map_.emplace(config.unique_id, &config);
             }
             if (modify_endian)
             {
-                gameserver::msg_header::big_endian(server_.common.server_big_endian);
+                gameserver::msg_header::big_endian(config_.common.server_big_endian);
             }
         }
 
         template<typename T>
-        void get_config(T& config, const string& key)
+        void get_config(T& config, const std::string& key)
         {
             de_.DeSerialize(config, key);
         }
 
-        common_info& common() { return server_.common; }
-        const common_info& common() const { return server_.common; }
+        common_info& common() { return config_.common; }
+        const common_info& common() const { return config_.common; }
 
         server_info& operator[](server_unique_id unique_id)
         {
@@ -60,7 +60,7 @@ namespace cytx
 
         void parse_real_ip(std::function<std::string(std::string, uint16_t)> func)
         {
-            for (auto& config : server_.servers)
+            for (auto& config : config_.server)
             {
                 config.host_ip = config.ip;
                 config.ip = func(config.host_ip, config.port);
@@ -68,7 +68,7 @@ namespace cytx
         }
     private:
         DeSerializer<xml_deserialize_adapter> de_;
-        server_cfg server_;
+        server_cfg config_;
         std::map<server_unique_id, server_info*> map_;
     };
 }
