@@ -3,6 +3,7 @@
 #include "server.hpp"
 #include "server_config.hpp"
 #include "msg_pack.hpp"
+#include "protocol.hpp"
 
 namespace cytx
 {
@@ -64,6 +65,11 @@ namespace cytx
                     flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time, cytx::bind(&this_t::flush_logs, this));
 
                     //连接各个服务
+                    /*bool depend_db = false;
+                    if (depend_db)
+                    {
+
+                    }*/
                 }
 
                 void start()
@@ -82,7 +88,7 @@ namespace cytx
             public:
                 //给服务端发送消息
                 template<typename MSG_ID, typename T>
-                void send_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
+                void send_server_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
                 {
                     inter_send_msg(unique_id, msg_id, t);
                 }
@@ -90,7 +96,7 @@ namespace cytx
                 template<typename MSG_ID, typename T>
                 void send_client_msg(int32_t user_id, MSG_ID msg_id, const T& t)
                 {
-                    connection_ptr conn_ptr = gate_conn_ptr_;
+                    connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
                     if (!conn_ptr)
                     {
                         //TODO log error
@@ -106,16 +112,14 @@ namespace cytx
                 template<typename MSG_ID, typename T>
                 void broadcast_client_msg(const std::vector<int32_t>& users, MSG_ID msg_id, const T& t)
                 {
-                    const uint32_t broadcast_msg_id = 0x60a001a;
-
-                    connection_ptr conn_ptr = gate_conn_ptr_;
+                    connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
                     if (!conn_ptr)
                     {
                         //TODO log error
                         return;
                     }
 
-                    msg_ptr msgp = server_pack_msg(broadcast_msg_id, server_unique_id::gateway_server, (uint32_t)msg_id, users, t);
+                    msg_ptr msgp = server_pack_msg(BroadcastMsg, server_unique_id::gateway_server, (uint32_t)msg_id, users, t);
                     send_raw_msg(conn_ptr, msgp);
                 }
 
@@ -154,8 +158,7 @@ namespace cytx
                 {
                     uint32_t protocol_id = msgp->header().protocol_id;
 
-                    const uint32_t gw_register_server = 0x40a0009;
-                    if (protocol_id == gw_register_server && gate_conn_ptr_ == nullptr)
+                    if (protocol_id == SimpleRegisterServer && gate_conn_ptr_ == nullptr)
                     {
                         auto unique_id = unpack_msg<server_unique_id>(msgp);
                         if (unique_id == server_unique_id::gateway_server)
@@ -177,13 +180,13 @@ namespace cytx
                 virtual connection_ptr get_connection_ptr(server_unique_id unique_id) const
                 {
                     if (unique_id == server_unique_id::gateway_server)
-                        return gate_conn_ptr_;
+                        return get_running_conn(gate_conn_ptr_);
                     else if (unique_id == server_unique_id::db_server)
-                        return db_conn_ptr_;
+                        return get_running_conn(db_conn_ptr_);
                     else
                         return nullptr;
                 }
-            private:
+            protected:
                 template<typename MSG_ID, typename T>
                 msg_ptr inter_send_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
                 {
@@ -215,7 +218,12 @@ namespace cytx
                     return msgp;
                 }
 
-            private:
+                connection_ptr get_running_conn(const connection_ptr& conn) const
+                {
+                    return conn && conn->is_running() ? conn : nullptr;
+                }
+
+            protected:
                 void flush_logs()
                 {
                     for (auto& log_ptr : logs_)
@@ -223,7 +231,7 @@ namespace cytx
                         log_ptr->flush();
                     }
                 }
-            private:
+            protected:
                 server_unique_id unique_id_;
                 server_config_manager config_mgr_;
                 server_ptr server_;

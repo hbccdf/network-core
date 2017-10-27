@@ -184,7 +184,6 @@ namespace cytx
                 , options_(options)
                 , socket_(ios_)
                 , timer_mgr_(ios_)
-                //, call_mgr_(ios_)
             {
 
             }
@@ -252,6 +251,8 @@ namespace cytx
             io_service_t& get_io_service() { return ios_; }
 
             socket_t& socket() { return socket_; }
+
+            bool is_running() const { return is_running_; }
 
         private:
             void reset_state()
@@ -326,7 +327,7 @@ namespace cytx
 
             void handle_connect(const ec_t& err)
             {
-                router_ptr_->connection_incoming(shared_from_this(), err);
+                router_ptr_->on_connect(shared_from_this(), err);
             }
             void handle_write(const ec_t& err, msg_ptr msgp)
             {

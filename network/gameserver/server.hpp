@@ -76,15 +76,19 @@ namespace cytx
 
             const server_options& get_options() const { return options_; }
 
-        private:
-            void do_accept()
+            connection_ptr create_connection()
             {
                 ++cur_conn_id_;
                 connection_options conn_options;
                 conn_options.batch_send_msg = options_.batch_send_msg;
                 conn_options.disconnect_interval = options_.disconnect_interval;
 
-                auto new_connection = std::make_shared<connection_t>(ios_pool_.get_io_service(), router_ptr_, cur_conn_id_, conn_options);
+                return std::make_shared<connection_t>(ios_pool_.get_io_service(), router_ptr_, cur_conn_id_, conn_options);
+            }
+        private:
+            void do_accept()
+            {
+                auto new_connection = create_connection();
 
                 acceptor_.async_accept(new_connection->socket(),
                     [this, new_connection](const ec_t& err) mutable
