@@ -242,6 +242,7 @@ namespace cytx {
             {
                 std::vector<boost::asio::const_buffer> buffers;
                 to_buffers(buffers);
+                return buffers;
             }
 
             void to_buffers(std::vector<boost::asio::const_buffer>& buffers) const

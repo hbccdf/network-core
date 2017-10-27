@@ -97,7 +97,7 @@ namespace cytx
                         return;
                     }
 
-                    msg_ptr msgp = pack_msg(msg_id, server_unique_id::gateway_server, t);
+                    msg_ptr msgp = server_pack_msg(msg_id, server_unique_id::gateway_server, t);
                     msgp->header().user_id = user_id;
 
                     send_raw_msg(conn_ptr, msgp);
@@ -115,7 +115,7 @@ namespace cytx
                         return;
                     }
 
-                    msg_ptr msgp = pack_msg(broadcast_msg_id, server_unique_id::gateway_server, (uint32_t)msg_id, users, t);
+                    msg_ptr msgp = server_pack_msg(broadcast_msg_id, server_unique_id::gateway_server, (uint32_t)msg_id, users, t);
                     send_raw_msg(conn_ptr, msgp);
                 }
 
@@ -130,18 +130,17 @@ namespace cytx
                         return nullptr;
                     }
 
-                    msg_ptr send_msgp = pack_msg(msg_id, unique_id, t);
+                    msg_ptr send_msgp = server_pack_msg(msg_id, unique_id, t);
                     msg_ptr msgp = conn_ptr->await_write(send_msgp);
                     return unpack_msg<RETURN_T>(msgp);
                 }
-            private:
+            protected:
                 void on_connect(connection_ptr& conn_ptr, const net_result& err) override
                 {
                     LOG_DEBUG("new conenct {}", err.message());
                 }
                 void on_disconnect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-
                     if (conn_ptr == gate_conn_ptr_)
                     {
                         LOG_ERROR("gate way connect disconnected, {}", err.message());
@@ -161,6 +160,7 @@ namespace cytx
                         auto unique_id = unpack_msg<server_unique_id>(msgp);
                         if (unique_id == server_unique_id::gateway_server)
                         {
+                            gate_conn_ptr_ = conn_ptr;
                             LOG_DEBUG("gate way connected");
                         }
                         else
@@ -174,6 +174,7 @@ namespace cytx
                     }
                 }
 
+            private:
                 template<typename MSG_ID, typename T>
                 msg_ptr inter_send_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
                 {
@@ -184,7 +185,7 @@ namespace cytx
                         return nullptr;
                     }
 
-                    msg_ptr msgp = pack_msg(msg_id, unique_id, t);
+                    msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
                      send_raw_msg(conn_ptr, msgp);
                     return msgp;
                 }
@@ -205,7 +206,7 @@ namespace cytx
                 }
 
                 template<typename MSG_ID, typename ... ARGS>
-                msg_ptr pack_msg(MSG_ID msg_id, server_unique_id to_unique_id, const ARGS& ... args)
+                msg_ptr server_pack_msg(MSG_ID msg_id, server_unique_id to_unique_id, const ARGS& ... args)
                 {
                     msg_ptr msgp = pack_msg(header_t::big_endian(), args ...);
                     auto& header = msgp->header();
@@ -228,7 +229,6 @@ namespace cytx
                 server_config_manager config_mgr_;
                 server_ptr server_;
                 timer_manager_ptr timer_mgr_;
-                //call_manager_ptr call_mgr_;
 
                 std::vector<log_ptr_t> logs_;
                 timer_t flush_log_timer_;

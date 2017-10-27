@@ -14,13 +14,17 @@ namespace cytx
             using thrift_base_t = ::apache::thrift::TBase;
             using buffer_t = cytx::codec::gos_buffer;
 
+            using msg_t = cytx::gameserver::server_msg<cytx::gameserver::msg_body>;
+            using msg_ptr = std::shared_ptr<msg_t>;
+            using header_t = typename msg_t::header_t;
+
             template <typename T, class = std::void_t<>>
             struct is_thrift_msg : std::false_type
             {
             };
 
             template<typename T>
-            struct is_thrift_msg<T, std::void_t<std::enable_if_t<std::is_base_of<T, thrift_base_t>::value>>> : std::true_type
+            struct is_thrift_msg<T, std::void_t<std::enable_if_t<std::is_base_of<thrift_base_t, T>::value>>> : std::true_type
             {
 
             };
@@ -97,11 +101,8 @@ namespace cytx
             }
         }
 
-        using msg_t = cytx::gameserver::server_msg<cytx::gameserver::msg_body>;
-        using msg_ptr = std::shared_ptr<msg_t>;
-        using header_t = typename msg_t::header_t;
         template<typename T>
-        msg_ptr pack_msg(const T& t, bool is_big_endian = true)
+        detail::msg_ptr pack_msg(const T& t, bool is_big_endian = true)
         {
             using namespace detail;
             msg_ptr msg = std::make_shared<msg_t>();
@@ -118,13 +119,13 @@ namespace cytx
         }
 
         template<typename ... ARGS>
-        msg_ptr pack_msg(bool is_big_endian, const ARGS& ... args)
+        detail::msg_ptr pack_msg(bool is_big_endian, const ARGS& ... args)
         {
             using namespace detail;
             msg_ptr msg = std::make_shared<msg_t>();
             gos_t gos;
 
-            char a[] = { (detail::pack_msg_impl(args, is_big_endian), 0) ... };
+            char a[] = { (detail::pack_msg_impl(gos, args, is_big_endian), 0) ... };
 
             msg->reset(gos.data_, gos.length());
             gos.alloc_type_ = 0;
@@ -132,9 +133,9 @@ namespace cytx
         }
 
         template<typename T>
-        T unpack_msg(msg_ptr msgp)
+        T unpack_msg(detail::msg_ptr msgp)
         {
-            return detail::unpack_msg_impl<T>(msgp->data(), msgp->length(), header_t::big_endian());
+            return detail::unpack_msg_impl<T>(msgp->data(), msgp->length(), detail::header_t::big_endian());
         }
     }
 }
