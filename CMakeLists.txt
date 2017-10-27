@@ -4,7 +4,7 @@ project(netrowk-core)
 
 #set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
 set(CMAKE_BUILD_TYPE DEBUG)
-set(CMAKE_CONFIGURATION_TYPES "Debug;RelWithDebInfo;Release")
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
 # set build output path
 #set(CMAKE_SKIP_BUILD_RPATH TRUE)
