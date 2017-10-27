@@ -31,7 +31,7 @@ namespace cytx
             };
 
             template<typename T>
-            struct is_gos_msg<T, std::void_t<std::enable_if_t<cytx::has_meta_macro<T>::value>>> : std::true_type
+            struct is_gos_msg<T, std::void_t<std::enable_if_t<!is_thrift_msg<T>::value>>> : std::true_type
             {
 
             };
@@ -69,11 +69,6 @@ namespace cytx
             }
 
             template<typename T>
-            auto pack_msg_impl(gos_t& gos, const T& t, bool is_big_endian) -> std::enable_if_t<!is_gos_msg<T>::value && !is_thrift_msg<T>::value>
-            {
-            }
-
-            template<typename T>
             auto pack_msg_impl(const T& t, bool is_big_endian) -> std::enable_if_t<is_thrift_msg<T>::value, buffer_t>
             {
                 cytx::codec::thrift_codec codec{ is_big_endian };
@@ -88,10 +83,17 @@ namespace cytx
             }
 
             template<typename T>
-            auto pack_msg_impl(const T& t, bool is_big_endian) -> std::enable_if_t<!is_gos_msg<T>::value && !is_thrift_msg<T>::value, buffer_t>
+            auto unpack_msg_impl(char const* data, size_t length, bool is_big_endian) ->std::enable_if_t<is_thrift_msg<T>::value, T>
             {
-                buffer_t buffer;
-                return buffer;
+                cytx::codec::thrift_codec codec{ is_big_endian };
+                return codec.unpack<T>(data, length);
+            }
+
+            template<typename T>
+            auto unpack_msg_impl(char const* data, size_t length, bool is_big_endian) ->std::enable_if_t<is_gos_msg<T>::value, T>
+            {
+                cytx::codec::gos_codec codec{ is_big_endian };
+                return codec.unpack<T>(data, length);
             }
         }
 
@@ -103,7 +105,7 @@ namespace cytx
         {
             using namespace detail;
             msg_ptr msg = std::make_shared<msg_t>();
-            buffer_t buffer = pack_msg_impl<T>(t, is_big_endian);
+            buffer_t buffer = detail::pack_msg_impl<T>(t, is_big_endian);
             msg->reset(buffer.data(), (int)buffer.size());
             buffer.reset();
             return msg;
@@ -112,7 +114,7 @@ namespace cytx
         template<typename T>
         void pack_msg(detail::gos_t& gos, const T& t, bool is_big_endian = true)
         {
-            pack_msg_impl<T>(gos, t, is_big_endian);
+            detail::pack_msg_impl<T>(gos, t, is_big_endian);
         }
 
         template<typename ... ARGS>
@@ -122,7 +124,7 @@ namespace cytx
             msg_ptr msg = std::make_shared<msg_t>();
             gos_t gos;
 
-            char a[] = { (pack_msg_impl(args, is_big_endian), 0) ... };
+            char a[] = { (detail::pack_msg_impl(args, is_big_endian), 0) ... };
 
             msg->reset(gos.data_, gos.length());
             gos.alloc_type_ = 0;
@@ -130,10 +132,9 @@ namespace cytx
         }
 
         template<typename T>
-        T unpack(msg_ptr msgp)
+        T unpack_msg(msg_ptr msgp)
         {
-            T t;
-            return t;
+            return detail::unpack_msg_impl<T>(msgp->data(), msgp->length(), header_t::big_endian());
         }
     }
 }

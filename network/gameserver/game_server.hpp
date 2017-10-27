@@ -132,7 +132,7 @@ namespace cytx
 
                     msg_ptr send_msgp = pack_msg(msg_id, unique_id, t);
                     msg_ptr msgp = conn_ptr->await_write(send_msgp);
-                    return unpack<RETURN_T>(msgp);
+                    return unpack_msg<RETURN_T>(msgp);
                 }
             private:
                 void on_connect(connection_ptr& conn_ptr, const net_result& err) override
@@ -158,8 +158,15 @@ namespace cytx
                     const uint32_t gw_register_server = 0x40a0009;
                     if (protocol_id == gw_register_server && gate_conn_ptr_ == nullptr)
                     {
-                        gate_conn_ptr_ = conn_ptr;
-                        LOG_DEBUG("gate way connected");
+                        auto unique_id = unpack_msg<server_unique_id>(msgp);
+                        if (unique_id == server_unique_id::gateway_server)
+                        {
+                            LOG_DEBUG("gate way connected");
+                        }
+                        else
+                        {
+                            LOG_DEBUG("connect register, server is {}", (uint32_t)unique_id);
+                        }
                     }
                     else
                     {
@@ -194,7 +201,7 @@ namespace cytx
                     else if (unique_id == server_unique_id::db_server)
                         return db_conn_ptr_;
                     else
-                        return server_mgr_conn_ptr_;
+                        return center_conn_ptr_;
                 }
 
                 template<typename MSG_ID, typename ... ARGS>
@@ -228,8 +235,8 @@ namespace cytx
 
                 connection_ptr gate_conn_ptr_;
                 connection_ptr db_conn_ptr_;
-                connection_ptr server_mgr_conn_ptr_;
-                //server_manager是主动连接
+                connection_ptr center_conn_ptr_;
+                //center是主动连接
                 //DB是主动连接
                 //其他服务不确定
             };
