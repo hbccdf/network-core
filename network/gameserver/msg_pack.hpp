@@ -97,6 +97,7 @@ namespace cytx
 
         using msg_t = cytx::gameserver::server_msg<cytx::gameserver::msg_body>;
         using msg_ptr = std::shared_ptr<msg_t>;
+        using header_t = typename msg_t::header_t;
         template<typename T>
         msg_ptr pack_msg(const T& t, bool is_big_endian = true)
         {
@@ -115,7 +116,7 @@ namespace cytx
         }
 
         template<typename ... ARGS>
-        void pack_msg(bool is_big_endian, const ARGS& ... args)
+        msg_ptr pack_msg(bool is_big_endian, const ARGS& ... args)
         {
             using namespace detail;
             msg_ptr msg = std::make_shared<msg_t>();

@@ -97,12 +97,8 @@ namespace cytx
                         return;
                     }
 
-                    msg_ptr msgp = pack_msg(t, header_t::big_endian());
-                    auto& header = msgp->header();
-                    header.protocol_id = (uint32_t)msg_id;
-                    header.from_unique_id = (uint16_t)unique_id_;
-                    header.to_unique_id = (uint16_t)server_unique_id::gateway_server;
-                    header.user_id = user_id;
+                    msg_ptr msgp = pack_msg(msg_id, server_unique_id::gateway_server, t);
+                    msgp->header().user_id = user_id;
 
                     send_raw_msg(conn_ptr, msgp);
                 }
@@ -119,12 +115,7 @@ namespace cytx
                         return;
                     }
 
-                    msg_ptr msgp = pack_msg(header_t::big_endian(), (uint32_t)msg_id, users, t);
-                    auto& header = msgp->header();
-                    header.protocol_id = broadcast_msg_id;
-                    header.from_unique_id = (uint16_t)unique_id_;
-                    header.to_unique_id = (uint16_t)server_unique_id::gateway_server;
-
+                    msg_ptr msgp = pack_msg(broadcast_msg_id, server_unique_id::gateway_server, (uint32_t)msg_id, users, t);
                     send_raw_msg(conn_ptr, msgp);
                 }
 
@@ -139,12 +130,7 @@ namespace cytx
                         return nullptr;
                     }
 
-                    msg_ptr send_msgp = pack_msg(t, header_t::big_endian());
-                    auto& header = send_msgp->header();
-                    header.protocol_id = (uint32_t)msg_id;
-                    header.from_unique_id = (uint16_t)unique_id_;
-                    header.to_unique_id = (uint16_t)unique_id;
-
+                    msg_ptr send_msgp = pack_msg(msg_id, unique_id, t);
                     msg_ptr msgp = conn_ptr->await_write(send_msgp);
                     return unpack<RETURN_T>(msgp);
                 }
@@ -155,12 +141,30 @@ namespace cytx
                 }
                 void on_disconnect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-                    LOG_DEBUG("new disconnect {}", err.message());
+
+                    if (conn_ptr == gate_conn_ptr_)
+                    {
+                        LOG_ERROR("gate way connect disconnected, {}", err.message());
+                    }
+                    else
+                    {
+                        LOG_DEBUG("new disconnect {}", err.message());
+                    }
                 }
                 void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
                 {
                     uint32_t protocol_id = msgp->header().protocol_id;
-                    LOG_DEBUG("receive msg {}", protocol_id);
+
+                    const uint32_t gw_register_server = 0x40a0009;
+                    if (protocol_id == gw_register_server && gate_conn_ptr_ == nullptr)
+                    {
+                        gate_conn_ptr_ = conn_ptr;
+                        LOG_DEBUG("gate way connected");
+                    }
+                    else
+                    {
+                        LOG_DEBUG("receive msg {}", protocol_id);
+                    }
                 }
 
                 template<typename MSG_ID, typename T>
@@ -173,13 +177,8 @@ namespace cytx
                         return nullptr;
                     }
 
-                    msg_ptr msgp = pack_msg(t, header_t::big_endian());
-                    auto& header = msgp->header();
-                    header.protocol_id = (uint32_t)msg_id;
-                    header.from_unique_id = (uint16_t)unique_id_;
-                    header.to_unique_id = (uint16_t)unique_id;
-
-                    send_raw_msg(conn_ptr, msgp);
+                    msg_ptr msgp = pack_msg(msg_id, unique_id, t);
+                     send_raw_msg(conn_ptr, msgp);
                     return msgp;
                 }
 
@@ -196,6 +195,17 @@ namespace cytx
                         return db_conn_ptr_;
                     else
                         return server_mgr_conn_ptr_;
+                }
+
+                template<typename MSG_ID, typename ... ARGS>
+                msg_ptr pack_msg(MSG_ID msg_id, server_unique_id to_unique_id, const ARGS& ... args)
+                {
+                    msg_ptr msgp = pack_msg(header_t::big_endian(), args ...);
+                    auto& header = msgp->header();
+                    header.protocol_id = (uint32_t)msg_id;
+                    header.from_unique_id = (uint16_t)unique_id_;
+                    header.to_unique_id = (uint16_t)to_unique_id;
+                    return msgp;
                 }
 
             private:
