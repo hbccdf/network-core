@@ -240,7 +240,7 @@ namespace cytx
             ti_ptr->id = id;
             ti_ptr->status = timer_status::ok;
             ti_ptr->milliseconds = milliseconds;
-            ti_ptr->next_time = date_time::now().total_milliseconds();
+            ti_ptr->next_time = 0;
             ti_ptr->timer = std::make_shared<timer_t>(ios_);
             ti_ptr->timer_func = func;
 
