@@ -7,7 +7,7 @@ namespace cytx {
     class json_serialize_adapter
     {
     public:
-        enum { use_field_separator = 0, use_begin_map = 0 };
+        enum { use_field_separator = 0, use_begin_map = 0, ralax_check_enum = 0 };
 
         void begin_serialize(const std::string& key = "") { json_.reset(); }
         void end_serialize() {}

@@ -335,7 +335,9 @@ namespace cytx {
                 rd_.read(str, val);
                 auto enum_val = to_enum<enum_t>(str.c_str());
                 if (enum_val)
+                {
                     t = enum_val.value();
+                }
             }
         }
 

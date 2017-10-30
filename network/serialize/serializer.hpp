@@ -157,7 +157,7 @@ namespace cytx {
             if (enum_with_str_)
             {
                 using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
-                auto enum_val = to_string(static_cast<enum_t>(val), nullptr);
+                auto enum_val = write_enum(static_cast<enum_t>(val));
                 if (!enum_val)
                 {
                     adapter_write_field(std::string(""), is_last);
@@ -195,7 +195,7 @@ namespace cytx {
         template<typename K, typename V>
         void WriteKV(K& k, V& v, bool is_last, std::true_type)
         {
-            wr_.write_key(k);
+            WriteKey(k, is_last);
             WriteObject(v, is_last, std::true_type{});
         }
 
@@ -208,6 +208,19 @@ namespace cytx {
         void WriteNull(bool is_last)
         {
             adapter_write_null(is_last);
+        }
+
+        template<typename K>
+        auto WriteKey(K& k, bool is_last) -> std::enable_if_t<is_basic_type<K>::value>
+        {
+            wr_.write_key(k);
+        }
+
+        template <typename K>
+        auto WriteKey(K& val, bool is_last) -> std::enable_if_t<std::is_enum<
+            std::remove_reference_t<std::remove_cv_t<K>>>::value>
+        {
+            WriteObject<K>(val, is_last, std::true_type{});
         }
 
     private:
@@ -299,6 +312,17 @@ namespace cytx {
         auto adapter_end_map(bool is_last)->std::enable_if_t<ADAPTER::use_begin_map == 1>
         {
             adapter_end_array(is_last);
+        }
+
+        template<typename enum_t, typename ADAPTER = adapter_t>
+        auto write_enum(enum_t e)->std::enable_if_t<ADAPTER::ralax_check_enum == 0, boost::optional<std::string>>
+        {
+            return to_string(e, nullptr);
+        }
+        template<typename enum_t, typename ADAPTER = adapter_t>
+        auto write_enum(enum_t e)->std::enable_if_t<ADAPTER::ralax_check_enum == 1, boost::optional<std::string>>
+        {
+            return ralax_to_string(e, nullptr);
         }
 
     private:
