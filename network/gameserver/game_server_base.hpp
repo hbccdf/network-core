@@ -14,7 +14,7 @@ namespace cytx
             using namespace cytx;
             using namespace cytx::gameserver;
 
-            using msg_t = cytx::gameserver::server_msg<cytx::gameserver::msg_body>;
+            using msg_t = server_msg<msg_body>;
             using header_t = typename msg_t::header_t;
             using server_t = tcp_server<msg_t>;
             using server_ptr = std::unique_ptr<server_t>;
@@ -63,13 +63,6 @@ namespace cytx
                     server_ = std::make_unique<server_t>(info.ip, info.port, options, this);
                     timer_mgr_ = std::make_unique<timer_manager_t>(server_->get_io_service());
                     flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time, cytx::bind(&this_t::flush_logs, this));
-
-                    //连接各个服务
-                    /*bool depend_db = false;
-                    if (depend_db)
-                    {
-
-                    }*/
                 }
 
                 void start()
@@ -90,7 +83,30 @@ namespace cytx
                 template<typename MSG_ID, typename T>
                 void send_server_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
                 {
-                    inter_send_msg(unique_id, msg_id, t);
+                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("server {} is not connected", (uint16_t)unique_id);
+                        return;
+                    }
+
+                    msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
+                    send_raw_msg(conn_ptr, msgp);
+                }
+
+                template<typename MSG_ID, typename T>
+                void send_server_msg(connection_ptr& server_conn_ptr, MSG_ID msg_id, const T& t)
+                {
+                    connection_ptr conn_ptr = get_running_conn(server_conn_ptr);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("the server is not connected");
+                        return;
+                    }
+
+                    server_unique_id unique_id = conn_ptr->get_conn_info().unique_id;
+                    msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
+                    send_raw_msg(conn_ptr, msgp);
                 }
 
                 template<typename MSG_ID, typename T>
@@ -99,7 +115,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
                     if (!conn_ptr)
                     {
-                        //TODO log error
+                        LOG_WARN("gateway is not connected");
                         return;
                     }
 
@@ -115,7 +131,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
                     if (!conn_ptr)
                     {
-                        //TODO log error
+                        LOG_WARN("server {} is not connected", (uint16_t)unique_id);
                         return;
                     }
 
@@ -130,7 +146,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
                     {
-                        //TODO log error
+                        LOG_WARN("server {} is not connected", (uint16_t)unique_id);
                         return nullptr;
                     }
 
@@ -164,6 +180,7 @@ namespace cytx
                         if (unique_id == server_unique_id::gateway_server)
                         {
                             gate_conn_ptr_ = conn_ptr;
+                            gate_conn_ptr_->set_conn_info(connection_info{ unique_id });
                             LOG_DEBUG("gate way connected");
                         }
                         else
@@ -181,27 +198,10 @@ namespace cytx
                 {
                     if (unique_id == server_unique_id::gateway_server)
                         return get_running_conn(gate_conn_ptr_);
-                    else if (unique_id == server_unique_id::db_server)
-                        return get_running_conn(db_conn_ptr_);
                     else
                         return nullptr;
                 }
             protected:
-                template<typename MSG_ID, typename T>
-                msg_ptr inter_send_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
-                {
-                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
-                    if (!conn_ptr)
-                    {
-                        //TODO log error
-                        return nullptr;
-                    }
-
-                    msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
-                     send_raw_msg(conn_ptr, msgp);
-                    return msgp;
-                }
-
                 void send_raw_msg(connection_ptr& conn_ptr, msg_ptr& msgp)
                 {
                     conn_ptr->write(msgp);
@@ -241,7 +241,6 @@ namespace cytx
                 timer_t flush_log_timer_;
 
                 connection_ptr gate_conn_ptr_;
-                connection_ptr db_conn_ptr_;
             };
         }
     }

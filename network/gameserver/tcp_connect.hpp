@@ -11,6 +11,7 @@
 #include "raw_msg.hpp"
 #include "irouter_base.hpp"
 #include "async_func.hpp"
+#include "common.hpp"
 
 #define CLIENT_MSG_BUFF_MAX 1024 * 100 //100K
 
@@ -154,6 +155,11 @@ namespace cytx
             bool batch_send_msg;
         };
 
+        struct connection_info
+        {
+            cytx::server_unique_id unique_id;
+        };
+
         template<typename MSG>
         class tcp_connection : public std::enable_shared_from_this<tcp_connection<MSG>>
         {
@@ -173,7 +179,6 @@ namespace cytx
             using ec_t = boost::system::error_code;
             using batch_msg_t = batch_msg<msg_t>;
             using batch_msg_ptr = std::shared_ptr<batch_msg_t>;
-            //using call_manager_t = call_manager<msg_t>;
             using handler_t = detail::handler_t<msg_ptr>;
 
         public:
@@ -253,6 +258,16 @@ namespace cytx
             socket_t& socket() { return socket_; }
 
             bool is_running() const { return is_running_; }
+
+            void set_conn_info(const connection_info& conn_info)
+            {
+                conn_info_ = conn_info;
+            }
+
+            const connection_info& get_conn_info() const
+            {
+                return conn_info_;
+            }
 
         private:
             void reset_state()
@@ -503,9 +518,10 @@ namespace cytx
             reader_t reader_;
 
             timer_manager timer_mgr_;
-            //call_manager_t call_mgr_;
             uint32_t cur_call_id_ = 0;
             std::map<uint32_t, handler_t> calls_;
+
+            connection_info conn_info_;
         };
     }
 }

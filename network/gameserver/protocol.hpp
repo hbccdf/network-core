@@ -17,6 +17,30 @@ namespace cytx
 
                 CS_GetServerInfo,
                 SC_GetServerInfo,
+
+                SC_ServerEvent,
+            };
+
+            enum EServerEvent
+            {
+                EServerConnected,
+                EServerDisconnected,
+            };
+
+            struct BroadcastInfo
+            {
+                uint32_t msg_id;
+                std::vector<server_unique_id> servers;
+                META(msg_id, servers);
+            };
+
+            struct ServerInfo
+            {
+                server_unique_id unique_id;
+                std::string ip;
+                uint16_t port;
+                int32_t connect_interval;
+                META(unique_id, ip, port, connect_interval);
             };
 
             struct CSRegisterServer
@@ -31,6 +55,25 @@ namespace cytx
             {
                 uint16_t server_uid;
                 META(server_uid);
+            };
+
+            struct CSGetServerInfo
+            {
+                std::vector<server_unique_id> servers;
+                META(servers);
+            };
+
+            struct SCGetServerInfo
+            {
+                std::map<server_unique_id, ServerInfo> servers;
+                META(servers);
+            };
+
+            struct SCServerEvent
+            {
+                EServerEvent event;
+                ServerInfo info;
+                META(event, info);
             };
         }
     }
