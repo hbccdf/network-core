@@ -68,7 +68,16 @@ namespace cytx
                     const server_info& info = config_mgr_[unique_id_];
 
                     CSRegisterServer send_data{ unique_id_, info.ip, info.port };
-                    send_server_msg(server_unique_id::center_server, CS_RegisterServer, send_data);
+                    /*send_server_msg(server_unique_id::center_server, CS_RegisterServer, send_data);*/
+
+                    /*SCServerEvent data = async_await_msg<SCServerEvent>(server_unique_id::center_server, CS_RegisterServer, send_data);
+
+                    LOG_DEBUG("server event {}, {}", (uint32_t)data.event, (uint16_t)data.info.unique_id);*/
+
+                    async_await_msg<SCServerEvent>(server_unique_id::center_server, CS_RegisterServer, send_data, [](SCServerEvent& data)
+                    {
+                        LOG_DEBUG("server event {}, {}", (uint32_t)data.event, (uint16_t)data.info.unique_id);
+                    });
                 }
                 void get_server_info()
                 {

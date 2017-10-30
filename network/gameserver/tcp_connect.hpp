@@ -247,10 +247,24 @@ namespace cytx
                     return nullptr;
 
                 io_service_t& ios = get_current_ios();
-                return detail::async_await(ios, [this, msgp] (handler_t handler)
+                return detail::async_await<msg_ptr>(ios, [this, msgp] (handler_t handler)
                 {
                     ios_.post(std::bind(&this_t::do_await_write, shared_from_this(), msgp, handler));
                 });
+            }
+
+            template<typename FUNC>
+            void await_write(msg_ptr msgp, FUNC&& func)
+            {
+                if (!is_running_)
+                    return;
+
+                io_service_t& ios = get_current_ios();
+                detail::async_await<msg_ptr>(ios, [this, msgp](handler_t handler)
+                {
+                    ios_.post(std::bind(&this_t::do_await_write, shared_from_this(), msgp, handler));
+                },
+                std::forward<FUNC>(func));
             }
 
             io_service_t& get_io_service() { return ios_; }

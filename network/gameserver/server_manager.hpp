@@ -41,9 +41,10 @@ namespace cytx
                     info.unique_id = data.unique_id;
                     info.ip = data.ip;
                     info.port = data.port;
-                    info.connect_interval = 5000;
+                    info.connect_interval = 4999;
                     servers_[data.unique_id].emplace_back(server_info);
 
+                    conn_ptr->set_conn_info(connection_info{ data.unique_id });
                     LOG_DEBUG("server {} register", (uint16_t)data.unique_id);
 
                     //通知其他服务
@@ -52,13 +53,13 @@ namespace cytx
                     server_event.info = server_info.info;
                     for (auto& p : servers_)
                     {
-                        if (p.first == data.unique_id)
-                            continue;
+                        /*if (p.first == data.unique_id)
+                            continue;*/
 
                         auto& info_list = p.second;
                         for (auto& server : info_list)
                         {
-                            send_server_msg(server.conn_ptr, SC_ServerEvent, server_event);
+                            send_server_msg(server.conn_ptr, SC_ServerEvent, server_event, msgp);
                         }
                     }
                 }

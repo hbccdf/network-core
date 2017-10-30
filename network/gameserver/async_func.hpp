@@ -51,10 +51,25 @@ namespace cytx
                 {
                     completion_t completion(std::forward<yield_t>(ctx));
 
-                    func(completion.handler);
+                    f(completion.handler);
                     t = completion.result.get();
                 });
                 return t;
+            }
+
+            template<typename T, typename FUNC, typename HANDLER>
+            void async_await(boost::asio::io_service& ios, FUNC&& func, HANDLER&& handler)
+            {
+                using completion_t = async_completion<yield_t, void(T)>;
+
+                boost::asio::spawn(ios, [f = std::forward<FUNC>(func), h = std::forward<HANDLER>(handler)](boost::asio::yield_context ctx)
+                {
+                    completion_t completion(std::forward<yield_t>(ctx));
+
+                    f(completion.handler);
+                    T t = completion.result.get();
+                    h(t);
+                });
             }
         }
     }

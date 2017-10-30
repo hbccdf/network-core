@@ -81,7 +81,7 @@ namespace cytx
             public:
                 //给服务端发送消息
                 template<typename MSG_ID, typename T>
-                void send_server_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
+                void send_server_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
                 {
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
@@ -91,11 +91,15 @@ namespace cytx
                     }
 
                     msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
+                    if (request_msgp)
+                    {
+                        msgp->header().call_id = request_msgp->header().call_id;
+                    }
                     send_raw_msg(conn_ptr, msgp);
                 }
 
                 template<typename MSG_ID, typename T>
-                void send_server_msg(connection_ptr& server_conn_ptr, MSG_ID msg_id, const T& t)
+                void send_server_msg(connection_ptr& server_conn_ptr, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
                 {
                     connection_ptr conn_ptr = get_running_conn(server_conn_ptr);
                     if (!conn_ptr)
@@ -106,6 +110,10 @@ namespace cytx
 
                     server_unique_id unique_id = conn_ptr->get_conn_info().unique_id;
                     msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
+                    if (request_msgp)
+                    {
+                        msgp->header().call_id = request_msgp->header().call_id;
+                    }
                     send_raw_msg(conn_ptr, msgp);
                 }
 
@@ -141,18 +149,47 @@ namespace cytx
 
             public:
                 template<typename RETURN_T, typename MSG_ID, typename T>
-                RETURN_T async_await_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t)
+                RETURN_T async_await_msg1(server_unique_id unique_id, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
+                {
+                    RETURN_T ret{};
+
+                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("server {} is not connected", (uint16_t)unique_id);
+                        return ret;
+                    }
+
+                    msg_ptr send_msgp = server_pack_msg(msg_id, unique_id, t);
+                    if (request_msgp)
+                    {
+                        send_msgp->header().call_id = request_msgp->header().call_id;
+                    }
+                    msg_ptr msgp = conn_ptr->await_write(send_msgp);
+                    ret = unpack_msg<RETURN_T>(msgp);
+                    return ret;
+                }
+
+                template<typename RETURN_T, typename MSG_ID, typename T>
+                void async_await_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t, std::function<void(RETURN_T)>&& func, const msg_ptr& request_msgp = nullptr)
                 {
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
                     {
                         LOG_WARN("server {} is not connected", (uint16_t)unique_id);
-                        return nullptr;
+                        return;
                     }
 
                     msg_ptr send_msgp = server_pack_msg(msg_id, unique_id, t);
-                    msg_ptr msgp = conn_ptr->await_write(send_msgp);
-                    return unpack_msg<RETURN_T>(msgp);
+                    if (request_msgp)
+                    {
+                        send_msgp->header().call_id = request_msgp->header().call_id;
+                    }
+                    conn_ptr->await_write(send_msgp, [this, f = std::forward<std::function<void(RETURN_T)>>(func)](msg_ptr& msgp)
+                    {
+                        RETURN_T ret = unpack_msg<RETURN_T>(msgp);
+                        f(ret);
+                    });
                 }
             protected:
                 void on_connect(connection_ptr& conn_ptr, const net_result& err) override
