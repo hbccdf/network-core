@@ -91,10 +91,7 @@ namespace cytx {
                 {
                     Serializer<thrift_serialize_adapter> sr;
                     GameObjectStream gos = sr.Serialize(std::forward<T>(t));
-                    buffer_type buffer;
-                    buffer.data_ = gos.data_;
-                    buffer.size_ = gos.length();
-                    gos.alloc_type_ = 0;
+                    buffer_type buffer(gos);
                     return std::move(buffer);
                 }
                 catch (std::exception& e)

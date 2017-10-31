@@ -27,11 +27,13 @@ if(NOT INCLUDED_COMMON)
     
     # generator .brc file, to analize code graph
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FR")
+    
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /IMPLIB:")
     
     #/Wall /WX
     
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  /ZI  /Gm")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  /ZI /Gm")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi /Gy /Oi /GL")
     
     #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /IMPLIB:")

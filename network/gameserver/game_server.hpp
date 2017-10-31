@@ -125,7 +125,7 @@ namespace cytx
                     }
                     else
                     {
-                        LOG_DEBUG("server {} event {}", (uint16_t)data.info.unique_id, (uint32_t)data.event)
+                        LOG_DEBUG("server {} event {}", (uint16_t)data.info.unique_id, (uint32_t)data.event);
                     }
                 }
 

@@ -4,6 +4,7 @@
 #include "server_config.hpp"
 #include "msg_pack.hpp"
 #include "protocol.hpp"
+#include "proto.hpp"
 
 namespace cytx
 {
@@ -247,7 +248,7 @@ namespace cytx
                 template<typename MSG_ID, typename ... ARGS>
                 msg_ptr server_pack_msg(MSG_ID msg_id, server_unique_id to_unique_id, const ARGS& ... args)
                 {
-                    msg_ptr msgp = pack_msg(header_t::big_endian(), args ...);
+                    msg_ptr msgp = pack_msg(args ...);
                     auto& header = msgp->header();
                     header.protocol_id = (uint32_t)msg_id;
                     header.from_unique_id = (uint16_t)unique_id_;

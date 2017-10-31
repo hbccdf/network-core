@@ -102,28 +102,27 @@ namespace cytx
         }
 
         template<typename T>
-        detail::msg_ptr pack_msg(const T& t, bool is_big_endian = true)
+        detail::msg_ptr pack_msg(const T& t)
         {
-            using namespace detail;
-            msg_ptr msg = std::make_shared<msg_t>();
-            buffer_t buffer = detail::pack_msg_impl<T>(t, is_big_endian);
+            detail::msg_ptr msg = std::make_shared<detail::msg_t>();
+            detail::buffer_t buffer = detail::pack_msg_impl<T>(t, detail::header_t::big_endian());
             msg->reset(buffer.data(), (int)buffer.size());
             buffer.reset();
             return msg;
         }
 
         template<typename T>
-        void pack_msg(detail::gos_t& gos, const T& t, bool is_big_endian = true)
+        void pack_msg(detail::gos_t& gos, const T& t)
         {
-            detail::pack_msg_impl<T>(gos, t, is_big_endian);
+            detail::pack_msg_impl<T>(gos, t, detail::header_t::big_endian());
         }
 
         template<typename ... ARGS>
-        detail::msg_ptr pack_msg(bool is_big_endian, const ARGS& ... args)
+        detail::msg_ptr pack_msg(const ARGS& ... args)
         {
-            using namespace detail;
-            msg_ptr msg = std::make_shared<msg_t>();
-            gos_t gos;
+            bool is_big_endian = detail::header_t::big_endian();
+            detail::msg_ptr msg = std::make_shared<detail::msg_t>();
+            detail::gos_t gos;
 
             char a[] = { (detail::pack_msg_impl(gos, args, is_big_endian), 0) ... };
 
