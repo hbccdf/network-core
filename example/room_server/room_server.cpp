@@ -28,7 +28,7 @@ namespace CytxGame
                 data.currentServerTime = cytx::date_time::now().total_milliseconds();
                 send_client_msg(user_id, ::MessageId::SC_ServerInfo, data);
             }
-            else if (protocol_id == ::MessageId::CS_CreateRoom)
+            else if (protocol_id == ::MessageId::CS_CreateRoom) 
             {
                 LOG_DEBUG("create room {}", user_id);
 
