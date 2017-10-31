@@ -10,7 +10,6 @@ namespace cytx
         {
             class server_manager : public game_server_base
             {
-
                 struct manage_server_info
                 {
                     connection_ptr conn_ptr;
@@ -30,6 +29,33 @@ namespace cytx
                     base_t::init(config_file_name);
                 }
 
+                template<typename MSG_ID, typename T>
+                void broadcast_server_msg(const std::vector<server_unique_id>& servers, MSG_ID msg_id, const T& t)
+                {
+                    msg_ptr msgp = server_pack_msg(msg_id, unique_id_, t);
+                    broadcast_server_msg(servers, msgp);
+                }
+
+                void broadcast_server_msg(const std::vector<server_unique_id>& servers, msg_ptr& msgp)
+                {
+                    for (auto unique_id : servers)
+                    {
+                        auto it = servers_.find(unique_id);
+                        if (it != servers_.end())
+                        {
+                            auto& info_list = it->second;
+                            for (auto& server : info_list)
+                            {
+                                auto conn_ptr = get_running_conn(server.conn_ptr);
+                                if (conn_ptr)
+                                {
+                                    send_raw_msg(conn_ptr, msgp);
+                                }
+                            }
+                        }
+                    }
+                }
+
             protected:
                 void on_cs_register_server(connection_ptr& conn_ptr, const msg_ptr& msgp)
                 {
@@ -41,7 +67,7 @@ namespace cytx
                     info.unique_id = data.unique_id;
                     info.ip = data.ip;
                     info.port = data.port;
-                    info.connect_interval = 4999;
+                    info.connect_interval = 5000;
                     servers_[data.unique_id].emplace_back(server_info);
 
                     conn_ptr->set_conn_info(connection_info{ data.unique_id });
@@ -51,17 +77,8 @@ namespace cytx
                     SCServerEvent server_event;
                     server_event.event = EServerConnected;
                     server_event.info = server_info.info;
-                    for (auto& p : servers_)
-                    {
-                        /*if (p.first == data.unique_id)
-                            continue;*/
 
-                        auto& info_list = p.second;
-                        for (auto& server : info_list)
-                        {
-                            send_server_msg(server.conn_ptr, SC_ServerEvent, server_event, msgp);
-                        }
-                    }
+                    broadcast_msg(data.unique_id, SC_ServerEvent, server_event);
                 }
 
                 void on_cs_get_server_info(connection_ptr& conn_ptr, const msg_ptr& msgp)
@@ -90,20 +107,7 @@ namespace cytx
 
                     //TODO ππ‘Ïmsgp
                     msg_ptr send_msgp = msgp;
-                    for (auto unique_id : data.servers)
-                    {
-                        for (auto& p : servers_)
-                        {
-                            if (p.first != unique_id)
-                                continue;
-
-                            auto& info_list = p.second;
-                            for (auto& server : info_list)
-                            {
-                                send_raw_msg(server.conn_ptr, send_msgp);
-                            }
-                        }
-                    }
+                    broadcast_server_msg(data.servers, send_msgp);
                 }
 
             protected:
@@ -135,17 +139,7 @@ namespace cytx
                     SCServerEvent server_event;
                     server_event.event = EServerDisconnected;
                     server_event.info.unique_id = unique_id;
-                    for (auto& p : servers_)
-                    {
-                        if(p.first == unique_id)
-                            continue;
-
-                        auto& info_list = p.second;
-                        for (auto& server : info_list)
-                        {
-                            send_server_msg(server.conn_ptr, SC_ServerEvent, server_event);
-                        }
-                    }
+                    broadcast_msg(unique_id, SC_ServerEvent, server_event);
                 }
 
                 void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
@@ -175,6 +169,22 @@ namespace cytx
                     return base_t::get_connection_ptr(unique_id);
                 }
 
+            protected:
+                template<typename MSG_ID, typename T>
+                void broadcast_msg(server_unique_id exclude_unique_id, MSG_ID msg_id, const T& t)
+                {
+                    for (auto& p : servers_)
+                    {
+                        if (p.first == exclude_unique_id)
+                            continue;
+
+                        auto& info_list = p.second;
+                        for (auto& server : info_list)
+                        {
+                            send_server_msg(server.conn_ptr, msg_id, t);
+                        }
+                    }
+                }
             private:
                 std::map<server_unique_id, std::vector<manage_server_info>> servers_;
             };

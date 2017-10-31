@@ -319,7 +319,9 @@ namespace cytx
                     {
                         auto it_key = attr->find(key);
                         if (it_key != attr->not_found())
-                            return attr->to_iterator(attr->find(key));
+                        {
+                            return attr->to_iterator(it_key);
+                        }
                     }
                 }
                 return val.to_iterator(it);
@@ -348,13 +350,17 @@ namespace cytx
                     }
                 }
                 else
+                {
                     t = val.get_value<T>();
+                }
             }
 
             std::string first(member_iterator& it)
             {
                 if (it->first != "@key" && it->first != "+")
+                {
                     return it->first;
+                }
                 if (it->first == "@key")
                 {
                     auto name = (it->second).get_optional<std::string>("<xmlattr>.name");

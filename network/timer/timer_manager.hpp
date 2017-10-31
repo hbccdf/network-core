@@ -47,7 +47,7 @@ namespace cytx
         bool operator == (const timer_proxy& other) const { return id_ == other.id_; }
 
     public:
-        void start();
+        void start(bool invoke_first = false);
         void stop();
         void invoke();
         void close();
@@ -262,10 +262,14 @@ namespace cytx
         int32_t timer_id_;
     };
 
-    inline void timer_proxy::start()
+    inline void timer_proxy::start(bool invoke_first/* = false*/)
     {
         if (timer_)
         {
+            if (invoke_first)
+            {
+                timer_->invoke_timer(id_);
+            }
             need_start_ = false;
             timer_->start_timer(id_);
         }
