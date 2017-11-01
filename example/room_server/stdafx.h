@@ -20,3 +20,5 @@
 #include <network/timer/timer_manager.hpp>
 #include <network/base/thread_pool.h>
 #include <network/base/cast.hpp>
+
+#include "proto/message_wraps.hpp"
