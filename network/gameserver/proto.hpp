@@ -12,6 +12,8 @@ namespace cytx
             using namespace cytx::gameserver;
 
             class Proto;
+            class game_server;
+            using game_server_t = game_server;
 
             using msg_t = server_msg<msg_body>;
             using header_t = typename msg_t::header_t;
@@ -22,9 +24,8 @@ namespace cytx
             using proto_ptr_t = std::shared_ptr<proto_t>;
             using proto_map_t = std::map<uint32_t, proto_ptr_t>;
 
-            class Proto : public std::enable_shared_from_this<Proto>
+            class Proto : public std::enable_shared_from_this<Proto>, public custom_msg
             {
-                friend void set_proto_id(Proto* proto, uint32_t proto_id);
             public:
                 Proto()
                     : protocol_id_(0)
@@ -36,9 +37,8 @@ namespace cytx
                 uint32_t get_protocol_id() const { return protocol_id_; }
             public:
                 virtual proto_ptr_t clone() = 0;
-                virtual msg_ptr pack() = 0;
                 virtual void unpack(msg_ptr& msgp) = 0;
-                virtual void process(msg_ptr& msgp, connection_ptr& conn_ptr) = 0;
+                virtual void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) = 0;
             public:
                 static proto_map_t& GetMap()
                 {
@@ -55,7 +55,7 @@ namespace cytx
                     }
                     return nullptr;
                 }
-                static proto_ptr_t Decode(msg_ptr msgp)
+                static proto_ptr_t Decode(msg_ptr& msgp)
                 {
                     uint32_t protocol_id = msgp->header().protocol_id;
                     proto_ptr_t proto = Create(protocol_id);
@@ -80,39 +80,18 @@ namespace cytx
                         proto_map.emplace(proto_id, proto);
                     }
                 }
-            private:
+            protected:
                 Proto(uint32_t id)
                     : protocol_id_(id)
                 {}
 
-                void set_protocol_id(uint32_t proto_id)
-                {
-                    protocol_id_ = proto_id;
-                }
                 uint32_t protocol_id_;
             };
 
-            template <typename T, class = std::void_t<>>
-            struct is_Proto_msg : std::false_type
-            {
-            };
-
             template<typename T>
-            struct is_Proto_msg<T, std::void_t<std::enable_if_t<std::is_base_of<proto_t, T>::value>>> : std::true_type
-            {
-
-            };
-
-            inline void set_proto_id(Proto* proto, uint32_t proto_id)
-            {
-                proto->set_protocol_id(proto_id);
-            }
-
-            template<typename T>
-            auto make_proto_ptr(uint32_t proto_id) -> std::enable_if_t<is_Proto_msg<T>::value, std::shared_ptr<T>>
+            auto make_proto_ptr(uint32_t proto_id)
             {
                 std::shared_ptr<T> ptr = std::make_shared<T>();
-                set_proto_id(ptr.get(), proto_id);
                 proto_t::RegisterProto(ptr);
                 return ptr;
             }
@@ -126,12 +105,6 @@ namespace cytx
         using connection_t = tcp_connection<msg_t>;
         using connection_ptr = std::shared_ptr<connection_t>;
         using msg_ptr = typename connection_t::msg_ptr;
-
-        template<typename T>
-        auto pack_msg(bool is_big_endian, const T& t) -> std::enable_if_t<detail::is_Proto_msg<T>::value, detail::msg_ptr>
-        {
-            return t.pack();
-        }
     }
 }
 

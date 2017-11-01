@@ -4,7 +4,6 @@
 #include "server_config.hpp"
 #include "msg_pack.hpp"
 #include "protocol.hpp"
-#include "proto.hpp"
 
 namespace cytx
 {
@@ -100,25 +99,6 @@ namespace cytx
                 }
 
                 template<typename MSG_ID, typename T>
-                void send_server_msg(connection_ptr& server_conn_ptr, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
-                {
-                    connection_ptr conn_ptr = get_running_conn(server_conn_ptr);
-                    if (!conn_ptr)
-                    {
-                        LOG_WARN("the server is not connected");
-                        return;
-                    }
-
-                    server_unique_id unique_id = conn_ptr->get_conn_info().unique_id;
-                    msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
-                    if (request_msgp)
-                    {
-                        msgp->header().call_id = request_msgp->header().call_id;
-                    }
-                    send_raw_msg(conn_ptr, msgp);
-                }
-
-                template<typename MSG_ID, typename T>
                 void send_client_msg(int32_t user_id, MSG_ID msg_id, const T& t)
                 {
                     connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
@@ -149,28 +129,56 @@ namespace cytx
                 }
 
             public:
-                template<typename RETURN_T, typename MSG_ID, typename T>
-                RETURN_T async_await_msg1(server_unique_id unique_id, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
+                // custom msg
+                template<typename T>
+                void send_server_msg(server_unique_id unique_id, const T& t, const msg_ptr& request_msgp = nullptr)
                 {
-                    RETURN_T ret{};
-
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
                     {
                         LOG_WARN("server {} is not connected", (uint16_t)unique_id);
-                        return ret;
+                        return;
                     }
 
-                    msg_ptr send_msgp = server_pack_msg(msg_id, unique_id, t);
+                    msg_ptr msgp = server_pack_msg(unique_id, t);
                     if (request_msgp)
                     {
-                        send_msgp->header().call_id = request_msgp->header().call_id;
+                        msgp->header().call_id = request_msgp->header().call_id;
                     }
-                    msg_ptr msgp = conn_ptr->await_write(send_msgp);
-                    ret = unpack_msg<RETURN_T>(msgp);
-                    return ret;
+                    send_raw_msg(conn_ptr, msgp);
                 }
 
+                template<typename T>
+                void send_client_msg(int32_t user_id, const T& t)
+                {
+                    connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("gateway is not connected");
+                        return;
+                    }
+
+                    msg_ptr msgp = server_pack_msg(server_unique_id::gateway_server, t);
+                    msgp->header().user_id = user_id;
+
+                    send_raw_msg(conn_ptr, msgp);
+                }
+
+                template<typename T>
+                void broadcast_client_msg(const std::vector<int32_t>& users, const T& t)
+                {
+                    connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("server {} is not connected", (uint16_t)unique_id);
+                        return;
+                    }
+
+                    msg_ptr msgp = server_pack_msg(BroadcastMsg, server_unique_id::gateway_server, t.get_protocol_id(), users, t);
+                    send_raw_msg(conn_ptr, msgp);
+                }
+
+            public:
                 template<typename RETURN_T, typename MSG_ID, typename T>
                 void async_await_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t, std::function<void(RETURN_T)>&& func, const msg_ptr& request_msgp = nullptr)
                 {
@@ -240,6 +248,46 @@ namespace cytx
                         return nullptr;
                 }
             protected:
+                template<typename MSG_ID, typename T>
+                void send_server_msg(connection_ptr& server_conn_ptr, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
+                {
+                    connection_ptr conn_ptr = get_running_conn(server_conn_ptr);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("the server is not connected");
+                        return;
+                    }
+
+                    server_unique_id unique_id = conn_ptr->get_conn_info().unique_id;
+                    msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
+                    if (request_msgp)
+                    {
+                        msgp->header().call_id = request_msgp->header().call_id;
+                    }
+                    send_raw_msg(conn_ptr, msgp);
+                }
+                template<typename RETURN_T, typename MSG_ID, typename T>
+                RETURN_T async_await_msg1(server_unique_id unique_id, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
+                {
+                    RETURN_T ret{};
+
+                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("server {} is not connected", (uint16_t)unique_id);
+                        return ret;
+                    }
+
+                    msg_ptr send_msgp = server_pack_msg(msg_id, unique_id, t);
+                    if (request_msgp)
+                    {
+                        send_msgp->header().call_id = request_msgp->header().call_id;
+                    }
+                    msg_ptr msgp = conn_ptr->await_write(send_msgp);
+                    ret = unpack_msg<RETURN_T>(msgp);
+                    return ret;
+                }
+
                 void send_raw_msg(connection_ptr& conn_ptr, msg_ptr& msgp)
                 {
                     conn_ptr->write(msgp);
@@ -254,6 +302,12 @@ namespace cytx
                     header.from_unique_id = (uint16_t)unique_id_;
                     header.to_unique_id = (uint16_t)to_unique_id;
                     return msgp;
+                }
+
+                template<typename T>
+                msg_ptr server_pack_msg(server_unique_id to_unique_id, const T& t)
+                {
+                    return server_pack_msg(t.get_protocol_id(), to_unique_id, t);
                 }
 
                 connection_ptr get_running_conn(const connection_ptr& conn) const

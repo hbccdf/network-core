@@ -1,5 +1,7 @@
 #pragma once
 #include "game_server_base.hpp"
+#include "proto.hpp"
+
 namespace cytx
 {
     namespace gameserver
