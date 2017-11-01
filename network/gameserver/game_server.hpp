@@ -198,6 +198,14 @@ namespace cytx
                 }
                 void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
                 {
+                    msg_ptr msgptr = msgp;
+                    proto_ptr_t proto = Proto::Decode(msgptr);
+                    if (proto)
+                    {
+                        proto->process(msgptr, conn_ptr, *this);
+                        return;
+                    }
+
                     uint32_t protocol_id = msgp->header().protocol_id;
                     if (protocol_id == SC_RegisterServer)
                     {

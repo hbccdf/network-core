@@ -17,13 +17,6 @@ namespace CytxGame
     protected:
         void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
         {
-            msg_ptr msgptr = msgp;
-            proto_ptr_t proto = Proto::Decode(msgptr);
-            if (proto)
-            {
-                proto->process(msgptr, conn_ptr, *this);
-                return;
-            }
             base_t::on_receive(conn_ptr, msgp);
         }
     };
