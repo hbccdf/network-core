@@ -4,6 +4,8 @@
 #include "server_config.hpp"
 #include "msg_pack.hpp"
 #include "protocol.hpp"
+#include "../service/service_manager.hpp"
+#include "config_service.hpp"
 
 namespace cytx
 {
@@ -63,10 +65,16 @@ namespace cytx
                     server_ = std::make_unique<server_t>(info.ip, info.port, options, this);
                     timer_mgr_ = std::make_unique<timer_manager_t>(server_->get_io_service());
                     flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time, cytx::bind(&this_t::flush_logs, this));
+
+                    //×¢²áËùÓÐµÄservice
+                    service_mgr_.reg_inter_service(new config_service(config_mgr_), "config");
+                    service_mgr_.register_service(info.services);
                 }
 
                 void start()
                 {
+                    service_mgr_.start_service();
+
                     flush_log_timer_.start();
                     server_->start();
                 }
@@ -75,7 +83,27 @@ namespace cytx
                     timer_mgr_->stop_all_timer();
                     server_->stop();
 
+                    service_mgr_.stop_service();
+
                     flush_logs();
+                }
+
+            public:
+                template<typename T>
+                T* get_service() const
+                {
+                    return service_mgr_.get_service<T>();
+                }
+
+                template<typename T>
+                bool find_service() const
+                {
+                    return service_mgr_.find_service<T>();
+                }
+
+                bool find_service(const std::string& service_name) const
+                {
+                    return service_mgr_.find_service(service_name);
                 }
 
             public:
@@ -333,6 +361,8 @@ namespace cytx
                 timer_t flush_log_timer_;
 
                 connection_ptr gate_conn_ptr_;
+
+                service_manager service_mgr_;
             };
         }
     }

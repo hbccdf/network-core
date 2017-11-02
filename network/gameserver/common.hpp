@@ -63,10 +63,11 @@ namespace cytx
 
         std::vector<server_unique_id> depends;
         std::vector<server_log_info> logs;
+        std::vector<std::string> services;
 
         int32_t flush_log_time = 10;
         META(name, ip, port, password, unique_id, connect_interval, disconnect_heartbeat, thread_mode, batch_send_msg,
-            depends, logs, flush_log_time);
+            depends, logs, services, flush_log_time);
 
         std::string host_ip;
     };

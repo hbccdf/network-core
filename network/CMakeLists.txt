@@ -11,6 +11,7 @@ add_files(SRC false "net")
 add_files(SRC false "orm")
 add_files(SRC false "serialize")
 add_files(SRC false "server")
+add_files(SRC false "service")
 add_files(SRC false "timer")
 add_files(SRC false "traits")
 

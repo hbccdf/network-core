@@ -63,6 +63,9 @@ namespace cytx
                         connect_db_timer_ = timer_mgr_->set_auto_timer(db_info_.connect_interval, connect_db_func);
                         get_db_info_timer_ = timer_mgr_->set_auto_timer(20 * 1000, get_db_info_func);
                     }
+
+                    //初始化所有的service
+                    service_mgr_.init_service();
                 }
 
                 template<typename MSG_ID, typename T>
