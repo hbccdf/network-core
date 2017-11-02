@@ -62,7 +62,6 @@ namespace cytx
                         db_conn_ptr_ = server_->create_connection();
                         connect_db_timer_ = timer_mgr_->set_auto_timer(db_info_.connect_interval, connect_db_func);
                         get_db_info_timer_ = timer_mgr_->set_auto_timer(20 * 1000, get_db_info_func);
-                        reconnect_db();
                     }
                 }
 
@@ -92,6 +91,7 @@ namespace cytx
                 {
                     if (depend_db_)
                     {
+                        LOG_DEBUG("try get db info");
                         CSGetServerInfo send_data;
                         send_data.servers.push_back(server_unique_id::db_server);
                         send_server_msg(server_unique_id::center_server, CS_GetServerInfo, send_data);
@@ -101,6 +101,8 @@ namespace cytx
                 {
                     SCRegisterServer data = unpack_msg<SCRegisterServer>(msgp);
                     LOG_INFO("current server uid {}", data.server_uid);
+
+                    reconnect_db();
                 }
                 void on_sc_get_server_info(const msg_ptr& msgp)
                 {
@@ -110,7 +112,12 @@ namespace cytx
                         auto it = data.servers.find(server_unique_id::db_server);
                         if (it != data.servers.end())
                         {
+                            LOG_DEBUG("geted db info, {}:{}", it->second.ip, it->second.port);
                             on_get_db_info(it->second);
+                        }
+                        else
+                        {
+                            LOG_DEBUG("on sc_get_server_info, don't have db info");
                         }
                     }
                 }
@@ -120,6 +127,10 @@ namespace cytx
                     if (data.event == EServerConnected)
                     {
                         LOG_DEBUG("server {} connected", (uint16_t)data.info.unique_id);
+                        if (data.info.unique_id == server_unique_id::db_server)
+                        {
+                            on_get_db_info(data.info);
+                        }
                     }
                     else if (data.event == EServerDisconnected)
                     {
