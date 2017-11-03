@@ -342,14 +342,15 @@ namespace cytx {
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<(is_basic_type<std::decay_t<T>>::value && !std::is_same<std::decay_t<T>, std::string>::value)
-                                            || std::is_enum<std::decay_t<T>>::value>
+        auto process_array(val_t& val) -> std::enable_if_t<is_basic_type<std::decay_t<T>>::value
+            || std::is_enum<std::decay_t<T>>::value>
         {
             rd_.process_array(val);
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<(!is_basic_type<std::decay_t<T>>::value && !std::is_enum<std::decay_t<T>>::value) || std::is_same<std::decay_t<T>, std::string>::value>
+        auto process_array(val_t& val) -> std::enable_if_t<!is_basic_type<std::decay_t<T>>::value
+            && !std::is_enum<std::decay_t<T>>::value>
         {
         }
 
