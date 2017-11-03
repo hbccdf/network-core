@@ -1,4 +1,4 @@
-#include "proto/message_wraps.hpp"
+#include "proto/all_wraps.hpp"
 
 namespace CytxGame
 {

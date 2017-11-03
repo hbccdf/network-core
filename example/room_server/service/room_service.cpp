@@ -1,6 +1,6 @@
 #include "room_service.h"
 #include "room_config.h"
-#include "proto/message_wraps.hpp"
+#include "proto/all_wraps.hpp"
 
 namespace CytxGame
 {

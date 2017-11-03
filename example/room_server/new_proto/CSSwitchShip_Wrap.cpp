@@ -1,4 +1,4 @@
-#include "proto/message_wraps.hpp"
+#include "proto/all_wraps.hpp"
 #include "service/common_check.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"

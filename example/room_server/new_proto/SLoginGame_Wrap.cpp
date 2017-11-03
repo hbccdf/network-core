@@ -1,5 +1,6 @@
-#include "proto/message_wraps.hpp"
+#include "proto/all_wraps.hpp"
 #include "service/player_service.h"
+#include "service/common_check.hpp"
 
 namespace CytxGame
 {
@@ -7,14 +8,8 @@ namespace CytxGame
 
     void SLoginGame_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
+        CHECK_PLAYER_SERVICE(player_svc);
         auto& header = msgp->header();
-        //获取player服务
-        player_service* player_svc = server.get_service<player_service>();
-        if (!player_svc)
-        {
-            LOG_ERROR("player service is not exist");
-            return;
-        }
 
         //获取player，如果没有，则创建一个player
         auto player = player_svc->get_player(header.user_id);
