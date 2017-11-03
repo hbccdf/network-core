@@ -144,6 +144,12 @@ namespace cytx
             return msg;
         }
 
+        detail::msg_ptr pack_msg()
+        {
+            detail::msg_ptr msg = std::make_shared<detail::msg_t>();
+            return msg;
+        }
+
         template<typename T>
         auto unpack_msg(detail::msg_ptr msgp)
         {
