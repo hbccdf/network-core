@@ -5,7 +5,6 @@ namespace cytx
 {
     class service_manager
     {
-        friend class game_server_base;
     public:
         template<typename ... Args>
         void register_service()
@@ -27,6 +26,13 @@ namespace cytx
             for (auto& str : services)
             {
                 register_service(str);
+            }
+        }
+        void service_set_server(game_server_base_t* server_ptr)
+        {
+            for (auto& p : service_map_)
+            {
+                p.second->set_server(server_ptr);
             }
         }
         void init_service()

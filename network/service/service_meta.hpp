@@ -9,6 +9,22 @@ namespace cytx
     HAS_FUNC(init);
     HAS_FUNC(start);
     HAS_FUNC(stop);
+    HAS_FUNC(reset);
+
+    template <typename T>
+    struct has_set_server_func
+    {
+    private:
+        template <typename P, typename = decltype(std::declval<P>().set_server((game_server_base_t*)nullptr))>
+        static std::true_type test(int);
+        template <typename P>
+        static std::false_type test(...);
+        using result_type = decltype(test<T>(0));
+    public:
+        static constexpr bool value = result_type::value;
+    };
+    template<typename T>
+    constexpr bool has_set_server_func_v = has_set_server_func<T>::value;
 
     template<typename T>
     class service_helper : public iservice
@@ -35,6 +51,10 @@ namespace cytx
         }
 
     public:
+        void set_server(game_server_base_t* server_ptr) override
+        {
+            set_server_impl<T>(server_ptr);
+        }
         void init() override
         {
             init_impl<T>();
@@ -48,6 +68,11 @@ namespace cytx
         void stop() override
         {
             stop_impl<T>();
+        }
+
+        void reset() override
+        {
+            reset_impl<T>();
         }
 
     public:
@@ -84,6 +109,26 @@ namespace cytx
         }
         template<typename TT>
         auto stop_impl()->std::enable_if_t<!has_stop_v<TT>>
+        {
+        }
+
+        template<typename TT>
+        auto reset_impl() -> std::enable_if_t<has_reset_v<TT>>
+        {
+            val_->reset();
+        }
+        template<typename TT>
+        auto reset_impl()->std::enable_if_t<!has_reset_v<TT>>
+        {
+        }
+
+        template<typename TT>
+        auto set_server_impl(game_server_base_t* server_ptr) -> std::enable_if_t<has_set_server_func_v<TT>>
+        {
+            val_->set_server(server_ptr);
+        }
+        template<typename TT>
+        auto set_server_impl(game_server_base_t* server_ptr) -> std::enable_if_t<!has_set_server_func_v<TT>>
         {
         }
     private:

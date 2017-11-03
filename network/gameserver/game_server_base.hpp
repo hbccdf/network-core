@@ -69,6 +69,8 @@ namespace cytx
                     //×¢²áËùÓÐµÄservice
                     service_mgr_.reg_inter_service(new config_service(config_mgr_), "config");
                     service_mgr_.register_service(info.services);
+
+                    service_mgr_.service_set_server(this);
                 }
 
                 void start()
