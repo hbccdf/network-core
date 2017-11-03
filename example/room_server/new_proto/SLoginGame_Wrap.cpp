@@ -1,4 +1,5 @@
 #include "proto/message_wraps.hpp"
+#include "service/player_service.h"
 
 namespace CytxGame
 {
@@ -6,11 +7,31 @@ namespace CytxGame
 
     void SLoginGame_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
-        int32_t user_id = msgp->header().user_id;
-        LOG_DEBUG("user {} login", user_id);
+        auto& header = msgp->header();
+        //获取player服务
+        player_service* player_svc = server.get_service<player_service>();
+        if (!player_svc)
+        {
+            LOG_ERROR("player service is not exist");
+            return;
+        }
 
-        SCServerInfo_Wrap data;
-        data.scServerInfo.currentServerTime = cytx::date_time::now().total_milliseconds();
-        server.send_client_msg(user_id, data);
+        //获取player，如果没有，则创建一个player
+        auto player = player_svc->get_player(header.user_id);
+        //如果player已经在房间中，则把其他玩家踢出
+        if (player->room())
+        {
+            player_svc->handle_player_disconnect(header.user_id);
+        }
+
+        if (!player->is_login())
+        {
+            LOG_INFO("player {} login game, info:[{}]", header.user_id, player->info());
+            player->update_to_login_status();
+
+            SCServerInfo_Wrap data;
+            data.scServerInfo.currentServerTime = cytx::date_time::now().total_milliseconds();
+            server.send_client_msg(header.user_id, data);
+        }
     }
 }
