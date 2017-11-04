@@ -144,7 +144,7 @@ namespace cytx
             return msg;
         }
 
-        detail::msg_ptr pack_msg()
+        inline detail::msg_ptr pack_msg()
         {
             detail::msg_ptr msg = std::make_shared<detail::msg_t>();
             return msg;

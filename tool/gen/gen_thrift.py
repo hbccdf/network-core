@@ -156,7 +156,8 @@ class _base_hpp(_base):
         content += "            : base_t(ProtoId()) {}\n"
         content += "        %s(const this_t& rhs)\n" % self.class_name
         content += "            : base_t(rhs)\n"
-        content += "            , %s(rhs.%s)\n" % (self.ref_inst_name, self.ref_inst_name)
+        if self.finded_struct:
+            content += "            , %s(rhs.%s)\n" % (self.ref_inst_name, self.ref_inst_name)
         content += "        {}\n"
         content += "        proto_ptr_t clone() override\n"
         content += "        {\n"
@@ -375,7 +376,7 @@ f2.gene_space = ""
 f2.dir = "struct"
 _list_thrift.append(f2)
 
-copy_dst_dir = "../../example/room_server/proto"
+copy_dst_dir = "../../example/common/proto"
 
 ############################################################################
 

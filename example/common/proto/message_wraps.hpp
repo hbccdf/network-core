@@ -96,7 +96,6 @@
             : base_t(ProtoId()) {}
         SCConnect_Wrap(const this_t& rhs)
             : base_t(rhs)
-            , scConnect(rhs.scConnect)
         {}
         proto_ptr_t clone() override
         {
@@ -131,7 +130,6 @@
             : base_t(ProtoId()) {}
         SCDisConnect_Wrap(const this_t& rhs)
             : base_t(rhs)
-            , scDisConnect(rhs.scDisConnect)
         {}
         proto_ptr_t clone() override
         {
