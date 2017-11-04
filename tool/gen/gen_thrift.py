@@ -244,7 +244,7 @@ class _cpp(_base):
         return self.gen_file_name
 
     def get_content(self):
-        content = "#include \"proto/%s_wraps.hpp\"\n\n" % self.thrift.dir
+        content = "#include \"proto/all_wraps.hpp\"\n\n"
         content += "%s\n{\n" % self.namespace
         content += "    REGISTER_PROTOCOL(%s);\n\n" % self.class_name
         content += "    void %s::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)\n" % self.class_name

@@ -87,7 +87,7 @@
         SLoginGame sLoginGame;
     };
 
-    /*class SCConnect_Wrap : public Proto
+    class SCConnect_Wrap : public Proto
     {
         using this_t = SCConnect_Wrap;
         using base_t = Proto;
@@ -104,15 +104,13 @@
         }
         msg_ptr pack() const
         {
-            return pack_msg(scConnect);
+            return pack_msg();
         }
         void pack(stream_t& gos) const
         {
-            pack_msg(gos, scConnect);
         }
         void unpack(msg_ptr& msgp) override
         {
-            scConnect = unpack_msg<SCConnect>(msgp);
         }
         void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
 
@@ -122,8 +120,6 @@
             return ::MessageId::SC_Connect;
         }
 
-    public:
-        SCConnect scConnect;
     };
 
     class SCDisConnect_Wrap : public Proto
@@ -143,15 +139,13 @@
         }
         msg_ptr pack() const
         {
-            return pack_msg(scDisConnect);
+            return pack_msg();
         }
         void pack(stream_t& gos) const
         {
-            pack_msg(gos, scDisConnect);
         }
         void unpack(msg_ptr& msgp) override
         {
-            scDisConnect = unpack_msg<SCDisConnect>(msgp);
         }
         void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
 
@@ -161,9 +155,7 @@
             return ::MessageId::SC_DisConnect;
         }
 
-    public:
-        SCDisConnect scDisConnect;
-    };*/
+    };
 
     class CSCreateRoom_Wrap : public Proto
     {
