@@ -3,7 +3,7 @@
     only for generating for c++ code
 '''
 
-import os, sys, time, functools, re, shutil
+import os, sys, time, functools, re, shutil, traceback
 
 _generator = "thrift-0.10.0.exe"
 
@@ -259,6 +259,60 @@ def move_file_to_dir(list, save_dir):
         file = os.path.join(os.path.abspath("."), _thrift_dir_name + fname)
         print "move", file, "->", save_dir
         shutil.move(file, save_dir)
+        
+def copytree(src, dst, symlinks=False):
+    names = os.listdir(src)
+    if not os.path.isdir(dst):
+        os.makedirs(dst)
+          
+    errors = []
+    for name in names:
+        srcname = os.path.join(src, name)
+        dstname = os.path.join(dst, name)
+        try:
+            if symlinks and os.path.islink(srcname):
+                linkto = os.readlink(srcname)
+                os.symlink(linkto, dstname)
+            elif os.path.isdir(srcname):
+                copytree(srcname, dstname, symlinks)
+            else:
+                if os.path.isdir(dstname):
+                    os.rmdir(dstname)
+                elif os.path.isfile(dstname):
+                    os.remove(dstname)
+                shutil.copy2(srcname, dstname)
+            # XXX What about devices, sockets etc.?
+        except (IOError, os.error) as why:
+            errors.append((srcname, dstname, str(why)))
+        # catch the Error from the recursive copytree so that we can
+        # continue with other files
+        except OSError as err:
+            errors.extend(err.args[0])
+    try:
+        shutil.copystat(src, dst)
+    except WindowsError:
+        # can't copy file access times on Windows
+        pass
+    except OSError as why:
+        errors.extend((src, dst, str(why)))
+    if errors:
+        raise Error(errors)
+
+def copy_dir(src_dir, dst_dir):
+    try:
+        exist = os.path.isdir(src_dir)
+        if exist:
+            copytree(src_dir, dst_dir)
+        else:
+            print src_dir, ' not exist.'
+
+    except:
+        traceback.print_exc()
+        # Write log file
+        # f=open("log.txt",'a')
+        # traceback.print_exc(file=f)
+        # f.flush()
+        # f.close()
 
 ############################################################################
 
@@ -280,16 +334,25 @@ f2.gene_space = ""
 f2.dir = "struct"
 _list_thrift.append(f2)
 
+copy_dst_dir = "../../example/room_server/proto"
+
 ############################################################################
 
 if __name__ == "__main__":
     list_common_total = []
+    copy_files = []
     for t in _list_thrift:
         if t.file_exist() == False:
             print "err:", t.name, "file not exist"
             break
 
         t.gen_thrift()
+
+        copy_files.append("%s%s_constants.h" % (_thrift_dir_name, t.dir))
+        copy_files.append("%s%s_constants.cpp" % (_thrift_dir_name, t.dir))
+        copy_files.append("%s%s_types.h" % (_thrift_dir_name, t.dir))
+        copy_files.append("%s%s_types.cpp" % (_thrift_dir_name, t.dir))
+
         gen_files = t.get_gen_file_name()
         if len(gen_files) == 0:
             continue
@@ -300,6 +363,8 @@ if __name__ == "__main__":
         create_dir(_generate_dir_name)
 
         full_hpp_file = _full_hpp(t.dir, t)
+        list_common_total.append(full_hpp_file.get_file_name())
+
         #print content
         for file_name in gen_files:
             gf = _g_factory()
@@ -312,8 +377,42 @@ if __name__ == "__main__":
             cpp_list.append(cpp_file.get_file_name())
 
         full_name = "%s%s" % (_thrift_dir_name, full_hpp_file.get_file_name())
+        copy_files.append(full_name)
 
         content = full_hpp_file.get_content()
+        file = open(full_name, "w")
+        file.write(content)
+        file.close()
+
+    print "wrap files", list_common_total
+
+    content = "#pragma once\n"
+    for wrap in list_common_total:
+        content += "#include \"%s\"\n" % wrap
+
+    full_name = "%s%s" % (_thrift_dir_name, "wraps_common.hpp")
+    file = open(full_name, "w")
+    file.write(content)
+    file.close()
+
+    #copy to dst dir
+    src_dir = os.path.join(os.path.abspath("."), _thrift_dir_name)
+    dst_dir = os.path.join(os.path.abspath("."), copy_dst_dir)
+    print dst_dir
+    copy_dir(src_dir, dst_dir)
+
+    full_name = "%s/%s" % (dst_dir, "custom_wraps.hpp")
+    if not os.path.exists(full_name):
+        content = "#pragma once\n"
+        file = open(full_name, "w")
+        file.write(content)
+        file.close()
+
+    full_name = "%s/%s" % (dst_dir, "all_wraps.hpp")
+    if not os.path.exists(full_name):
+        content = "#pragma once\n"
+        content += "#include \"wraps_common.hpp\"\n"
+        content += "#include \"custom_wraps.hpp\"\n"
         file = open(full_name, "w")
         file.write(content)
         file.close()
