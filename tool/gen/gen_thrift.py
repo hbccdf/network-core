@@ -31,6 +31,7 @@ class _thrift:
         self.dir=""
         self.gene_space=""
         self.proto_id_namespace=""
+        self.dic = {}
 
     def file_exist(self):
         if os.path.exists(self.name):
@@ -48,6 +49,7 @@ class _thrift:
         if len(self.key) > 0:
             pattern = re.compile(r'(\w+)_(\w+)(\W+)=(\W+)(\d+)', re.DOTALL)
             pattern_for_protoid = re.compile(r'enum(\W+)%s' % self.key, re.DOTALL)
+
             file = open(self.name, 'r')
             is_matched_protoid = False
             is_matched_lbrace = False
@@ -74,13 +76,35 @@ class _thrift:
                         #n = s.index('_')
                         #file_list.append(s[:n] + s[n + 1:])
                         file_list.append(s)
+
                     if line.find('}') != -1:
                         is_matched_rbrace = True
                         # print '---->3'
             file.close()
         return file_list
 
+    def find_struct(self, struct_name):
+        pattern_struct = re.compile(r'struct(\W+)%s' % struct_name, re.DOTALL)
 
+        struct_matched = False
+        file = open(self.name, 'r')
+        for line in file:
+            struct_matched = pattern_struct.search(line)
+            if struct_matched :
+                break
+
+        file.close()
+        return struct_matched
+
+    def get_dic(self):
+        for name in self.get_gen_file_name():
+            struct_name = _remove_underline(name)
+            finded = self.find_struct(struct_name)
+            self.dic[name] = finded
+            if not finded:
+                print struct_name, "not finded"
+
+        return self.dic
 
 class _base:
     include_list=["<network/gameserver/game_server.hpp>"]
@@ -102,10 +126,11 @@ class _base:
         self.proto_id_namespace = thrift.proto_id_namespace
 
 class _base_hpp(_base):
-    def __init__(self, key_name, thrift):
+    def __init__(self, key_name, thrift, finded_struct):
         _base.__init__(self, key_name, thrift)
         self.gen_file_name = "%s_Wrap.hpp" % self.new_name
         self.thrift = thrift
+        self.finded_struct = finded_struct
 
     def get_file_name(self):
         return self.gen_file_name
@@ -137,26 +162,42 @@ class _base_hpp(_base):
         content += "        {\n"
         content += "            return std::make_shared<this_t>(*this);\n"
         content += "        }\n"
-        content += "        msg_ptr pack() const\n"
-        content += "        {\n"
-        content += "            return pack_msg(%s);\n" % self.ref_inst_name
-        content += "        }\n"
-        content += "        void pack(stream_t& gos) const\n"
-        content += "        {\n"
-        content += "            pack_msg(gos, %s);\n" % self.ref_inst_name
-        content += "        }\n"
-        content += "        void unpack(msg_ptr& msgp) override\n"
-        content += "        {\n"
-        content += "            %s = unpack_msg<%s>(msgp);\n" % (self.ref_inst_name, self.new_name)
-        content += "        }\n"
+        if not self.finded_struct:
+            content += "        msg_ptr pack() const\n"
+            content += "        {\n"
+            content += "            return pack_msg();\n"
+            content += "        }\n"
+            content += "        void pack(stream_t& gos) const\n"
+            content += "        {\n"
+            content += "        }\n"
+            content += "        void unpack(msg_ptr& msgp) override\n"
+            content += "        {\n"
+            content += "        }\n"
+        else:
+            content += "        msg_ptr pack() const\n"
+            content += "        {\n"
+            content += "            return pack_msg(%s);\n" % self.ref_inst_name
+            content += "        }\n"
+            content += "        void pack(stream_t& gos) const\n"
+            content += "        {\n"
+            content += "            pack_msg(gos, %s);\n" % self.ref_inst_name
+            content += "        }\n"
+            content += "        void unpack(msg_ptr& msgp) override\n"
+            content += "        {\n"
+            content += "            %s = unpack_msg<%s>(msgp);\n" % (self.ref_inst_name, self.new_name)
+            content += "        }\n"
+
         content += "        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;\n\n"
         content += "    public:\n"
         content += "        static uint32_t ProtoId()\n"
         content += "        {\n"
         content += "            return %s::%s::%s;\n" % (self.thrift.gene_space, self.proto_id_namespace, self.key_name)
         content += "        }\n\n"
-        content += "    public:\n"
-        content += "        %s %s;\n" % (self.new_name, self.ref_inst_name)
+
+        if self.finded_struct:
+            content += "    public:\n"
+            content += "        %s %s;\n" % (self.new_name, self.ref_inst_name)
+
         content += "    };\n"
 
         return content
@@ -232,10 +273,10 @@ class _proto():
 
 
 class _g_factory:
-    def create(self, type, file_name, thrift, is_full_hpp):
+    def create(self, type, file_name, thrift, is_full_hpp, finded_struct):
         if type == "hpp":
             full_name = "%s/%s_Wrap.hpp" % (_generate_dir_name, _remove_underline(file_name))
-            inst = _base_hpp(file_name, thrift)
+            inst = _base_hpp(file_name, thrift, finded_struct)
         elif type == "cpp":
             full_name = "%s/%s_Wrap.cpp" % (_generate_dir_name, _remove_underline(file_name))
             inst = _cpp(file_name, thrift)
@@ -357,6 +398,7 @@ if __name__ == "__main__":
         if len(gen_files) == 0:
             continue
 
+        gen_dic = t.get_dic()
         hpp_list = []
         cpp_list = []
 
@@ -366,14 +408,14 @@ if __name__ == "__main__":
         list_common_total.append(full_hpp_file.get_file_name())
 
         #print content
-        for file_name in gen_files:
+        for name in gen_files:
             gf = _g_factory()
-
-            hpp_file = gf.create("hpp", file_name, t, True)
+            finded = gen_dic[name]
+            hpp_file = gf.create("hpp", name, t, True, finded)
             hpp_list.append(hpp_file.get_file_name())
             full_hpp_file.add_hpp(hpp_file)
 
-            cpp_file = gf.create("cpp", file_name, t, False)
+            cpp_file = gf.create("cpp", name, t, False, finded)
             cpp_list.append(cpp_file.get_file_name())
 
         full_name = "%s%s" % (_thrift_dir_name, full_hpp_file.get_file_name())
