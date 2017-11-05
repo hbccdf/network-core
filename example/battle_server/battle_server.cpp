@@ -7,11 +7,11 @@ namespace CytxGame
     using namespace cytx::gameserver;
 
     using game_server_t = cytx::gameserver::game_server;
-    class room_server_t : public game_server_t
+    class battle_server_t : public game_server_t
     {
         using base_t = game_server_t;
     public:
-        room_server_t()
+        battle_server_t()
             : game_server_t(server_unique_id::room_server)
         {}
     protected:
@@ -29,7 +29,7 @@ namespace CytxGame
 
 int main(int argc, char* argv[])
 {
-    CytxGame::room_server_t server;
+    CytxGame::battle_server_t server;
     server.init();
     server.start();
 }

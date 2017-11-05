@@ -1,6 +1,5 @@
 #pragma once
 #include "service_base.hpp"
-#include "game_player.h"
 
 namespace CytxGame
 {

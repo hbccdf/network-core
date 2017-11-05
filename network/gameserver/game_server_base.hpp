@@ -28,6 +28,7 @@ namespace cytx
             using timer_manager_t = timer_manager;
             using timer_manager_ptr = std::unique_ptr<timer_manager_t>;
             using timer_t = timer_proxy;
+            using timer_func_t = std::function<bool()>;
 
             class game_server_base : public irouter_t
             {
@@ -91,6 +92,7 @@ namespace cytx
                 }
 
             public:
+                // service
                 template<typename T>
                 T* get_service() const
                 {
@@ -108,6 +110,32 @@ namespace cytx
                     return service_mgr_.find_service(service_name);
                 }
 
+            public:
+                //timer
+                timer_t set_timer(int milliseconds, timer_func_t func)
+                {
+                    return timer_mgr_->set_timer(milliseconds, func);
+                }
+
+                timer_t set_fix_timer(int milliseconds, timer_func_t func)
+                {
+                    return timer_mgr_->set_fix_timer(milliseconds, func);
+                }
+
+                timer_t set_fix_timer(int milliseconds, std::function<void()> func)
+                {
+                    return timer_mgr_->set_fix_timer(milliseconds, func);
+                }
+
+                timer_t set_once_timer(int milliseconds, std::function<void()> func)
+                {
+                    return timer_mgr_->set_once_timer(milliseconds, func);
+                }
+
+                timer_t set_auto_timer(int milliseconds, std::function<void()> func)
+                {
+                    return timer_mgr_->set_auto_timer(milliseconds, func);
+                }
             public:
                 //给服务端发送消息
                 template<typename MSG_ID, typename T>
