@@ -12,7 +12,7 @@ namespace CytxGame
         using base_t = game_server_t;
     public:
         battle_server_t()
-            : game_server_t(server_unique_id::room_server)
+            : game_server_t(server_unique_id::battle_server)
         {}
     protected:
         void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override

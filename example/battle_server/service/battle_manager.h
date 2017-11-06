@@ -16,4 +16,6 @@ namespace CytxGame
     private:
         static int get_battle_id();
     };
+
+    REG_SERVICE(battle_manager);
 }

@@ -5,6 +5,7 @@ namespace CytxGame
 {
     void battle_manager::init()
     {
+        LOG_DEBUG("battle manager init");
         update_timer* timer_ptr = server_->get_service<update_timer>();
         if (!timer_ptr)
             return;

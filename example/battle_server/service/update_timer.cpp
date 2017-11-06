@@ -5,6 +5,7 @@ namespace CytxGame
 {
     void update_timer::init()
     {
+        LOG_DEBUG("update timer init");
         config_ = timer_config{};
 
         battle_config* config_ptr = server_->get_service<battle_config>();

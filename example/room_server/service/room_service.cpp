@@ -5,6 +5,11 @@
 
 namespace CytxGame
 {
+    void room_service::init()
+    {
+        LOG_DEBUG("room service init");
+    }
+
     room_ptr_t room_service::create_room(player_ptr_t& master, size_t max_size, room_mode mode)
     {
         auto room = std::make_shared<room_t>(max_size, mode);

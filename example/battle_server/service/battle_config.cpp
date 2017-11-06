@@ -7,6 +7,7 @@ namespace CytxGame
 
     void battle_config::init()
     {
+        LOG_DEBUG("battle config init");
         config_service* service_ptr = server_->get_service<config_service>();
         if (!service_ptr)
             return;

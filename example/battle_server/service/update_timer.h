@@ -30,4 +30,6 @@ namespace CytxGame
         func_t func_;
         timer_config config_;
     };
+
+    REG_SERVICE(update_timer);
 }

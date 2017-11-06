@@ -3,6 +3,17 @@
 
 namespace CytxGame
 {
+
+    void player_service::init()
+    {
+        LOG_DEBUG("player service init");
+    }
+
+    void player_service::reset()
+    {
+        LOG_DEBUG("player service reset");
+    }
+
     player_ptr_t player_service::find_player(int user_id, bool is_login /*= true*/)
     {
         auto it = players_.find(user_id);
@@ -46,4 +57,5 @@ namespace CytxGame
         player->update_to_none_status();
         LOG_DEBUG("player {} disconnect", user_id);
     }
+
 }
