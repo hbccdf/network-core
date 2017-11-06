@@ -41,19 +41,7 @@ namespace cytx
                 {
                     for (auto unique_id : servers)
                     {
-                        auto it = servers_.find(unique_id);
-                        if (it != servers_.end())
-                        {
-                            auto& info_list = it->second;
-                            for (auto& server : info_list)
-                            {
-                                auto conn_ptr = get_running_conn(server.conn_ptr);
-                                if (conn_ptr)
-                                {
-                                    send_raw_msg(conn_ptr, msgp);
-                                }
-                            }
-                        }
+                        forward_msg(unique_id, msgp);
                     }
                 }
 
@@ -113,6 +101,12 @@ namespace cytx
                     broadcast_server_msg(data.servers, send_msgp);
                 }
 
+                void on_forward_msg(connection_ptr& conn_ptr, const msg_ptr& msgp)
+                {
+                    server_unique_id to_unique_id = (server_unique_id)(msgp->header().to_unique_id);
+                    forward_msg(to_unique_id, msgp);
+                }
+
             protected:
                 void on_disconnect(connection_ptr& conn_ptr, const net_result& err) override
                 {
@@ -161,6 +155,10 @@ namespace cytx
                     {
                         on_broadcast_server_msg(conn_ptr, msgp);
                     }
+                    else if (protocol_id != SimpleRegisterServer)
+                    {
+                        on_forward_msg(conn_ptr, msgp);
+                    }
                     else
                     {
                         base_t::on_receive(conn_ptr, msgp);
@@ -185,6 +183,23 @@ namespace cytx
                         for (auto& server : info_list)
                         {
                             send_server_msg(server.conn_ptr, msg_id, t);
+                        }
+                    }
+                }
+
+                void forward_msg(server_unique_id to_unique_id, msg_ptr msgp)
+                {
+                    auto it = servers_.find(to_unique_id);
+                    if (it != servers_.end())
+                    {
+                        auto& info_list = it->second;
+                        for (auto& server : info_list)
+                        {
+                            auto conn_ptr = get_running_conn(server.conn_ptr);
+                            if (conn_ptr)
+                            {
+                                send_raw_msg(conn_ptr, msgp);
+                            }
                         }
                     }
                 }
