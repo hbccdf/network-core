@@ -1,0 +1,28 @@
+<config>
+    <server>
+        <item name="LoginServer" ip="127.0.0.1" port="30001" connect_interval="5000" unique_id="login_server" />
+        <item name="GatewayServer" ip="127.0.0.1" port="31001" connect_interval="5000" unique_id="gateway_server"  >
+            <depends>login_server,room_server,battle_server,center_server</depends>
+        </item>
+        <item name="RoomServer" ip="127.0.0.1" port="32001" connect_interval="5000" unique_id="room_server">
+            <!-- <depends>db_server</depends> -->
+            <services>room_config,player_service,room_service</services>
+        </item>
+        <item name="BattleServer" ip="127.0.0.1" port="33001" connect_interval="5000" unique_id="battle_server">
+            <services>battle_config,update_timer,battle_manager</services>
+        </item>
+        <item name="CenterServer" ip="127.0.0.1" port="30009" connect_interval="5000" unique_id="center_server" />
+        
+    </server>
+    <gateway  allow_reconnect_time="0" first_connect_msg_timeout="5000" disconnect_interval="30" reply_heartbeat_packet="false" log_level="debug" 
+    process_newconn_msg="false" allow_not_login="false" read_mode="batch" >
+        <send_register_msg>room_server,battle_server,center_server</send_register_msg>
+        <forward_login_msg>room_server</forward_login_msg>
+        <forward_disconnect_msg>room_server,battle_server</forward_disconnect_msg>
+        <close_all_client>room_server,battle_server,center_server</close_all_client>
+    </gateway>
+    <common client_big_endian="false" server_big_endian="true"/>
+    
+    <room end_battle_when_disconnect="true"></room>
+    <battle update_time="20" use_custom_delta="true" custom_delta="0.02"></battle>
+</config>
