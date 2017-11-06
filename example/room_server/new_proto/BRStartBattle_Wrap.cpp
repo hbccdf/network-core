@@ -14,21 +14,22 @@ namespace CytxGame
 
         auto& header = msgp->header();
 
-        auto player = player_svc->find_player(header.user_id);
+        int32_t user_id = brStartBattle.master_id;
+        auto player = player_svc->find_player(user_id);
         int ret = 0;
         if (!check_player(ret, player) || !check_matched(ret, player))
         {
-            LOG_DEBUG("player {} start battle resp failed, {}, result:{}", header.user_id, error_code_str(ret));
+            LOG_DEBUG("player {} start battle resp failed, {}, result:{}", user_id, error_code_str(ret));
             return;
         }
 
         auto room = player->room();
         SCStartBattle_Wrap data_wrap;
-        data_wrap.scStartBattle.result = brResult ? 0 : 1;
+        data_wrap.scStartBattle.result = brStartBattle.result ? 0 : 1;
         data_wrap.scStartBattle.startTime = cytx::date_time::now().total_milliseconds();
 
         //开始战斗了
-        if (brResult)
+        if (brStartBattle.result)
         {
             room->status_ = room_status::battle;
             LOG_DEBUG("start battle success");

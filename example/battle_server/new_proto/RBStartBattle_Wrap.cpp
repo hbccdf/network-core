@@ -13,7 +13,8 @@ namespace CytxGame
         bool result = battle_svc->create_battle(scRoomInfo);
 
         BRStartBattle_Wrap data_wrap;
-        data_wrap.brResult = result;
-        server.send_server_msg(server_unique_id::battle_server, data_wrap);
+        data_wrap.brStartBattle.result = result;
+        data_wrap.brStartBattle.master_id = scRoomInfo.masterId;
+        server.send_server_msg(server_unique_id::room_server, data_wrap);
     }
 }

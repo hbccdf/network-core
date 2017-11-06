@@ -75,6 +75,12 @@ namespace CytxGame
         SCRoomInfo scRoomInfo;
     };
 
+    struct BRStartBattle
+    {
+        bool result = true;
+        int32_t master_id = 0;
+        META(result, master_id);
+    };
     class BRStartBattle_Wrap : public Proto
     {
         using this_t = BRStartBattle_Wrap;
@@ -84,7 +90,7 @@ namespace CytxGame
             : base_t(ProtoId()) {}
         BRStartBattle_Wrap(const this_t& rhs)
             : base_t(rhs)
-            , brResult(rhs.brResult)
+            , brStartBattle(rhs.brStartBattle)
         {}
         proto_ptr_t clone() override
         {
@@ -92,15 +98,15 @@ namespace CytxGame
         }
         msg_ptr pack() const
         {
-            return pack_msg(brResult);
+            return pack_msg(brStartBattle);
         }
         void pack(stream_t& gos) const
         {
-            pack_msg(gos, brResult);
+            pack_msg(gos, brStartBattle);
         }
         void unpack(msg_ptr& msgp) override
         {
-            brResult = unpack_msg<bool>(msgp);
+            brStartBattle = unpack_msg<BRStartBattle>(msgp);
         }
         void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
 
@@ -111,6 +117,6 @@ namespace CytxGame
         }
 
     public:
-        bool brResult;
+        BRStartBattle brStartBattle;
     };
 }
