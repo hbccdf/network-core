@@ -2,6 +2,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${ROOT}/network ${ROOT}/example/common)
 
 file(GLOB SRC "*.h" "*.hpp" "*.cpp")
+add_files(SRC false "battle")
 add_files(SRC false "new_proto")
 add_files(SRC false "service")
 

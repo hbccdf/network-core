@@ -1,6 +1,6 @@
 #pragma once
 #include <network/meta/meta.hpp>
-#include "proto/message_types.h"
+#include "message_types.h"
 
 namespace CytxGame
 {
@@ -23,4 +23,5 @@ namespace CytxGame
 
     using player_type = ::ClassType::type;
     REG_ENUM(player_type, DRIVER, SHOOTER);
+
 }

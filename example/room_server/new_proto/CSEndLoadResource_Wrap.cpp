@@ -28,8 +28,9 @@ namespace CytxGame
         auto room = player->room();
         if (room->all_ready())
         {
-            SCRoomInfo room_info = room->get_room_info();
-            server.send_server_msg(server_unique_id::battle_server, battle_msg_id::start_battle, room_info);
+            RBStartBattle_Wrap data_wrap;
+            data_wrap.scRoomInfo = room->get_room_info();
+            server.send_server_msg(server_unique_id::battle_server, data_wrap);
         }
     }
 }
