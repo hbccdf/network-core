@@ -1,4 +1,5 @@
 #include "player_service.h"
+#include "room_service.h"
 
 namespace CytxGame
 {
@@ -36,7 +37,11 @@ namespace CytxGame
             return;
         }
 
-        //exit_room(player);
+        room_service* room_svc = server_->get_service<room_service>();
+        if (room_svc)
+        {
+            room_svc->exit_room(player);
+        }
 
         player->update_to_none_status();
         LOG_DEBUG("player {} disconnect", user_id);

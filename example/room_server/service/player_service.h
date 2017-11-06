@@ -4,7 +4,7 @@
 
 namespace CytxGame
 {
-    class player_service
+    class player_service : public service_base
     {
     public:
         void reset() {}

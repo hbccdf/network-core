@@ -1,5 +1,6 @@
 #include "room_service.h"
 #include "room_config.h"
+#include "game_player.h"
 #include "proto/all_wraps.hpp"
 
 namespace CytxGame
