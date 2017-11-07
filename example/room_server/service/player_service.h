@@ -1,10 +1,10 @@
 #pragma once
+#include <network/gameserver/service_base.hpp>
 #include "game_player.h"
-#include "service_base.hpp"
 
 namespace CytxGame
 {
-    class player_service : public service_base
+    class player_service : public cytx::gameserver::service_base
     {
     public:
         void init();

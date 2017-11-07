@@ -1,5 +1,5 @@
 #pragma once
-#include "service_base.hpp"
+#include <network/gameserver/service_base.hpp>
 
 namespace CytxGame
 {
@@ -13,7 +13,7 @@ namespace CytxGame
         META(update_time, use_custom_delta, custom_delta);
     };
 
-    class battle_config : public service_base
+    class battle_config : public cytx::gameserver::service_base
     {
     public:
         void init();

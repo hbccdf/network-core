@@ -1,5 +1,5 @@
 #pragma once
-#include "service_base.hpp"
+#include <network/gameserver/service_base.hpp>
 #include <network/base/date_time.hpp>
 
 namespace CytxGame
@@ -11,7 +11,7 @@ namespace CytxGame
         bool use_custom_delta;
         float custom_delta;
     };
-    class update_timer : public service_base
+    class update_timer : public cytx::gameserver::service_base
     {
         using this_t = update_timer;
         using timer_t = cytx::timer_proxy;

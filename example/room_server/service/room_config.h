@@ -1,5 +1,5 @@
 #pragma once
-#include "service_base.hpp"
+#include <network/gameserver/service_base.hpp>
 
 namespace CytxGame
 {
@@ -11,7 +11,7 @@ namespace CytxGame
         META(end_battle_when_disconnect);
     };
 
-    class room_config : public service_base
+    class room_config : public cytx::gameserver::service_base
     {
     public:
         void init();

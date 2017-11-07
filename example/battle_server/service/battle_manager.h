@@ -1,12 +1,12 @@
 #pragma once
-#include "service_base.hpp"
+#include <network/gameserver/service_base.hpp>
 #include "battle/arena_battle.h"
 
 namespace CytxGame
 {
     using namespace cytx;
 
-    class battle_manager : public service_base
+    class battle_manager : public cytx::gameserver::service_base
     {
         using this_t = battle_manager;
     public:
