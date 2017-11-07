@@ -273,6 +273,7 @@ namespace cytx
                     if (conn_ptr == gate_conn_ptr_)
                     {
                         LOG_ERROR("gate way connect disconnected, {}", err.message());
+                        gate_conn_ptr_ = nullptr;
                     }
                     else
                     {
