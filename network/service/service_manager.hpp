@@ -56,6 +56,13 @@ namespace cytx
                 p.second->stop();
             }
         }
+        void reset_service()
+        {
+            for (auto& p : service_map_)
+            {
+                p.second->reset();
+            }
+        }
 
         template<typename T>
         T* get_service() const

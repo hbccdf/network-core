@@ -110,6 +110,11 @@ namespace cytx
                     return service_mgr_.find_service(service_name);
                 }
 
+                void reset_services()
+                {
+                    service_mgr_.reset_service();
+                }
+
             public:
                 //timer
                 timer_t set_timer(int milliseconds, timer_func_t func)

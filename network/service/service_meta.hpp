@@ -255,19 +255,19 @@ namespace cytx
 }
 
 
-#define REG_SERVICE(type)                                                   \
-inline auto to_extend(const type&)                                          \
-{                                                                           \
-    struct type ## meta                                                     \
-    {                                                                       \
-        static constexpr const char* name()                                 \
-        {                                                                   \
-            return #type;                                                   \
-        }                                                                   \
-    };                                                                      \
-}                                                                           \
-                                                                            \
-namespace __reg_service_ ## type ## __LINE__                                \
-{                                                                           \
-    static int r = service_factory::ins().register_service<type>(#type);    \
+#define REG_SERVICE(type)                                                           \
+inline auto to_extend(const type&)                                                  \
+{                                                                                   \
+    struct type ## meta                                                             \
+    {                                                                               \
+        static constexpr const char* name()                                         \
+        {                                                                           \
+            return #type;                                                           \
+        }                                                                           \
+    };                                                                              \
+}                                                                                   \
+                                                                                    \
+namespace __reg_service_ ## type ## __LINE__                                        \
+{                                                                                   \
+    static int r = cytx::service_factory::ins().register_service<type>(#type);      \
 }
