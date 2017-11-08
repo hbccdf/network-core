@@ -107,6 +107,34 @@ namespace cytx
                 cytx::codec::gos_codec codec{ is_big_endian };
                 return codec.unpack<T>(data, length);
             }
+
+            template<typename T>
+            auto unpack_msg_impl(gos_t& gos, bool is_big_endian) ->std::enable_if_t<is_thrift_msg<T>::value, T>
+            {
+                cytx::codec::thrift_codec codec{ is_big_endian };
+                return codec.unpack<T>(gos);
+            }
+
+            template<typename T>
+            auto unpack_msg_impl(gos_t& gos, bool is_big_endian) ->std::enable_if_t<is_gos_msg<T>::value, T>
+            {
+                cytx::codec::gos_codec codec{ is_big_endian };
+                return codec.unpack<T>(gos);
+            }
+
+            template<typename T>
+            auto unpack_msg_impl(gos_t& gos, T& t, bool is_big_endian) ->std::enable_if_t<is_thrift_msg<T>::value>
+            {
+                cytx::codec::thrift_codec codec{ is_big_endian };
+                t = codec.unpack<T>(gos);
+            }
+
+            template<typename T>
+            auto unpack_msg_impl(gos_t& gos, T& t, bool is_big_endian) ->std::enable_if_t<is_gos_msg<T>::value>
+            {
+                cytx::codec::gos_codec codec{ is_big_endian };
+                t = codec.unpack<T>(gos);
+            }
         }
 
         template<typename T>
@@ -144,6 +172,14 @@ namespace cytx
             return msg;
         }
 
+        template<typename ... ARGS>
+        void pack_msg(detail::gos_t& gos, const ARGS& ... args)
+        {
+            bool is_big_endian = detail::header_t::big_endian();
+
+            char a[] = { (detail::pack_msg_impl(gos, args, is_big_endian), 0) ... };
+        }
+
         inline detail::msg_ptr pack_msg()
         {
             detail::msg_ptr msg = std::make_shared<detail::msg_t>();
@@ -154,6 +190,15 @@ namespace cytx
         auto unpack_msg(detail::msg_ptr msgp)
         {
             return detail::unpack_msg_impl<T>(msgp->data(), msgp->length(), detail::header_t::big_endian());
+        }
+
+        template<typename ... ARGS>
+        void unpack_msg(detail::msg_ptr msgp, ARGS& ... args)
+        {
+            bool is_big_endian = detail::header_t::big_endian();
+            detail::gos_t gos = msgp->get_stream();
+
+            char a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
         }
     }
 }

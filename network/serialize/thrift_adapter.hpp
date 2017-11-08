@@ -175,7 +175,7 @@ namespace cytx
             auto membuffer = boost::make_shared<TMemoryBuffer>();
             auto protocol = boost::make_shared<TCompactProtocol>(membuffer);
 
-            membuffer->resetBuffer((uint8_t*)gos_.data_, gos_.length());
+            membuffer->resetBuffer((uint8_t*)gos_.rd_ptr(), gos_.length());
             t.read(protocol.get());
         }
     private:
