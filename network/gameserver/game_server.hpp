@@ -69,17 +69,18 @@ namespace cytx
                 }
 
                 template<typename MSG_ID, typename T>
-                void broadcast_server_msg(const std::vector<server_unique_id>& servers, MSG_ID msg_id, const T& t)
+                uint32_t broadcast_server_msg(const std::vector<server_unique_id>& servers, MSG_ID msg_id, const T& t)
                 {
                     connection_ptr conn_ptr = get_connection_ptr(server_unique_id::center_server);
                     if (!conn_ptr)
                     {
                         LOG_WARN("center server is not connected");
-                        return;
+                        return 0;
                     }
 
                     msg_ptr msgp = server_pack_msg(BroadcastServerMsg, server_unique_id::center_server, (uint32_t)msg_id, servers, t);
                     send_raw_msg(conn_ptr, msgp);
+                    return msgp->total_length();
                 }
 
             protected:
