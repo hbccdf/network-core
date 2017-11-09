@@ -491,6 +491,7 @@ namespace cytx
 
             void on_receive_msgs(const std::vector<msg_ptr>& msg_list)
             {
+                std::vector<msg_ptr> new_msg_list;
                 auto conn_ptr = shared_from_this();
                 for (auto& msgp : msg_list)
                 {
@@ -509,7 +510,12 @@ namespace cytx
                         }
                     }
 
-                    router_ptr_->on_receive(conn_ptr, msgp);
+                    new_msg_list.push_back(msgp);
+                }
+
+                if (!new_msg_list.empty())
+                {
+                    router_ptr_->on_receive_msgs(conn_ptr, new_msg_list);
                 }
             }
         private:

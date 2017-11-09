@@ -30,6 +30,9 @@ namespace cytx
             using timer_t = timer_proxy;
             using timer_func_t = std::function<bool()>;
 
+            using before_invoke_func_t = std::function<void(const header_t&)>;
+            using before_send_func_t = std::function<void(const header_t&)>;
+
             class game_server_base : public irouter_t
             {
                 using this_t = game_server_base;
@@ -140,6 +143,22 @@ namespace cytx
                 timer_t set_auto_timer(int milliseconds, std::function<void()> func)
                 {
                     return timer_mgr_->set_auto_timer(milliseconds, func);
+                }
+
+            public:
+                void add_before_invoke_func(before_invoke_func_t&& func)
+                {
+                    if (func)
+                    {
+                        before_invoke_funcs_.emplace_back(func);
+                    }
+                }
+                void add_before_send_func(before_send_func_t&& func)
+                {
+                    if (func)
+                    {
+                        before_send_funcs_.emplace_back(func);
+                    }
                 }
             public:
                 //给服务端发送消息
@@ -309,6 +328,18 @@ namespace cytx
                         LOG_DEBUG("receive msg {}", protocol_id);
                     }
                 }
+                void on_receive_msgs(connection_ptr& conn_ptr, const std::vector<msg_ptr>& msg_list) override
+                {
+                    for (auto& msgp : msg_list)
+                    {
+                        auto& header = msgp->header();
+                        for (auto& func : before_invoke_funcs_)
+                        {
+                            func(header);
+                        }
+                        this->on_receive(conn_ptr, msgp);
+                    }
+                }
 
                 virtual connection_ptr get_connection_ptr(server_unique_id unique_id) const
                 {
@@ -361,6 +392,11 @@ namespace cytx
 
                 void send_raw_msg(connection_ptr& conn_ptr, msg_ptr& msgp)
                 {
+                    auto& header = msgp->header();
+                    for (auto& func : before_send_funcs_)
+                    {
+                        func(header);
+                    }
                     conn_ptr->write(msgp);
                 }
 
@@ -406,6 +442,9 @@ namespace cytx
                 connection_ptr gate_conn_ptr_;
 
                 service_manager service_mgr_;
+
+                std::vector<before_invoke_func_t> before_invoke_funcs_;
+                std::vector<before_send_func_t> before_send_funcs_;
             };
         }
     }

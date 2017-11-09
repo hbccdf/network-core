@@ -21,6 +21,9 @@ namespace cytx
                 SC_ServerEvent,
             };
 
+            using InterMsgId = MsgId;
+            REG_ALIAS_ENUM(InterMsgId, proto, BroadcastServerMsg, CS_RegisterServer, SC_RegisterServer, CS_GetServerInfo, SC_GetServerInfo, SC_ServerEvent);
+
             enum EServerEvent
             {
                 EServerConnected,
