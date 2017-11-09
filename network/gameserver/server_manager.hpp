@@ -60,7 +60,7 @@ namespace cytx
                     servers_[data.unique_id].emplace_back(server_info);
 
                     conn_ptr->set_conn_info(connection_info{ data.unique_id });
-                    LOG_DEBUG("server {} register", (uint16_t)data.unique_id);
+                    LOG_DEBUG("server {} register", to_unique_str(data.unique_id));
 
                     send_server_msg(conn_ptr, SC_RegisterServer, SCRegisterServer{ (uint16_t)data.unique_id });
 
@@ -126,7 +126,7 @@ namespace cytx
                         if (info.conn_ptr == conn_ptr)
                         {
                             info.conn_ptr = nullptr;
-                            LOG_ERROR("server {} disconnect", (uint16_t)unique_id);
+                            LOG_ERROR("server {} disconnect", to_unique_str(unique_id));
                             server_info_list.erase(info_it);
                             break;
                         }

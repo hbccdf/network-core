@@ -128,21 +128,22 @@ namespace cytx
                 void on_sc_server_event(const msg_ptr& msgp)
                 {
                     SCServerEvent data = unpack_msg<SCServerEvent>(msgp);
+                    server_unique_id unique_id = data.info.unique_id;
                     if (data.event == EServerConnected)
                     {
-                        LOG_DEBUG("server {} connected", (uint16_t)data.info.unique_id);
-                        if (data.info.unique_id == server_unique_id::db_server)
+                        LOG_DEBUG("server {} connected", to_unique_str(unique_id));
+                        if (unique_id == server_unique_id::db_server)
                         {
                             on_get_db_info(data.info);
                         }
                     }
                     else if (data.event == EServerDisconnected)
                     {
-                        LOG_DEBUG("server {} disconnected", (uint16_t)data.info.unique_id);
+                        LOG_DEBUG("server {} disconnected", to_unique_str(unique_id));
                     }
                     else
                     {
-                        LOG_DEBUG("server {} event {}", (uint16_t)data.info.unique_id, (uint32_t)data.event);
+                        LOG_DEBUG("server {} event {}", to_unique_str(unique_id), (uint32_t)data.event);
                     }
                 }
 
