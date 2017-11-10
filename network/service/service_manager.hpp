@@ -71,10 +71,18 @@ namespace cytx
             type_id_t type_id = TypeId::id<real_type>();
             auto it = service_map_.find(type_id);
             if (it == service_map_.end())
-                return nullptr;
+            {
+                real_type* val = static_cast<real_type*>(it->second);
+                return val->get_val();
+            }
 
-            real_type* val = static_cast<real_type*>(it->second);
-            return val->get_val();
+            std::vector<type_id_t> typeid_list = service_factory::ins().get_derived_typeid_list<T>();
+            if (!typeid_list.empty())
+            {
+
+            }
+
+            return nullptr;
         }
 
         template<typename T>

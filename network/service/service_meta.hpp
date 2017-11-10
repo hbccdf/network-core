@@ -174,6 +174,29 @@ namespace cytx
             return 0;
         }
 
+        template<typename T, typename BaseT>
+        int register_service(const std::string& service_name)
+        {
+            using real_type = service_helper<T>;
+            using real_base_type = service_helper<BaseT>;
+
+            type_id_t type_id = TypeId::id<real_type>();
+            auto it = service_map_.find(type_id);
+            if (it != service_map_.end())
+                return 0;
+
+            service_map_.emplace(type_id, new real_type());
+            if (!service_name.empty())
+            {
+                name_map_.emplace(service_name, type_id);
+            }
+
+            type_id_t base_type_id = TypeId::id<real_base_type>();
+            auto& type_list = derived_service_map_[base_type_id];
+            type_list.push_back(type_id);
+            return 0;
+        }
+
         template<typename T>
         iservice* reg_inter_service(T* ptr, const::std::string& service_name)
         {
@@ -199,20 +222,49 @@ namespace cytx
             using real_type = service_helper<T>;
             type_id_t type_id = TypeId::id<real_type>();
             auto it = service_map_.find(type_id);
-            if (it == service_map_.end())
-                return nullptr;
+            if (it != service_map_.end())
+            {
+                real_type* val = static_cast<real_type*>(it->second);
+                return val->get_val();
+            }
 
-            real_type* val = static_cast<real_type*>(it->second);
-            return val->get_val();
+            std::vector<T*> type_list = get_derived_services<T>();
+            if (!type_list.empty())
+                return type_list.front();
+
+            return nullptr;
+        }
+
+        template<typename T>
+        std::vector<T*> get_all_service() const
+        {
+            std::vector<T*> type_list;
+
+            using real_type = service_helper<T>;
+            type_id_t type_id = TypeId::id<real_type>();
+            auto it = service_map_.find(type_id);
+            if (it != service_map_.end())
+            {
+                real_type* val = static_cast<real_type*>(it->second);
+                type_list.push_back(val->get_val());
+                return type_list;
+            }
+
+            type_list = get_derived_services<T>();
+            return type_list;
         }
 
         template<typename T>
         bool find_service() const
         {
             using real_type = service_helper<T>;
-            type_id_t type_id = TypeId<real_type>::id();
+            type_id_t type_id = TypeId::id<real_type>();
             auto it = service_map_.find(type_id);
-            return (it != service_map_.end());
+            if (it != service_map_.end())
+                return true;
+
+            std::vector<T*> type_list = get_derived_services<T>();
+            return !type_list.empty();
         }
 
         bool find_service(const std::string& service_name) const
@@ -234,13 +286,13 @@ namespace cytx
             return it->second;
         }
 
-        iservice* get_service(const std::string& service_name)
+        iservice* get_service(const std::string& service_name) const
         {
             type_id_t type_id = get_service_typeid(service_name);
             return get_service(type_id);
         }
 
-        type_id_t get_service_typeid(const std::string& service_name)
+        type_id_t get_service_typeid(const std::string& service_name) const
         {
             auto it = name_map_.find(service_name);
             if (it == name_map_.end())
@@ -248,26 +300,68 @@ namespace cytx
 
             return it->second;
         }
+
+        template<typename T>
+        std::vector<type_id_t> get_derived_typeid_list() const
+        {
+            std::vector<type_id_t> type_list;
+            using real_type = service_helper<T>;
+            type_id_t base_type_id = TypeId::id<real_type>();
+
+            auto it = derived_service_map_.find(base_type_id);
+            if (it == derived_service_map_.end() || it->second.empty())
+                return type_list;
+
+            type_list = it->second;
+            return type_list;
+        }
+
+    private:
+        template<typename BaseT>
+        std::vector<BaseT*> get_derived_services() const
+        {
+            std::vector<BaseT*> derived_list;
+            using real_type = service_helper<BaseT>;
+            type_id_t base_type_id = TypeId::id<real_type>();
+
+            auto it = derived_service_map_.find(base_type_id);
+            if (it == derived_service_map_.end() || it->second.empty())
+                return derived_list;
+
+            auto& typeid_list = it->second;
+
+            for (type_id_t type_id : typeid_list)
+            {
+                iservice* service_ptr = get_service(type_id);
+                if (service_ptr)
+                {
+                    real_type* val = static_cast<real_type*>(service_ptr);
+                    derived_list.push_back(val->get_val());
+                }
+            }
+            return derived_list;
+        }
     private:
         std::map<type_id_t, iservice*> service_map_;
         std::map<std::string, type_id_t> name_map_;
+        std::map<type_id_t, std::vector<type_id_t>> derived_service_map_;
     };
 }
 
 
-#define REG_SERVICE(type)                                                           \
-inline auto to_extend(const type&)                                                  \
-{                                                                                   \
-    struct type ## meta                                                             \
-    {                                                                               \
-        static constexpr const char* name()                                         \
-        {                                                                           \
-            return #type;                                                           \
-        }                                                                           \
-    };                                                                              \
-}                                                                                   \
-                                                                                    \
-namespace __reg_service_ ## type ## __LINE__                                        \
-{                                                                                   \
-    static int r = cytx::service_factory::ins().register_service<type>(#type);      \
+#define REG_SERVICE(type, ...)                                                                  \
+inline auto to_extend(const type&)                                                              \
+{                                                                                               \
+    struct type ## meta                                                                         \
+    {                                                                                           \
+        static constexpr const char* name()                                                     \
+        {                                                                                       \
+            return #type;                                                                       \
+        }                                                                                       \
+    };                                                                                          \
+}                                                                                               \
+                                                                                                \
+namespace __reg_service_ ## type ## __LINE__                                                    \
+{                                                                                               \
+    static int r = cytx::service_factory::ins().register_service<type, __VA_ARGS__>(#type);     \
 }
