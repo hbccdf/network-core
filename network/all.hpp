@@ -1,4 +1,4 @@
 #pragma once
 #include "serialize.hpp"
-#include "client.hpp"
-#include "server.hpp"
+#include "rpc/client.hpp"
+#include "rpc/server.hpp"

@@ -1,4 +1,4 @@
-﻿#include <network/client.hpp>
+﻿#include <network/rpc/client.hpp>
 #include <network/serialize/xml_adapter.hpp>
 
 namespace cytx
