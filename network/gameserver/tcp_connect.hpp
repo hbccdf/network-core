@@ -201,11 +201,20 @@ namespace cytx
 
             void async_connect(const std::string& host, uint32_t port)
             {
+                if (is_running_)
+                    return;
+
                 host_ = host;
                 port_ = port;
 
                 using namespace boost::asio;
                 using namespace boost::asio::ip;
+                if (socket_.is_open())
+                {
+                    ec_t ec;
+                    socket_.close(ec);
+                }
+
                 socket_.async_connect(cytx::util::get_tcp_endpoint(host_, port_), cytx::bind(&this_t::handle_connect, shared_from_this()));
             }
 
@@ -288,10 +297,21 @@ namespace cytx
             {
                 ec_t ec;
                 socket_.set_option(boost::asio::ip::tcp::no_delay(true), ec);
+                received_msg_ = false;
                 is_running_ = true;
                 force_close_error_ = false;
                 write_msg_queue_.clear();
-                received_msg_ = false;
+                reader_.reset();
+                batch_msg_ptr_ = nullptr;
+                cur_call_id_ = 0;
+                for (auto& p : calls_)
+                {
+                    handler_t& handler = p.second;
+
+                    using boost::asio::asio_handler_invoke;
+                    asio_handler_invoke(std::bind(handler, nullptr), &handler);
+                }
+                calls_.clear();
             }
 
             void start_read()
@@ -482,6 +502,7 @@ namespace cytx
                     return;
 
                 is_running_ = false;
+                timer_mgr_.stop_all_timer();
                 router_ptr_->on_disconnect(shared_from_this(), err);
             }
             void on_error(const ec_t& ec, cytx::error_code err)
