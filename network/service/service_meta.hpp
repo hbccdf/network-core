@@ -247,10 +247,13 @@ namespace cytx
             {
                 real_type* val = static_cast<real_type*>(it->second);
                 type_list.push_back(val->get_val());
-                return type_list;
             }
 
-            type_list = get_derived_services<T>();
+            auto derived_type_list = get_derived_services<T>();
+            for (auto t : derived_type_list)
+            {
+                type_list.push_back(t);
+            }
             return type_list;
         }
 

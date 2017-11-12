@@ -6,28 +6,6 @@ namespace cytx
     class service_manager
     {
     public:
-        template<typename ... Args>
-        void register_service()
-        {
-            char a[]{ (reg_impl<Args>(), 0) ... };
-        }
-        void register_service(const std::string& service_name)
-        {
-            auto& factory = service_factory::ins();
-            iservice* service_ptr = factory.get_service(service_name);
-            if (service_ptr)
-            {
-                auto type_id = service_ptr->get_type_id();
-                service_map_.emplace(type_id, service_ptr);
-            }
-        }
-        void register_service(const std::vector<std::string>& services)
-        {
-            for (auto& str : services)
-            {
-                register_service(str);
-            }
-        }
         void service_set_server(game_server_base_t* server_ptr)
         {
             for (auto& p : service_map_)
@@ -64,38 +42,72 @@ namespace cytx
             }
         }
 
+    public:
         template<typename T>
         T* get_service() const
         {
+            if (service_map_.empty())
+                return nullptr;
+
             using real_type = service_helper<T>;
             type_id_t type_id = TypeId::id<real_type>();
-            auto it = service_map_.find(type_id);
-            if (it == service_map_.end())
-            {
-                real_type* val = static_cast<real_type*>(it->second);
-                return val->get_val();
-            }
+
+            T* service_ptr = internal_get_service<T>(type_id);
+            if (service_ptr)
+                return service_ptr;
 
             std::vector<type_id_t> typeid_list = service_factory::ins().get_derived_typeid_list<T>();
-            if (!typeid_list.empty())
+            for (auto derived_type_id : typeid_list)
             {
-
+                service_ptr = internal_get_service<T>(derived_type_id);
+                if (service_ptr)
+                    return service_ptr;
             }
 
             return nullptr;
         }
 
         template<typename T>
+        std::vector<T*> get_all_service() const
+        {
+            std::vector<T*> type_list;
+
+            if (service_map_.empty())
+                return type_list;
+
+            using real_type = service_helper<T>;
+            type_id_t type_id = TypeId::id<real_type>();
+
+            T* service_ptr = internal_get_service<T>(type_id);
+            if (service_ptr)
+            {
+                type_list.push_back(service_ptr);
+            }
+
+            std::vector<type_id_t> typeid_list = service_factory::ins().get_derived_typeid_list<T>();
+            for (auto derived_type_id : typeid_list)
+            {
+                service_ptr = internal_get_service<T>(derived_type_id);
+                if (service_ptr)
+                {
+                    type_list.push_back(service_ptr);
+                }
+            }
+
+            return type_list;
+        }
+
+        template<typename T>
         bool find_service() const
         {
-            using real_type = service_helper<T>;
-            type_id_t type_id = TypeId<real_type>::id();
-            auto it = service_map_.find(type_id);
-            return (it != service_map_.end());
+            return get_service<T>() != nullptr;
         }
 
         bool find_service(const std::string& service_name) const
         {
+            if (service_map_.empty())
+                return false;
+
             auto& factory = service_factory::ins();
             auto service_ptr = factory.get_service(service_name);
             if (!service_ptr)
@@ -106,6 +118,28 @@ namespace cytx
         }
 
     public:
+        template<typename ... Args>
+        void register_service()
+        {
+            char a[]{ (reg_impl<Args>(), 0) ... };
+        }
+        void register_service(const std::string& service_name)
+        {
+            auto& factory = service_factory::ins();
+            iservice* service_ptr = factory.get_service(service_name);
+            if (service_ptr)
+            {
+                auto type_id = service_ptr->get_type_id();
+                service_map_.emplace(type_id, service_ptr);
+            }
+        }
+        void register_service(const std::vector<std::string>& services)
+        {
+            for (auto& str : services)
+            {
+                register_service(str);
+            }
+        }
         template<typename T>
         void reg_inter_service(T* ptr, const std::string& service_name = "")
         {
@@ -126,6 +160,18 @@ namespace cytx
                 auto type_id = service_ptr->get_type_id();
                 service_map_.emplace(type_id, service_ptr);
             }
+        }
+        template<typename T>
+        T* internal_get_service(type_id_t type_id) const
+        {
+            using real_type = service_helper<T>;
+            auto it = service_map_.find(type_id);
+            if (it != service_map_.end())
+            {
+                real_type* val = static_cast<real_type*>(it->second);
+                return val->get_val();
+            }
+            return nullptr;
         }
     private:
         std::map<type_id_t, iservice*> service_map_;
