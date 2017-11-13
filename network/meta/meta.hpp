@@ -394,17 +394,23 @@ namespace cytx
         template<typename T>
         void reg()
         {
+            const char* enum_name = enum_meta<T>::name();
+            auto it = enums_.find(std::string(enum_name));
+            if (it != enums_.end())
+                return;
+
             auto enum_vec = get_vec<T>(get_meta<T>());
             vec_t vec;
             for (auto& p : enum_vec)
             {
                 vec.push_back({ p.first, (uint32_t)p.second });
             }
-            reg(enum_meta<T>::name(), enum_meta<T>::alias_name(), std::move(vec));
+            reg(enum_name, enum_meta<T>::alias_name(), std::move(vec));
         }
 
         void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
         {
+            //std::cout << fmt::format("reg enum {}, alias {}, field count {}", enum_name, alias_name ? alias_name : "null", enum_fields.size()) << std::endl;
             auto helper_ptr = std::unique_ptr<enum_helper>(new enum_helper());
             helper_ptr->init(enum_name, std::forward<vec_t>(enum_fields));
 
@@ -429,7 +435,9 @@ namespace cytx
             val_ptr->emplace_back(std::move(helper_ptr));
             enums_.emplace(enum_name, val_ptr);
             if (alias_name)
+            {
                 enums_.emplace(alias_name, val_ptr);
+            }
         }
 
         template<typename T>
