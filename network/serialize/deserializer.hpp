@@ -112,15 +112,15 @@ namespace cytx {
             if (index == 0)
                 process_array<T>(val);
 
-            T t;
+            T t{};
             auto array_size = rd_.array_size(val);
             if (array_size <= index)
-                return std::move(t);
+                return t;
 
             auto& ele_val = rd_.it_val(rd_.array_it(val, index));
             ReadObject(t, ele_val, std::true_type{});
             ++index;
-            return std::move(t);
+            return t;
         }
 
         template<typename T, typename BeginObjec>
@@ -142,7 +142,7 @@ namespace cytx {
                 using second_type = typename pair_t::second_type;
 
                 first_type f = cytx::util::cast<first_type>(rd_.first(it));
-                second_type s;
+                second_type s{};
                 ReadObject(s, rd_.second(it), bo);
                 t[f] = s;
             }
@@ -159,7 +159,7 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-                ele_t el;
+                ele_t el{};
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 std::fill_n(std::inserter(t, t.end()), 1, std::move(el));
             }
@@ -176,8 +176,7 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-
-                ele_t el;
+                ele_t el{};
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 std::fill_n(std::back_inserter(t), 1, std::move(el));
             }
@@ -294,7 +293,7 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
-                ele_t el;
+                ele_t el{};
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 t.emplace_back(el);
             }
@@ -322,22 +321,17 @@ namespace cytx {
         auto ReadObject(T& t, val_t& val, BeginObject) ->std::enable_if_t<std::is_enum<
             std::remove_reference_t<std::remove_cv_t<T>>>::value>
         {
+            using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
+            using under_type = std::underlying_type_t<enum_t>;
             if (!enum_with_str_)
             {
-                using under_type = std::underlying_type_t<
-                    std::remove_reference_t<std::remove_cv_t<T>>>;
                 rd_.read(reinterpret_cast<under_type&>(t), val);
             }
             else
             {
-                using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
                 std::string str;
                 rd_.read(str, val);
-                auto enum_val = to_enum<enum_t>(str.c_str());
-                if (enum_val)
-                {
-                    t = enum_val.value();
-                }
+                t = cytx::util::cast<enum_t>(str);
             }
         }
 

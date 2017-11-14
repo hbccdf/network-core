@@ -17,7 +17,7 @@ namespace cytx {
                     GameObjectStream gos(const_cast<char*>(data), (int)length, 0);
                     DeSerializer<thrift_deserialize_adapter> dr(gos);
 
-                    T t;
+                    T t{};
                     dr.DeSerialize(t);
                     return t;
                 }
@@ -50,7 +50,7 @@ namespace cytx {
                 {
                     DeSerializer<thrift_deserialize_adapter> dr(gos);
 
-                    T t;
+                    T t{};
                     dr.DeSerialize(t);
                     return t;
                 }

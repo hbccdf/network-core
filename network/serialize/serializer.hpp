@@ -154,13 +154,15 @@ namespace cytx {
         auto WriteObject(T const& val, bool is_last, BeginObject) -> std::enable_if_t<std::is_enum<
             std::remove_reference_t<std::remove_cv_t<T>>>::value>
         {
+            using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
+            using under_type = std::underlying_type_t<enum_t>;
+
             if (enum_with_str_)
             {
-                using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
                 auto enum_val = write_enum(static_cast<enum_t>(val));
                 if (!enum_val)
                 {
-                    adapter_write_field(std::string(""), is_last);
+                    adapter_write_field(static_cast<under_type>(val), is_last);
                 }
                 else
                 {
@@ -169,8 +171,6 @@ namespace cytx {
             }
             else
             {
-                using under_type = std::underlying_type_t<
-                    std::remove_reference_t<std::remove_cv_t<T>>>;
                 adapter_write_field(static_cast<under_type>(val), is_last);
             }
         }
@@ -195,7 +195,7 @@ namespace cytx {
         template<typename K, typename V>
         void WriteKV(K& k, V& v, bool is_last, std::true_type)
         {
-            WriteKey(k, is_last);
+            WriteKey(k);
             WriteObject(v, is_last, std::true_type{});
         }
 
@@ -211,16 +211,34 @@ namespace cytx {
         }
 
         template<typename K>
-        auto WriteKey(K& k, bool is_last) -> std::enable_if_t<is_basic_type<K>::value>
+        auto WriteKey(K& k) -> std::enable_if_t<is_basic_type<K>::value>
         {
             wr_.write_key(k);
         }
 
         template <typename K>
-        auto WriteKey(K& val, bool is_last) -> std::enable_if_t<std::is_enum<
+        auto WriteKey(K& val) -> std::enable_if_t<std::is_enum<
             std::remove_reference_t<std::remove_cv_t<K>>>::value>
         {
-            WriteObject<K>(val, is_last, std::true_type{});
+            using enum_t = std::remove_reference_t<std::remove_cv_t<K>>;
+            using under_type = std::underlying_type_t<enum_t>;
+
+            if (enum_with_str_)
+            {
+                auto enum_val = write_enum(static_cast<enum_t>(val));
+                if (!enum_val)
+                {
+                    wr_.write_key(static_cast<under_type>(val));
+                }
+                else
+                {
+                    wr_.write_key(enum_val.value());
+                }
+            }
+            else
+            {
+                wr_.write_key(static_cast<under_type>(val));
+            }
         }
 
     private:

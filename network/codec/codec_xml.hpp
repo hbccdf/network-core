@@ -18,7 +18,7 @@ namespace cytx {
                     DeSerializer<xml_deserialize_adapter> dr;
                     dr.parse(data, length);
 
-                    T t;
+                    T t{};
                     dr.DeSerialize(t);
                     return t;
                 }

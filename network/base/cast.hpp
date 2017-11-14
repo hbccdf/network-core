@@ -41,11 +41,18 @@ namespace cytx
         template<typename T>
         auto cast(const std::string& str) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value, T>
         {
+            using enum_t = std::decay_t<T>;
+            using under_type = std::underlying_type_t<enum_t>;
+
             auto ret = cytx::to_enum<T>(str.c_str(), true);
             if (ret)
+            {
                 return ret.value();
+            }
             else
-                return T{};
+            {
+                return (enum_t)boost::lexical_cast<under_type>(str);
+            }
         }
 
         template<typename T>

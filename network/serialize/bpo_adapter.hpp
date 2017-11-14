@@ -3,6 +3,7 @@
 #include "../traits/traits.hpp"
 #include "../meta/meta.hpp"
 #include "../base/cast.hpp"
+#include "deserializer.hpp"
 
 namespace cytx
 {
@@ -44,12 +45,12 @@ namespace cytx
         void parse(const char* cmd_line)
         {
             vm_.clear();
-            std::vector<string> args = bpo::split_winmain(cmd_line);
+            std::vector<std::string> args = bpo::split_winmain(cmd_line);
             bpo::store(bpo::command_line_parser(args).options(ops_).run(), vm_);
             bpo::notify(vm_);
         }
 
-        void parse(const std::vector<string>& args)
+        void parse(const std::vector<std::string>& args)
         {
             vm_.clear();
             bpo::store(bpo::command_line_parser(args).options(ops_).run(), vm_);
@@ -74,12 +75,12 @@ namespace cytx
             {
                 ops_.add(o);
             }
-            std::vector<string> args = bpo::split_winmain(cmd_line);
+            std::vector<std::string> args = bpo::split_winmain(cmd_line);
             bpo::store(bpo::command_line_parser(args).options(ops_).run(), vm_);
             bpo::notify(vm_);
         }
 
-        void parse(const vector<string>& args, const bpo::options_description& op)
+        void parse(const std::vector<std::string>& args, const bpo::options_description& op)
         {
             vm_.clear();
             for (auto& o : op.options())
@@ -175,19 +176,17 @@ namespace cytx
         auto ReadObject(T& t, val_t& val) ->std::enable_if_t<std::is_enum<
             std::remove_reference_t<std::remove_cv_t<T>>>::value>
         {
+            using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
+            using under_type = std::underlying_type_t<enum_t>;
+
             if (!enum_with_str_)
             {
-                using under_type = std::underlying_type_t<
-                    std::remove_reference_t<std::remove_cv_t<T>>>;
                 t = (T)val.as<under_type>();
             }
             else
             {
-                using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
                 std::string str = val.as<std::string>();
-                auto enum_val = to_enum<enum_t>(str.c_str());
-                if (enum_val)
-                    t = enum_val.value();
+                t = cytx::util::cast<enum_t>(str);
             }
         }
 

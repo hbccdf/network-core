@@ -18,10 +18,8 @@ namespace cytx
                 gos.size_ = 0;
             }
             gos_buffer(const char* const begin, const char* const end)
+                : gos_buffer(begin, end - begin)
             {
-                size_ = end - begin;
-                data_ = NEW_ARRAY_MP(char, (int)size_);
-                memcpy(data_, begin, size_);
             }
             gos_buffer(const char* const begin, size_t size)
             {

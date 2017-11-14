@@ -164,7 +164,7 @@ namespace cytx
         template<typename T>
         auto get_tuple_elem() -> std::enable_if_t<!tuple_contains<T, OtherTuple>::value, T>
         {
-            T t;
+            T t{};
             ReadObject(t);
             return std::move(t);
         }

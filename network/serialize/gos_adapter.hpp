@@ -252,7 +252,7 @@ namespace cytx
         template<typename T>
         auto get_tuple_elem() -> std::enable_if_t<!tuple_contains<T, OtherTuple>::value, T>
         {
-            T t;
+            T t{};
             ReadObject(t, std::true_type{});
             return std::move(t);
         }
@@ -311,7 +311,7 @@ namespace cytx
 
             for (size_t i = 0; i < array_size; ++i)
             {
-                val_t pair;
+                val_t pair{};
                 ReadKV(pair.first, pair.second, BeginObject{});
                 t.insert(pair);
             }
@@ -335,13 +335,14 @@ namespace cytx
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
         {
+            typedef decltype(*t.begin()) element_t;
+            using val_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
+
             size_t array_size = 0;
             rd_.begin_array(array_size);
             for (size_t i = 0; i < array_size; ++i)
             {
-                typedef decltype(*t.begin()) element_t;
-                using val_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
-                val_t val;
+                val_t val{};
                 ReadObject(val, std::false_type{});
                 std::fill_n(std::inserter(t, t.end()), 1, val);
             }
@@ -351,13 +352,14 @@ namespace cytx
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<has_back_insert<T>::value>
         {
+            typedef decltype(*t.begin()) element_t;
+            using val_t = std::remove_reference_t<element_t>;
+
             size_t array_size = 0;
             rd_.begin_array(array_size);
             for (size_t i = 0; i < array_size; ++i)
             {
-                typedef decltype(*t.begin()) element_t;
-                using val_t = std::remove_reference_t<element_t>;
-                val_t val;
+                val_t val{};
                 ReadObject(val, std::false_type{});
                 std::fill_n(std::back_inserter(t), 1, val);
             }
@@ -394,12 +396,13 @@ namespace cytx
         template<typename Array>
         inline void ReadArray(Array & v, size_t array_size)
         {
+            typedef decltype((v)[0]) element_t;
+            using val_t = std::remove_reference_t<element_t>;
+
             rd_.begin_array(array_size);
             for (size_t i = 0; i < array_size; ++i)
             {
-                typedef decltype((v)[0]) element_t;
-                using val_t = std::remove_reference_t<element_t>;
-                val_t val;
+                val_t val{};
                 ReadObject(val, std::false_type{});
                 v.emplace_back(val);
             }
@@ -429,7 +432,8 @@ namespace cytx
         {
             using under_type = std::underlying_type_t<
                 std::remove_reference_t<std::remove_cv_t<T>>>;
-            under_type tmp_val;
+
+            under_type tmp_val{};
             rd_.read(tmp_val);
             val = static_cast<T>(tmp_val);
         }

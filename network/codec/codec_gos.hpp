@@ -18,7 +18,7 @@ namespace cytx {
                     GameObjectStream gos(const_cast<char*>(data), (int)length, 0);
                     DeSerializer<gos_deserialize_adapter> dr(gos, is_big_endian_);
 
-                    T t;
+                    T t{};
                     dr.DeSerialize(t);
                     return t;
                 }
@@ -51,7 +51,7 @@ namespace cytx {
                 {
                     DeSerializer<gos_deserialize_adapter> dr(gos, is_big_endian_);
 
-                    T t;
+                    T t{};
                     dr.DeSerialize(t);
                     return t;
                 }
