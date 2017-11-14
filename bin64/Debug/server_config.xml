@@ -7,6 +7,12 @@
         <item name="RoomServer" ip="127.0.0.1" port="32001" connect_interval="5000" unique_id="room_server">
             <!-- <depends>db_server</depends> -->
             <services>room_config,player_service,room_service</services>
+            <logs>
+                <log name="server" filename="room_server_log" level="debug" console="true" />
+                <log name="net" filename="room_net_log" level="debug" console="true" />
+                <log name="timer" filename="room_timer_log" level="debug" console="true" />
+                <log name="conn" filename="room_conn_log" level="trace" console="true" />
+            </logs>
         </item>
         <item name="BattleServer" ip="127.0.0.1" port="33001" connect_interval="5000" unique_id="battle_server">
             <services>battle_config,update_timer,battle_manager</services>

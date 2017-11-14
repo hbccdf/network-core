@@ -95,12 +95,15 @@ namespace cytx
             }
             io_service_t& get_io_service(int32_t id)
             {
-                if (ios_ptrs_.empty())
+                if (ios_ptrs_.empty() || id < 0)
                     return *main_ios_ptr_;
 
                 int32_t index = id % (int32_t)ios_ptrs_.size();
                 return *(ios_ptrs_[index]);
             }
+
+            size_t io_service_size() const { return ios_ptrs_.size(); }
+            int32_t get_cur_ios_index() const { return ios_ptrs_.empty() ? -1 : cur_ios_index_; }
 
         private:
             void init_io_services(uint32_t io_service_count)

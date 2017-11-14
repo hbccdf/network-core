@@ -31,15 +31,19 @@ namespace cytx
                         depend_db_ = it != info.depends.end();
                     }
 
+                    SERVER_DEBUG("server depend_db {}", depend_db_);
+
                     center_conn_ptr_ = server_->create_connection();
 
                     auto connect_func = [this]
                     {
+                        SERVER_DEBUG("connect center server");
                         const server_info& info = config_mgr_[server_unique_id::center_server];
                         center_conn_ptr_->async_connect(info.ip, info.port);
                     };
                     auto connect_db_func = [this]
                     {
+                        SERVER_DEBUG("connect db server");
                         db_conn_ptr_->async_connect(db_info_.ip, db_info_.port);
                     };
                     auto get_db_info_func = [this]
@@ -47,6 +51,7 @@ namespace cytx
                         if (db_conn_ptr_->is_running())
                             return;
 
+                        SERVER_DEBUG("get server info");
                         connect_db_timer_.stop();
 
                         get_server_info();
@@ -65,6 +70,7 @@ namespace cytx
                     }
 
                     //初始化所有的service
+                    SERVER_DEBUG("init service");
                     service_mgr_.init_service();
                 }
 
@@ -88,6 +94,7 @@ namespace cytx
                 {
                     const server_info& info = config_mgr_[unique_id_];
 
+                    SERVER_DEBUG("register to center server");
                     CSRegisterServer send_data{ unique_id_, info.ip, info.port };
                     send_server_msg(server_unique_id::center_server, CS_RegisterServer, send_data);
                 }
@@ -116,7 +123,6 @@ namespace cytx
                         auto it = data.servers.find(server_unique_id::db_server);
                         if (it != data.servers.end())
                         {
-                            LOG_DEBUG("geted db info, {}:{}", it->second.ip, it->second.port);
                             on_get_db_info(it->second);
                         }
                         else
@@ -152,10 +158,12 @@ namespace cytx
                     if (!depend_db_)
                         return;
 
+                    SERVER_DEBUG("reconnect db");
                     get_db_info_timer_.start(true);
                 }
                 void on_get_db_info(const ServerInfo& db_info)
                 {
+                    LOG_DEBUG("geted db info, {}:{}", db_info.ip, db_info.port);
                     db_info_ = db_info;
                     connect_db_timer_.start(true);
                 }

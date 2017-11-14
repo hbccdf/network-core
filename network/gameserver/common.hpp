@@ -30,7 +30,8 @@ namespace cytx
 
     REG_ENUM(server_unique_id, master, slave, redis_server,
         db_server, login_server, res_server, lobby_server, room_server,
-        replay_server, gateway_server, chat_server, push_server, battle_server, monitor_server, rank_server, log_server, center_server);
+        replay_server, gateway_server, chat_server, push_server, battle_server,
+        monitor_server, rank_server, log_server, center_server);
 
     enum class server_thread_mode : uint8_t
     {

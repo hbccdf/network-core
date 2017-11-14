@@ -3,8 +3,27 @@
 #include "schedule_timer.hpp"
 #include "../traits/traits.hpp"
 #include "../base/date_time.hpp"
+#include "../base/log.hpp"
 namespace cytx
 {
+#define TIMER_LOG(level, str, ...)              \
+if(log_)                                        \
+{                                               \
+    log_->## level ## (str, __VA_ARGS__);       \
+}
+
+#define TIMER_DEBUG(str, ...)                   \
+if(log_)                                        \
+{                                               \
+    log_->debug(str, __VA_ARGS__);              \
+}
+
+#define TIMER_TRACE(str, ...)                   \
+if(log_)                                        \
+{                                               \
+    log_->trace(str, __VA_ARGS__);              \
+}
+
     class timer_manager;
 
     class timer_proxy
@@ -86,28 +105,32 @@ namespace cytx
         using timer_map_t = std::map<int32_t, timer_info_ptr>;
 
     public:
-        timer_manager(io_service_t& ios)
+        timer_manager(io_service_t& ios, log_ptr_t log_ptr = nullptr)
             : ios_(ios)
             , timer_id_(0)
+            , log_(log_ptr)
         {
+            TIMER_DEBUG("create timer manager");
         }
 
         ~timer_manager() { stop_all_timer(); }
     public:
-        timer_proxy set_timer(int milliseconds, timer_func_t func)
+        timer_proxy set_timer(int32_t milliseconds, timer_func_t func)
         {
             timer_info_ptr ti_ptr = create_timer(milliseconds, func);
+            TIMER_DEBUG("create timer {}, millisecond {}, timer count {}", ti_ptr->id, milliseconds, timers_.size());
             return timer_proxy(this, ti_ptr->id);
         }
 
-        timer_proxy set_fix_timer(int milliseconds, timer_func_t func)
+        timer_proxy set_fix_timer(int32_t milliseconds, timer_func_t func)
         {
             timer_info_ptr ti_ptr = create_timer(milliseconds, func);
-            ti_ptr->next_time = date_time::now().utc_milliseconds();
+            ti_ptr->next_time = date_time::now().utc_milliseconds() + milliseconds;
+            TIMER_DEBUG("create fix timer {}, millisecond {}, timer count {}", ti_ptr->id, milliseconds, timers_.size());
             return timer_proxy(this, ti_ptr->id);
         }
 
-        timer_proxy set_fix_timer(int milliseconds, std::function<void()> func)
+        timer_proxy set_fix_timer(int32_t milliseconds, std::function<void()> func)
         {
             return set_fix_timer(milliseconds, (timer_func_t)[f = std::move(func)]()->bool{
                 f();
@@ -115,7 +138,7 @@ namespace cytx
             });
         }
 
-        timer_proxy set_once_timer(int milliseconds, std::function<void()> func)
+        timer_proxy set_once_timer(int32_t milliseconds, std::function<void()> func)
         {
             return set_timer(milliseconds, [f = std::move(func)]()->bool{
                 f();
@@ -123,7 +146,7 @@ namespace cytx
             });
         }
 
-        timer_proxy set_auto_timer(int milliseconds, std::function<void()> func)
+        timer_proxy set_auto_timer(int32_t milliseconds, std::function<void()> func)
         {
             return set_timer(milliseconds, [f = std::move(func)]()->bool{
                 f();
@@ -133,6 +156,7 @@ namespace cytx
 
         void stop_all_timer()
         {
+            TIMER_DEBUG("stop all timer, size {}", timers_.size());
             for (auto& timer_pair : timers_)
             {
                 stop_timer(timer_pair.second);
@@ -143,28 +167,40 @@ namespace cytx
         {
             auto it = timers_.find(id);
             if (it != timers_.end() && it->second->status != timer_status::canceled)
+            {
+                TIMER_DEBUG("auto start timer {}", it->second->id);
                 start_timer(it->second);
+            }
         }
 
         void start_timer(int32_t id)
         {
             auto it = timers_.find(id);
             if (it != timers_.end())
+            {
+                TIMER_DEBUG("start timer {}", it->second->id);
                 start_timer(it->second);
+            }
         }
 
         void stop_timer(int32_t id)
         {
             auto it = timers_.find(id);
             if (it != timers_.end())
+            {
+                TIMER_DEBUG("stop timer {}", it->second->id);
                 stop_timer(it->second);
+            }
         }
 
         void invoke_timer(int32_t id)
         {
             auto it = timers_.find(id);
             if (it != timers_.end())
+            {
+                TIMER_DEBUG("invoke timer {}", it->second->id);
                 invoke_timer(it->second);
+            }
         }
 
         void close_timer(int32_t id)
@@ -172,6 +208,7 @@ namespace cytx
             auto it = timers_.find(id);
             if (it != timers_.end())
             {
+                TIMER_DEBUG("close timer {}, current timer count {}", it->second->id, timers_.size());
                 stop_timer(it->second);
                 timers_.erase(it);
             }
@@ -209,6 +246,7 @@ namespace cytx
 
         void timer_handler(const boost::system::error_code& ec, timer_info_ptr ti_ptr)
         {
+            TIMER_TRACE("timer {}, status {}, ec {}", ti_ptr->id, (int32_t)ti_ptr->status, ec.message());
             if (!ec && timer_status::ok == ti_ptr->status)
             {
                 bool is_continue = false;
@@ -217,8 +255,11 @@ namespace cytx
                     is_continue = ti_ptr->timer_func();
                 }
 
-                if(is_continue || ti_ptr->next_time > 0)
-                    start_timer(ti_ptr->id);
+                if (is_continue || ti_ptr->next_time > 0)
+                {
+                    TIMER_TRACE("continue timer {}", ti_ptr->id);
+                    start_timer(ti_ptr);
+                }
             }
         }
 
@@ -260,6 +301,7 @@ namespace cytx
         io_service_t& ios_;
         timer_map_t timers_;
         int32_t timer_id_;
+        cytx::log_ptr_t log_;
     };
 
     inline void timer_proxy::start(bool invoke_first/* = false*/)

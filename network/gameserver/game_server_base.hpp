@@ -12,6 +12,24 @@ namespace cytx
 {
     namespace gameserver
     {
+
+#define SERVER_LOG(level, str, ...)             \
+if(log_)                                        \
+{                                               \
+    log_->## level ## (str, __VA_ARGS__);       \
+}
+
+#define SERVER_DEBUG(str, ...)                  \
+if(log_)                                        \
+{                                               \
+    log_->debug(str, __VA_ARGS__);              \
+}
+
+#define SERVER_TRACE(str, ...)                  \
+if(log_)                                        \
+{                                               \
+    log_->trace(str, __VA_ARGS__);              \
+}
         namespace detail
         {
             inline std::string to_unique_str(server_unique_id unique_id)
@@ -52,20 +70,23 @@ namespace cytx
                 {
                     //初始化内存池
                     MemoryPoolManager::get_mutable_instance().init();
-
-                    cytx::log::get().init(log_level_t::debug);
                     //读取配置文件
                     config_mgr_.init(config_file_name);
                     config_mgr_.parse_real_ip(cytx::util::domain2ip);
 
                     //初始化日志
                     const server_info& info = config_mgr_[unique_id_];
+                    cytx::log::get().init(fmt::format("logs/{}", info.name), log_level_t::debug);
+
                     for (auto& log_cfg : info.logs)
                     {
                         auto log_ptr = log::init_log(fmt::format("logs/{}", log_cfg.filename), log_cfg.level, log_cfg.name, log_cfg.console);
                         logs_.push_back(log_ptr);
                     }
 
+                    log_ = cytx::log::get_log("server");
+
+                    SERVER_DEBUG("init server");
                     //初始化server和timer
                     server_options options;
                     options.thread_mode = (cytx::gameserver::server_thread_mode)info.thread_mode;
@@ -73,9 +94,10 @@ namespace cytx
                     options.batch_send_msg = info.batch_send_msg;
 
                     server_ = std::make_unique<server_t>(info.ip, info.port, options, this);
-                    timer_mgr_ = std::make_unique<timer_manager_t>(server_->get_io_service());
-                    flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time, cytx::bind(&this_t::flush_logs, this));
+                    timer_mgr_ = std::make_unique<timer_manager_t>(server_->get_io_service(), cytx::log::get_log("timer"));
+                    flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time * 1000, cytx::bind(&this_t::flush_logs, this));
 
+                    SERVER_DEBUG("register service");
                     //注册所有的service
                     service_mgr_.reg_inter_service(new config_service(config_mgr_), "config");
                     service_mgr_.register_service(info.services);
@@ -85,16 +107,20 @@ namespace cytx
 
                 void start()
                 {
+                    SERVER_DEBUG("start service");
                     service_mgr_.start_service();
 
+                    SERVER_DEBUG("start server");
                     flush_log_timer_.start();
                     server_->start();
                 }
                 void stop()
                 {
+                    SERVER_DEBUG("stop server");
                     timer_mgr_->stop_all_timer();
                     server_->stop();
 
+                    SERVER_DEBUG("stop service");
                     service_mgr_.stop_service();
 
                     flush_logs();
@@ -297,7 +323,7 @@ namespace cytx
             protected:
                 void on_connect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-                    LOG_DEBUG("new conenct {}", err.message());
+                    LOG_DEBUG("new conenct {}, {}", conn_ptr->get_conn_id(), err.message());
                 }
                 void on_disconnect(connection_ptr& conn_ptr, const net_result& err) override
                 {
@@ -308,7 +334,7 @@ namespace cytx
                     }
                     else
                     {
-                        LOG_DEBUG("conn disconnect {}", err.message());
+                        LOG_DEBUG("conn {} disconnect {}", conn_ptr->get_conn_id(), err.message());
                     }
                 }
                 void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
@@ -451,6 +477,7 @@ namespace cytx
 
                 std::vector<before_invoke_func_t> before_invoke_funcs_;
                 std::vector<before_send_func_t> before_send_funcs_;
+                log_ptr_t log_;
             };
         }
     }

@@ -15,6 +15,24 @@
 
 #define CLIENT_MSG_BUFF_MAX 1024 * 100 //100K
 
+#define CONN_LOG(level, str, ...)           \
+if(log_)                                    \
+{                                           \
+    log_->## level ## (str, __VA_ARGS__);   \
+}
+
+#define CONN_DEBUG(str, ...)                \
+if(log_)                                    \
+{                                           \
+    log_->debug(str, __VA_ARGS__);          \
+}
+
+#define CONN_TRACE(str, ...)                \
+if(log_)                                    \
+{                                           \
+    log_->trace(str, __VA_ARGS__);          \
+}
+
 namespace cytx
 {
     namespace gameserver
@@ -31,6 +49,11 @@ namespace cytx
                 using msg_ptr = std::shared_ptr<msg_t>;
                 using buffers_t = boost::asio::mutable_buffers_1;
 
+                connection_reader(cytx::log_ptr_t log_ptr, int32_t conn_id)
+                    : log_(log_ptr)
+                    , conn_id_(conn_id)
+                {
+                }
             public:
                 buffers_t prepare_next_recv()
                 {
@@ -45,6 +68,8 @@ namespace cytx
                         return 0;
 
                     size_t data_len = remain_len_ + bytes_transfered;
+                    CONN_TRACE("connection {} completion condition, bytes {}, total len {}", conn_id_, bytes_transfered, data_len);
+
                     assert(data_len <= CLIENT_MSG_BUFF_MAX);
 
                     if ((size_t)-1 == cur_len_ && data_len >= header_length_)
@@ -60,6 +85,9 @@ namespace cytx
                     remain_len_ += bytes_transfered;
                     auto pnext = buff_.begin();
                     assert(remain_len_ <= CLIENT_MSG_BUFF_MAX);
+
+                    size_t total_len = remain_len_;
+                    size_t msg_count = 0;
 
                     bool parse_ok = true;
                     while (parse_ok)
@@ -78,6 +106,7 @@ namespace cytx
                                     memcpy(msg->raw_data(), std::next(pnext, header_length_), header_.length);
                                 }
                                 msg_list_.push_back(msg);
+                                ++msg_count;
 
                                 std::advance(pnext, cur_len_);
                                 remain_len_ -= cur_len_;
@@ -110,6 +139,8 @@ namespace cytx
                         memcpy(buff_.begin(), pnext, remain_len_);
                     }
 
+                    CONN_TRACE("connection {}, parse msg, bytes {}, total {}, msg count {}, remain_len {}", conn_id_, bytes_transfered, total_len, msg_count, remain_len_);
+
                     return parse_ok;
                 }
 
@@ -133,12 +164,15 @@ namespace cytx
 
                     if (cur_len_ > CLIENT_MSG_BUFF_MAX || cur_len_ < header_length_)
                     {
-                        LOG_ERROR("completion_condition: {}", cur_len_);
+                        LOG_ERROR("connection {}, completion_condition: {}", conn_id_, cur_len_);
                         return false;
                     }
                     return true;
                 }
             private:
+                cytx::log_ptr_t log_;
+                int32_t conn_id_;
+
                 const size_t header_length_ = sizeof(header_t);
                 boost::array<char, CLIENT_MSG_BUFF_MAX> buff_;
                 header_t header_;
@@ -184,19 +218,21 @@ namespace cytx
         public:
             tcp_connection(io_service_t& ios, irouter_ptr router, int32_t conn_id, const connection_options& options)
                 : ios_(ios)
+                , log_(cytx::log::get_log("conn"))
                 , router_ptr_(router)
                 , conn_id_(conn_id)
                 , options_(options)
                 , socket_(ios_)
+                , reader_(log_, conn_id_)
                 , timer_mgr_(ios_)
             {
-
+                CONN_LOG(debug, "connection {} created", conn_id_);
             }
 
             ~tcp_connection()
             {
                 stop_timer();
-                LOG_DEBUG("connection {} destruct", conn_id_);
+                CONN_DEBUG("connection {} destroy", conn_id_);
             }
 
             void async_connect(const std::string& host, uint32_t port)
@@ -215,6 +251,7 @@ namespace cytx
                     socket_.close(ec);
                 }
 
+                CONN_DEBUG("connection {} connect tcp://{}:{}", conn_id_, host_, port_);
                 socket_.async_connect(cytx::util::get_tcp_endpoint(host_, port_), cytx::bind(&this_t::handle_connect, shared_from_this()));
             }
 
@@ -224,7 +261,7 @@ namespace cytx
                 remote_ = socket_.remote_endpoint(ec);
                 if (ec)
                 {
-                    LOG_ERROR("start failed, {}", ec.message());
+                    LOG_ERROR("connection {} start failed, {}", conn_id_, ec.message());
                     return false;
                 }
 
@@ -292,6 +329,8 @@ namespace cytx
                 return conn_info_;
             }
 
+            int32_t get_conn_id() const { return conn_id_; }
+
         private:
             void reset_state()
             {
@@ -303,15 +342,6 @@ namespace cytx
                 write_msg_queue_.clear();
                 reader_.reset();
                 batch_msg_ptr_ = nullptr;
-                cur_call_id_ = 0;
-                for (auto& p : calls_)
-                {
-                    handler_t& handler = p.second;
-
-                    using boost::asio::asio_handler_invoke;
-                    asio_handler_invoke(std::bind(handler, nullptr), &handler);
-                }
-                calls_.clear();
             }
 
             void start_read()
@@ -344,7 +374,7 @@ namespace cytx
                 force_close_error_ = true;
                 is_running_ = false;
 
-                LOG_DEBUG("connect close {}", conn_id_);
+                CONN_DEBUG("connection {} close", conn_id_);
             }
             void do_write(msg_ptr msgp)
             {
@@ -376,6 +406,7 @@ namespace cytx
 
             void handle_connect(const ec_t& err)
             {
+                CONN_DEBUG("connection {} connect tcp://{}:{}, result {}", conn_id_, host_, port_, err.message());
                 router_ptr_->on_connect(shared_from_this(), err);
             }
             void handle_write(const ec_t& err, msg_ptr msgp)
@@ -411,6 +442,7 @@ namespace cytx
             }
             void handle_timer()
             {
+                CONN_TRACE("connection {} handle timer, received msg {}", conn_id_, received_msg_);
                 if (!received_msg_)
                 {
                     on_error(cytx::error_code::timeout);
@@ -426,6 +458,7 @@ namespace cytx
 
                 if (!options_.batch_send_msg || write_msg_queue_.size() == 1)
                 {
+                    CONN_TRACE("connection {} write msg, queue size {}", conn_id_, write_msg_queue_.size());
                     msg_ptr msgp = write_msg_queue_.front();
                     msgp->hton();
                     async_write(socket_, msgp->to_buffers(), boost::bind(&this_t::handle_write, shared_from_this(), placeholders::error, msgp));
@@ -452,6 +485,9 @@ namespace cytx
                         return;
                     }
 
+                    CONN_DEBUG("connection {} batch write msg, count {}, length {}, full {}, length full {}", conn_id_, batch_msg_ptr_->size(), batch_msg_ptr_->total_length(),
+                        batch_msg_ptr_->full(), batch_msg_ptr_->length_full());
+
                     batch_msg_ptr_->hton();
                     async_write(socket_, batch_msg_ptr_->to_buffers(), boost::bind(&this_t::handle_write_batch, shared_from_this(), placeholders::error));
                 }
@@ -468,6 +504,8 @@ namespace cytx
                 if (buffer_size(recv_buff) > 0)
                 {
                     received_msg_ = true;
+
+                    CONN_TRACE("connection {} begin sequence read", conn_id_);
                     async_read(socket_, recv_buff, cytx::bind(&this_t::completion_condition, shared_from_this()),
                         cytx::bind(&this_t::handle_sequence_read, shared_from_this()));
                 }
@@ -480,6 +518,7 @@ namespace cytx
                     return;
                 }
 
+                CONN_TRACE("connection {} handle read, bytes {}", conn_id_, bytes_transfered);
                 bool has_msg = reader_.parse(bytes_transfered);
                 if (has_msg)
                 {
@@ -501,8 +540,21 @@ namespace cytx
                 if (!is_running_)
                     return;
 
+                CONN_DEBUG("connection {} on error {}, cur call id {}, calls {}", conn_id_, err.message(), cur_call_id_, calls_.size());
+
                 is_running_ = false;
                 timer_mgr_.stop_all_timer();
+
+                cur_call_id_ = 0;
+                for (auto& p : calls_)
+                {
+                    handler_t& handler = p.second;
+
+                    using boost::asio::asio_handler_invoke;
+                    asio_handler_invoke(std::bind(handler, nullptr), &handler);
+                }
+                calls_.clear();
+
                 router_ptr_->on_disconnect(shared_from_this(), err);
             }
             void on_error(const ec_t& ec, cytx::error_code err)
@@ -512,10 +564,15 @@ namespace cytx
 
             void on_receive_msgs(const std::vector<msg_ptr>& msg_list)
             {
+                size_t msg_list_size = msg_list.size();
+                size_t new_list_size = 0;
+                CONN_DEBUG("connection {} start batch process msg, count {}", conn_id_, msg_list_size);
+
                 std::vector<msg_ptr> new_msg_list;
                 auto conn_ptr = shared_from_this();
                 for (auto& msgp : msg_list)
                 {
+                    received_msg_ = true;
                     uint32_t call_id = msgp->header().call_id;
                     if (call_id > 0)
                     {
@@ -534,15 +591,20 @@ namespace cytx
                     new_msg_list.push_back(msgp);
                 }
 
+                new_list_size = new_msg_list.size();
                 if (!new_msg_list.empty())
                 {
+                    received_msg_ = true;
                     router_ptr_->on_receive_msgs(conn_ptr, new_msg_list);
                 }
+
+                CONN_DEBUG("connection {} end batch process msg, call count {}, msg count {}", conn_id_, msg_list_size - new_list_size, new_list_size);
             }
         private:
             io_service_t& ios_;
             int32_t conn_id_ = 0;
             bool received_msg_ = false;
+            cytx::log_ptr_t log_;
 
             std::atomic<bool> is_running_{ false };
             std::atomic<bool> force_close_error_{ false };

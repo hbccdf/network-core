@@ -27,6 +27,7 @@ namespace cytx
                 void init(const std::string& config_file_name = "server_config.xml")
                 {
                     base_t::init(config_file_name);
+                    SERVER_DEBUG("init service");
                     service_mgr_.init_service();
                 }
 

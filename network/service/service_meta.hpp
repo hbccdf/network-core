@@ -157,6 +157,7 @@ namespace cytx
         template<typename T>
         int register_service(const std::string& service_name)
         {
+            //std::cout << fmt::format("register service {}", service_name) << std::endl;
             using real_type = service_helper<T>;
 
             type_id_t type_id = TypeId::id<real_type>();
@@ -175,6 +176,7 @@ namespace cytx
         template<typename T, typename BaseT>
         int register_service(const std::string& service_name)
         {
+            //std::cout << fmt::format("register service with base class {}", service_name) << std::endl;
             using real_type = service_helper<T>;
             using real_base_type = service_helper<BaseT>;
 
@@ -193,25 +195,6 @@ namespace cytx
             auto& type_list = derived_service_map_[base_type_id];
             type_list.push_back(type_id);
             return 0;
-        }
-
-        template<typename T>
-        iservice* reg_inter_service(T* ptr, const::std::string& service_name)
-        {
-            using real_type = service_helper<T>;
-
-            type_id_t type_id = TypeId::id<real_type>();
-            auto it = service_map_.find(type_id);
-            if (it != service_map_.end())
-                return it->second;
-
-            iservice* service_ptr = new real_type(ptr);
-            service_map_.emplace(type_id, service_ptr);
-            if (!service_name.empty())
-            {
-                name_map_.emplace(service_name, type_id);
-            }
-            return service_ptr;
         }
 
         template<typename T>
@@ -315,6 +298,26 @@ namespace cytx
 
             type_list = it->second;
             return type_list;
+        }
+
+    public:
+        template<typename T>
+        iservice* reg_inter_service(T* ptr, const::std::string& service_name)
+        {
+            using real_type = service_helper<T>;
+
+            type_id_t type_id = TypeId::id<real_type>();
+            auto it = service_map_.find(type_id);
+            if (it != service_map_.end())
+                return it->second;
+
+            iservice* service_ptr = new real_type(ptr);
+            service_map_.emplace(type_id, service_ptr);
+            if (!service_name.empty())
+            {
+                name_map_.emplace(service_name, type_id);
+            }
+            return service_ptr;
         }
 
     private:
