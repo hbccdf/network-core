@@ -1,23 +1,26 @@
 <config>
+    <property_group>
+        <PortStart>3</PortStart>
+    </property_group>
     <server>
-        <item name="LoginServer" ip="127.0.0.1" port="30001" connect_interval="5000" unique_id="login_server" />
-        <item name="GatewayServer" ip="127.0.0.1" port="31001" connect_interval="5000" unique_id="gateway_server"  >
+        <item name="LoginServer" ip="127.0.0.1" port="$(PortStart)0001" connect_interval="5000" unique_id="login_server" />
+        <item name="GatewayServer" ip="127.0.0.1" port="$(PortStart)1001" connect_interval="5000" unique_id="gateway_server"  >
             <depends>login_server,room_server,battle_server,center_server</depends>
         </item>
-        <item name="RoomServer" ip="127.0.0.1" port="32001" connect_interval="5000" unique_id="room_server">
+        <item name="RoomServer" ip="127.0.0.1" port="$(PortStart)2001" connect_interval="5000" unique_id="room_server">
             <!-- <depends>db_server</depends> -->
-            <services>room_config,player_service,room_service</services>
+            <!-- <services>room_config,player_service,room_service</services> -->
             <logs>
-                <log name="server" filename="room_server_log" level="debug" console="true" />
-                <log name="net" filename="room_net_log" level="debug" console="true" />
-                <log name="timer" filename="room_timer_log" level="debug" console="true" />
-                <log name="conn" filename="room_conn_log" level="trace" console="true" />
+                <log name="server" filename="RoomServer" level="debug" console="true" />
+                <log name="net" filename="RoomServer" level="debug" console="true" />
+                <log name="timer" filename="RoomServer" level="debug" console="true" />
+                <log name="conn" filename="RoomServer" level="trace" console="true" />
             </logs>
         </item>
-        <item name="BattleServer" ip="127.0.0.1" port="33001" connect_interval="5000" unique_id="battle_server">
-            <services>battle_config,update_timer,battle_manager</services>
+        <item name="BattleServer" ip="127.0.0.1" port="$(PortStart)3001" connect_interval="5000" unique_id="battle_server">
+            <!-- <services>battle_config,update_timer,battle_manager</services> -->
         </item>
-        <item name="CenterServer" ip="127.0.0.1" port="30009" connect_interval="5000" unique_id="center_server" />
+        <item name="CenterServer" ip="127.0.0.1" port="$(PortStart)0009" connect_interval="5000" unique_id="center_server" />
         
     </server>
     <gateway  allow_reconnect_time="0" first_connect_msg_timeout="5000" disconnect_interval="30" reply_heartbeat_packet="false" log_level="debug" 

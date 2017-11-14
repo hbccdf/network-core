@@ -140,6 +140,10 @@ namespace cytx
                 register_service(str);
             }
         }
+        void register_all_service()
+        {
+            service_map_ = service_factory::ins().get_all_service_map();
+        }
         template<typename T>
         void reg_inter_service(T* ptr, const std::string& service_name = "")
         {

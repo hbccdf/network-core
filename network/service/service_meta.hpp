@@ -320,6 +320,11 @@ namespace cytx
             return service_ptr;
         }
 
+        const std::map<type_id_t, iservice*>& get_all_service_map() const
+        {
+            return service_map_;
+        }
+
     private:
         template<typename BaseT>
         std::vector<BaseT*> get_derived_services() const

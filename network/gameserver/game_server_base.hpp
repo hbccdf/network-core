@@ -97,10 +97,19 @@ if(log_)                                        \
                     timer_mgr_ = std::make_unique<timer_manager_t>(server_->get_io_service(), cytx::log::get_log("timer"));
                     flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time * 1000, cytx::bind(&this_t::flush_logs, this));
 
-                    SERVER_DEBUG("register service");
+                    SERVER_DEBUG("begin register service");
                     //×¢²áËùÓÐµÄservice
                     service_mgr_.reg_inter_service(new config_service(config_mgr_), "config");
-                    service_mgr_.register_service(info.services);
+                    if (info.services)
+                    {
+                        SERVER_DEBUG("register {} service", info.services->size());
+                        service_mgr_.register_service(info.services.get());
+                    }
+                    else
+                    {
+                        SERVER_DEBUG("register all service");
+                        service_mgr_.register_all_service();
+                    }
 
                     service_mgr_.service_set_server(this);
                 }
