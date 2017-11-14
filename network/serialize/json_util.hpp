@@ -252,6 +252,11 @@ namespace cytx {
                 t = val.GetBool();
         }
 
+        bool is_null(rapidjson::Value& val)
+        {
+            return val.IsNull();
+        }
+
         const char* c_str()
         {
             return buf_.GetString();

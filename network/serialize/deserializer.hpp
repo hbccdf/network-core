@@ -317,6 +317,18 @@ namespace cytx {
             rd_.read(t, val);
         }
 
+        template<typename T, typename BeginObject>
+        auto ReadObject(T& t, val_t& val, BeginObject) -> std::enable_if_t<is_optional<T>::value>
+        {
+            using value_type = typename T::value_type;
+            if (!rd_.is_null(val))
+            {
+                value_type v{};
+                ReadObject(v, val, std::true_type{});
+                t = v;
+            }
+        }
+
         template <typename T, typename BeginObject>
         auto ReadObject(T& t, val_t& val, BeginObject) ->std::enable_if_t<std::is_enum<
             std::remove_reference_t<std::remove_cv_t<T>>>::value>

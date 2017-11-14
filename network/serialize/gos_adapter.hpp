@@ -21,7 +21,10 @@ namespace cytx
         void end_fixed_array() {}
 
         void write(const std::string& str) { gos_.pushString(str); }
-        void write_null() {  }
+        void write_is_null(bool is_null)
+        {
+            write(is_null);
+        }
 
         void write_key_name(const std::string& str) {  }
 
@@ -424,6 +427,20 @@ namespace cytx
         auto ReadObject(T& t, BeginObject) -> std::enable_if_t<is_basic_type<T>::value>
         {
             rd_.read(t);
+        }
+
+        template<typename T, typename BeginObject>
+        auto ReadObject(T& t, BeginObject) -> std::enable_if_t<is_optional<T>::value>
+        {
+            using value_type = typename T::value_type;
+            bool is_null = false;
+            rd_.read(is_null);
+            if (!is_null)
+            {
+                value_type v{};
+                ReadObject(v, std::true_type{});
+                t = v;
+            }
         }
 
         template <typename T, typename BeginObject>

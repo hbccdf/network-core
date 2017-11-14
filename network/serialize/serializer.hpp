@@ -37,13 +37,11 @@ namespace cytx {
         template <typename T, typename BeginObjec>
         auto WriteObject(T const& t, bool is_last, BeginObjec bj) -> std::enable_if_t<is_optional<T>::value>
         {
-            if (static_cast<bool>(t))
+            bool is_null = !static_cast<bool>(t);
+            WriteIsNull(is_null, is_last);
+            if (!is_null)
             {
                 WriteObject(*t, is_last, bj);
-            }
-            else
-            {
-                WriteNull(is_last);
             }
         }
 
@@ -205,9 +203,9 @@ namespace cytx {
             adapter_write_field(t, is_last);
         }
 
-        void WriteNull(bool is_last)
+        void WriteIsNull(bool is_null, bool is_last)
         {
-            adapter_write_null(is_last);
+            adapter_write_is_null(is_null, is_last);
         }
 
         template<typename K>
@@ -250,18 +248,18 @@ namespace cytx {
         template<typename T, typename ADAPTER = adapter_t>
         auto adapter_write_field(T const& t, bool is_last) -> std::enable_if_t<ADAPTER::use_field_separator == 1>
         {
-            wr_.write_field(t, is_last);
+            wr_.write(t, is_last);
         }
 
         template<typename ADAPTER = adapter_t>
-        auto adapter_write_null(bool /*is_last*/) -> std::enable_if_t<ADAPTER::use_field_separator == 0>
+        auto adapter_write_is_null(bool is_null, bool /*is_last*/) -> std::enable_if_t<ADAPTER::use_field_separator == 0>
         {
-            wr_.write_null();
+            wr_.write_is_null(is_null);
         }
         template<typename ADAPTER = adapter_t>
-        auto adapter_write_null(bool is_last) -> std::enable_if_t<ADAPTER::use_field_separator == 1>
+        auto adapter_write_is_null(bool is_null, bool is_last) -> std::enable_if_t<ADAPTER::use_field_separator == 1>
         {
-            wr_.write_null(is_last);
+            wr_.write_is_null(is_null, is_last);
         }
 
         void adapter_begin_object()

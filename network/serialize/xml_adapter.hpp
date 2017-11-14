@@ -12,7 +12,7 @@ namespace cytx
     {
         using namespace boost::property_tree;
 
-        enum class node_type { object, array, value };
+        enum class node_type { object, array, value, null };
 
         struct xml_node
         {
@@ -63,7 +63,7 @@ namespace cytx
             }
             void end_serialize()
             {
-                if (!(cur_node_.key.empty() && cur_node_.val.data().empty() && cur_node_.val.empty()))
+                if (cur_node_.type != node_type::null && !(cur_node_.key.empty() && cur_node_.val.data().empty() && cur_node_.val.empty()))
                 {
                     if (cur_node_.key.empty())
                         cur_node_.key = "+";
@@ -92,7 +92,13 @@ namespace cytx
                         cur_node_.reset(node_type::object);
                     }
                     else
+                    {
                         cur_node_.type = node_type::object;
+                    }
+                }
+                else if (cur_node_.type == node_type::null)
+                {
+                    cur_node_.type = node_type::object;
                 }
                 nodes_.emplace_back(cur_node_);
                 cur_node_.reset(node_type::value);
@@ -101,7 +107,7 @@ namespace cytx
             {
                 auto node = nodes_.back();
                 nodes_.pop_back();
-                if (!cur_node_.key.empty() || !cur_node_.val.data().empty())
+                if (cur_node_.type != node_type::null && (!cur_node_.key.empty() || !cur_node_.val.data().empty()))
                 {
                     node.val.add_child(cur_node_.key, cur_node_.val);
                 }
@@ -118,7 +124,9 @@ namespace cytx
                         cur_node_.reset(node_type::object);
                     }
                     else
+                    {
                         cur_node_.type = node_type::object;
+                    }
                 }
                 nodes_.emplace_back(cur_node_);
                 cur_node_.reset(node_type::array);
@@ -139,7 +147,7 @@ namespace cytx
                             node.val.add_child(cur_node_.key.empty() ? "+" : cur_node_.key, cur_node_.val);
                     }
                 }
-                else
+                else if(cur_node_.type != node_type::null)
                 {
                     if (node.val.empty() && node.type != node_type::array)
                         node.val = cur_node_.val;
@@ -165,6 +173,10 @@ namespace cytx
             template<typename T>
             void write_key(T&& t)
             {
+                if (cur_node_.type == node_type::null)
+                {
+                    cur_node_.reset(node_type::value);
+                }
                 if (cur_node_.key.empty())
                 {
                     auto str = fmt::format("{}", t);
@@ -205,16 +217,18 @@ namespace cytx
                         cur_node_.val.put_value(t);
                     }
                 }
-                else
+                else if(cur_node_.type != node_type::null)
                 {
                     cur_node_.val.put_value(t);
                 }
             }
 
-            void write_null()
+            void write_is_null(bool is_null)
             {
-                /*auto& node = cur_node();
-                node.val.put_value("null");*/
+                if (is_null)
+                {
+                    cur_node_.reset(node_type::null);
+                }
             }
 
             std::string str() { return buf_; }
@@ -353,6 +367,11 @@ namespace cytx
                 {
                     t = val.get_value<T>();
                 }
+            }
+
+            bool is_null(value_t& val)
+            {
+                return false;
             }
 
             std::string first(member_iterator& it)

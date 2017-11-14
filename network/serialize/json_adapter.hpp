@@ -33,7 +33,13 @@ namespace cytx {
             json_.write_value(std::forward<T>(t));
         }
 
-        void write_null() { json_.write_null(); }
+        void write_is_null(bool is_null)
+        {
+            if (is_null)
+            {
+                json_.write_null();
+            }
+        }
 
         std::string str() { return json_.str(); }
     protected:
@@ -94,6 +100,11 @@ namespace cytx {
         void read(T& t, value_t& val)
         {
             json_.read_value(t, val);
+        }
+
+        bool is_null(value_t& val)
+        {
+            return json_.is_null(val);
         }
 
         std::string first(member_iterator& it)
