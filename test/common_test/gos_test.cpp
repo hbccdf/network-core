@@ -22,6 +22,48 @@ public:
     }
 
     virtual void TearDown() {}
+
+    template<typename T>
+    void assert_val_equal(T&& v, T&& dv)
+    {
+        assert_eq(v, dv);
+    }
+    template<>
+    void assert_val_equal<float>(float&& v, float&& dv)
+    {
+        assert_float_eq(v, dv);
+    }
+    template<>
+    void assert_val_equal<double>(double&& v, double&& dv)
+    {
+        assert_double_eq(v, dv);
+    }
+
+    /*template<typename T>
+    auto assert_val_equal(T&& v, T&& dv) -> std::enable_if_t<is_container<T>::value>
+    {
+    auto itv = v.begin();
+    auto it_dv = dv.begin();
+    for (; it != v.end(); ++it, ++it_dv)
+    {
+    assert_val_equal(*it, *it_dv);
+    }
+    }*/
+
+    template<typename T, size_t N>
+    void assert_val_equal(T(&v)[N], T(&dv)[N])
+    {
+        for (size_t i = 0; i < N; ++i)
+        {
+            assert_val_equal(v[i], dv[i]);
+        }
+    }
+
+    template<size_t N>
+    void assert_val_equal(char(&v)[N], char(&dv)[N])
+    {
+        assert_streq(v, dv);
+    }
 };
 
 int func_test(int a, int b)
@@ -36,27 +78,6 @@ struct foo
         return a + b;
     }
 };
-
-//TEST(test, t)
-//{
-//    auto f = cytx::bind(func_test);
-//    auto r = f(2, 9);
-//    assert_eq(r, 11);
-//
-//    foo ff;
-//    auto f1 = cytx::bind(&foo::add, &ff);
-//
-//    auto ff2 = std::make_shared<foo>();
-//    auto f2 = cytx::bind(&foo::add, ff2);
-//
-//    auto r1 = f1(2, 4);
-//    auto r2 = f2(2, 4);
-//    assert_eq(r1, 6);
-//    assert_eq(r2, 6);
-//
-//    auto f3 = cytx::bind(&foo::add, ff2, std::placeholders::_1, 3);
-//    assert_eq(f3(4), 7);
-//}
 
 TEST_F(gos_type, bool)
 {
@@ -682,4 +703,32 @@ TEST_F(gos_type, other_tupe2_with_ref)
 
     d = 2.345;
     assert_double_eq(std::get<0>(dv), d);
+}
+
+enum struct_enum_key
+{
+    key1,
+    key2,
+    key3,
+};
+REG_ENUM(struct_enum_key, key1, key2, key3);
+
+TEST_F(gos_type, struct_with_enum_key_map)
+{
+    struct st
+    {
+        std::map<struct_enum_key, int> enum_map;
+        META(enum_map);
+    };
+
+    st v;
+    v.enum_map.emplace(key1, 1);
+    v.enum_map.emplace(key2, 2);
+    v.enum_map.emplace(key3, 3);
+    v.enum_map.emplace((struct_enum_key)9, 9);
+
+    se.Serialize(v);
+    st dv;
+    de.DeSerialize(dv);
+    assert_val_equal(v.enum_map, dv.enum_map);
 }

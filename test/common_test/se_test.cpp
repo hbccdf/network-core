@@ -63,46 +63,53 @@ public:
     }
 
     template<typename T>
-    void assert_equal(T&& v)
+    void assert_equal(T&& v, bool enum_str = false)
     {
         using value_t = std::decay_t<T>;
         value_t dv;
+        se.enum_with_str(enum_str);
         se.Serialize(v);
         auto str = se.get_adapter().str();
+        de.enum_with_str(enum_str);
         de.parse(str);
         de.DeSerialize(dv);
         assert_val_equal(v, dv);
     }
 
     template<typename T, size_t N>
-    void assert_equal(T(&v)[N])
+    void assert_equal(T(&v)[N], bool enum_str = false)
     {
         using value_t = std::decay_t<T>;
         value_t dv[N];
+        se.enum_with_str(enum_str);
         se.Serialize(v);
         auto str = se.get_adapter().str();
+        de.enum_with_str(enum_str);
         de.parse(str);
         de.DeSerialize(dv);
         assert_val_equal(v, dv);
     }
 
     template<typename T>
-    T get_de(T& v)
+    T get_de(T& v, bool enum_str = false)
     {
         using value_t = std::decay_t<T>;
         value_t dv;
+        se.enum_with_str(enum_str);
         se.Serialize(v);
         auto str = se.get_adapter().str();
+        de.enum_with_str(enum_str);
         de.parse(str);
         de.DeSerialize(dv);
         return std::move(dv);
     }
 
     template<typename T>
-    T get_de(string str)
+    T get_de(string str, bool enum_str = false)
     {
         using value_t = std::decay_t<T>;
         value_t dv;
+        de.enum_with_str(enum_str);
         de.parse(str);
         de.DeSerialize(dv);
         return std::move(dv);
@@ -609,6 +616,50 @@ TEST_F(base_type, struct_with_reverse_order)
     assert_val_equal(v.p, dv.p);
     assert_val_equal(v.t, dv.t);
     assert_val_equal(v.i, dv.i);
+}
+
+enum struct_enum_key
+{
+    key1,
+    key2,
+    key3,
+};
+REG_ENUM(struct_enum_key, key1, key2, key3);
+
+TEST_F(base_type, struct_with_enum_key_map)
+{
+    struct st
+    {
+        std::map<struct_enum_key, int> enum_map;
+        META(enum_map);
+    };
+
+    st v;
+    v.enum_map.emplace(key1, 1);
+    v.enum_map.emplace(key2, 2);
+    v.enum_map.emplace(key3, 3);
+    v.enum_map.emplace((struct_enum_key)9, 9);
+
+    auto dv = get_de(v);
+    assert_val_equal(v.enum_map, dv.enum_map);
+}
+
+TEST_F(base_type, struct_with_enum_key_map_with_str)
+{
+    struct st
+    {
+        std::map<struct_enum_key, int> enum_map;
+        META(enum_map);
+    };
+
+    st v;
+    v.enum_map.emplace(key1, 1);
+    v.enum_map.emplace(key2, 2);
+    v.enum_map.emplace(key3, 3);
+    v.enum_map.emplace((struct_enum_key)9, 9);
+
+    auto dv = get_de(v, true);
+    assert_val_equal(v.enum_map, dv.enum_map);
 }
 
 TEST_F(base_type, struct_with_json)
