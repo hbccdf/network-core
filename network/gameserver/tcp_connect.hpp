@@ -74,7 +74,8 @@ namespace cytx
 
                     if ((size_t)-1 == cur_len_ && data_len >= header_length_)
                     {
-                        parse_header(buff_.begin());
+                        if (!parse_header(buff_.begin()))
+                            return 0;
                     }
 
                     return data_len >= cur_len_ ? 0 : boost::asio::detail::default_max_transfer_size;
@@ -151,9 +152,12 @@ namespace cytx
                     cur_index_ = 0;
                     header_.length = 0;
                     msg_list_.clear();
+                    is_valid_ = true;
                 }
 
                 const std::vector<msg_ptr>& get_msgs() const { return msg_list_; }
+
+                bool is_valid() const { return is_valid_ && cur_len_ <= CLIENT_MSG_BUFF_MAX; }
 
             private:
                 bool parse_header(const void* src)
@@ -164,7 +168,8 @@ namespace cytx
 
                     if (cur_len_ > CLIENT_MSG_BUFF_MAX || cur_len_ < header_length_)
                     {
-                        LOG_ERROR("connection {}, completion_condition: {}", conn_id_, cur_len_);
+                        is_valid_ = false;
+                        LOG_WARN("connection {}, completion_condition: {}", conn_id_, cur_len_);
                         return false;
                     }
                     return true;
@@ -180,6 +185,7 @@ namespace cytx
                 size_t remain_len_ = 0; //half_baked_msg
                 size_t cur_index_ = 0;
                 std::vector<msg_ptr> msg_list_;
+                bool is_valid_ = true;
             };
         }
 
@@ -512,7 +518,7 @@ namespace cytx
             }
             void handle_sequence_read(const ec_t& err, size_t bytes_transfered)
             {
-                if (err || bytes_transfered == 0)
+                if (err || bytes_transfered == 0 || !reader_.is_valid())
                 {
                     on_error(err, cytx::error_code::recv_error);
                     return;
