@@ -81,7 +81,7 @@ namespace cytx
         template<typename T>
         auto cast_string(const T& t) -> std::enable_if_t<std::is_same<T, date_time>::value, std::string>
         {
-            return fmt::format("'{}'", t.to_string());
+            return t.to_string();
         }
 
         template<typename T>
@@ -90,19 +90,24 @@ namespace cytx
             if (t)
                 return cast_string(t.get());
             else
-                return "null";
+                return "";
         }
 
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type<T>::value && !std::is_same<std::string, T>::value, std::string>
+        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type<T>::value, std::string>
         {
             return fmt::format("{}", t);
         }
 
-        template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<std::string, T>::value, std::string>
+        inline std::string cast_string(const char* str)
         {
-            return fmt::format("'{}'", t);
+            return str;
+        }
+
+        template<size_t N>
+        std::string cast_string(char(&str)[N])
+        {
+            return str;
         }
     }
 }

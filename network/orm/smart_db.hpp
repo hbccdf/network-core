@@ -198,7 +198,7 @@ namespace cytx
                         return;
 
                     names_wr.write("{}{}", is_first ? "" : ",", item.first);
-                    values_wr.write("{}{}", is_first ? "" : ",", util::cast_string(item.second.value()));
+                    values_wr.write("{}{}", is_first ? "" : ",", cytx::orm::cast_string(item.second.value()));
                     is_first = false;
                 });
 
@@ -220,7 +220,7 @@ namespace cytx
                         return;
 
                     names_wr.write("{}{}", is_first ? "" : ",", item.name());
-                    values_wr.write("{}{}", is_first ? "" : ",", util::cast_string(item.value()));
+                    values_wr.write("{}{}", is_first ? "" : ",", cytx::orm::cast_string(item.value()));
                     is_first = false;
                 });
                 string insert_sql = fmt::format("INSERT INTO `{}`({}) values({})", arg0.table_name(), names_wr.str(), values_wr.str());
@@ -238,7 +238,7 @@ namespace cytx
                     if (!item.second)
                         return;
 
-                    values_wr.write("{}{}={}", is_first ? "" : ",", item.first, util::cast_string(item.second.value()));
+                    values_wr.write("{}{}={}", is_first ? "" : ",", item.first, cytx::orm::cast_string(item.second.value()));
                     is_first = false;
                 });
 

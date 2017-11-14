@@ -124,3 +124,10 @@ TEST(tuple_total_size, struct)
     assert_eq(tuple_total_size<st_base_and_base1>::value, 20);
     assert_eq(tuple_total_size<st_invalid>::value, -1);
 }
+
+TEST(cast_string, test)
+{
+    assert_streq("test", cytx::util::cast_string("test").c_str());
+    cytx::date_time t = cytx::date_time::parse("2013-11-22 12:11:11");
+    assert_streq("2013-11-22 12:11:11", cytx::util::cast_string(t).c_str());
+}

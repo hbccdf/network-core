@@ -23,6 +23,9 @@ TEST(field_proxy, assign)
     v.id = 3;
     assert_streq(v.id.str().c_str(), "st.id=3");
 
+    v.name = "test";
+    assert_streq(v.name.str().c_str(), "st.name='test'");
+
     v.id = v.id + 3;
     assert_streq(v.id.str().c_str(), "st.id=st.id+3");
 }
