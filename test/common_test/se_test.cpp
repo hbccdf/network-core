@@ -662,6 +662,120 @@ TEST_F(base_type, struct_with_enum_key_map_with_str)
     assert_val_equal(v.enum_map, dv.enum_map);
 }
 
+TEST_F(base_type, struct_with_optional)
+{
+    struct st
+    {
+        boost::optional<int> v;
+        META(v);
+    };
+    st v;
+    v.v = 3;
+    auto dv = get_de(v);
+    assert_val_equal(v.v, dv.v);
+}
+
+TEST_F(base_type, struct_with_optional_null)
+{
+    struct st
+    {
+        boost::optional<int> v;
+        META(v);
+    };
+    st v;
+    auto dv = get_de(v);
+    assert_val_equal(v.v, dv.v);
+}
+
+TEST_F(base_type, struct_with_optional_and_other_field)
+{
+    struct st
+    {
+        int i;
+        boost::optional<int> v;
+        std::string str;
+        META(i, v, str);
+    };
+    st v;
+    v.i = 100;
+    v.str = "test";
+    auto dv = get_de(v);
+    assert_val_equal(v.i, dv.i);
+    assert_val_equal(v.v, dv.v);
+    assert_val_equal(v.str, dv.str);
+
+    v.v = 33;
+    dv = get_de(v);
+    assert_val_equal(v.i, dv.i);
+    assert_val_equal(v.v, dv.v);
+    assert_val_equal(v.str, dv.str);
+}
+
+TEST_F(base_type, struct_with_optional_null_struct)
+{
+    struct base_st
+    {
+        std::string str;
+        int i;
+        boost::optional<float> v;
+        double d;
+        META(str, i, v, d);
+    };
+    struct st
+    {
+        int i;
+        boost::optional<base_st> v;
+        std::string str;
+        META(i, v, str);
+    };
+
+    st v;
+    v.i = 3;
+    v.str = "test";
+    auto dv = get_de(v);
+    assert_val_equal(v.i, dv.i);
+    assert_true(!dv.v);
+    assert_val_equal(v.str, dv.str);
+}
+
+TEST_F(base_type, struct_with_optional_struct)
+{
+    struct base_st
+    {
+        std::string str;
+        int i;
+        boost::optional<float> v;
+        double d;
+        META(str, i, v, d);
+    };
+    struct st
+    {
+        int i;
+        boost::optional<base_st> v;
+        std::string str;
+        META(i, v, str);
+    };
+
+    base_st b;
+    b.str = "hello";
+    b.i = 10;
+    b.v = 3.3f;
+    b.d = 15.456;
+
+    st v;
+    v.i = 3;
+    v.v = b;
+    v.str = "test";
+    auto dv = get_de(v);
+    assert_val_equal(v.i, dv.i);
+    assert_false(!dv.v);
+    assert_val_equal(v.v->str, dv.v->str);
+    assert_val_equal(v.v->i, dv.v->i);
+    assert_val_equal(v.v->v, dv.v->v);
+    assert_val_equal(v.v->d, dv.v->d);
+    assert_val_equal(v.str, dv.str);
+}
+
 TEST_F(base_type, struct_with_json)
 {
     struct st
