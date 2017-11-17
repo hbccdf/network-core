@@ -10,6 +10,8 @@ _generator = "thrift-0.10.0.exe"
 _thrift_dir_name = "gen-cpp/"
 _generate_dir_name = "gen_files"
 
+_config_info = {}
+
 _args = (
     #'--gen csharp',
     '--gen cpp',
@@ -115,7 +117,7 @@ class _base:
     def __init__(self, key_name, thrift):
         self.key_name = key_name
         self.new_name = _remove_underline(key_name)
-        self.class_name = "%s_Wrap" % self.new_name
+        self.class_name = "%s%s" % (self.new_name, _config_info["class_suffix"])
         n = key_name.find("_")
         if n >= 0:
             self.ref_inst_name = key_name[:n].lower() + key_name[n+1:]
@@ -128,7 +130,7 @@ class _base:
 class _base_hpp(_base):
     def __init__(self, key_name, thrift, finded_struct):
         _base.__init__(self, key_name, thrift)
-        self.gen_file_name = "%s_Wrap.hpp" % self.new_name
+        self.gen_file_name = "%s_%s.hpp" % (self.new_name, _config_info["hpp_suffix"])
         self.thrift = thrift
         self.finded_struct = finded_struct
 
@@ -206,7 +208,7 @@ class _base_hpp(_base):
 class _full_hpp(_base):
     def __init__(self, key_name, thrift):
         _base.__init__(self, key_name, thrift)
-        self.gen_file_name = "%s_wraps.hpp" % key_name
+        self.gen_file_name = "%s_%ss.hpp" % (key_name, _config_info["hpp_suffix"])
         self.hpps = []
         self.thrift = thrift
 
@@ -238,14 +240,15 @@ class _full_hpp(_base):
 class _cpp(_base):
     def __init__(self, key_name, thrift):
         _base.__init__(self, key_name, thrift)
-        self.gen_file_name = "%s_Wrap.cpp" % self.new_name
+        self.gen_file_name = "%s%s.cpp" % (self.new_name, _config_info["cpp_suffix"])
         self.thrift = thrift
 
     def get_file_name(self):
         return self.gen_file_name
 
     def get_content(self):
-        content = "#include \"proto/all_wraps.hpp\"\n\n"
+        
+        content = "#include \"%s/all_%ss.hpp\"\n\n" % (_config_info["proto_dir"], _config_info["hpp_suffix"])
         content += "%s\n{\n" % self.namespace
         content += "    REGISTER_PROTOCOL(%s);\n\n" % self.class_name
         content += "    void %s::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)\n" % self.class_name
@@ -275,11 +278,12 @@ class _proto():
 
 class _g_factory:
     def create(self, type, file_name, thrift, is_full_hpp, finded_struct):
+        file_suffix = _config_info["cpp_suffix"]
         if type == "hpp":
-            full_name = "%s/%s_Wrap.hpp" % (_generate_dir_name, _remove_underline(file_name))
+            full_name = "%s/%s%s.hpp" % (_generate_dir_name, _remove_underline(file_name), file_suffix)
             inst = _base_hpp(file_name, thrift, finded_struct)
         elif type == "cpp":
-            full_name = "%s/%s_Wrap.cpp" % (_generate_dir_name, _remove_underline(file_name))
+            full_name = "%s/%s%s.cpp" % (_generate_dir_name, _remove_underline(file_name), file_suffix)
             inst = _cpp(file_name, thrift)
 
         if not is_full_hpp:
@@ -376,6 +380,11 @@ f2.gene_space = ""
 f2.dir = "struct"
 _list_thrift.append(f2)
 
+_config_info["proto_dir"] = "proto"
+_config_info["hpp_suffix"] = "action"
+_config_info["cpp_suffix"] = "_Action"
+_config_info["class_suffix"] = "_Action"
+
 copy_dst_dir = "../../example/common/proto"
 
 ############################################################################
@@ -427,13 +436,18 @@ if __name__ == "__main__":
         file.write(content)
         file.close()
 
-    print "wrap files", list_common_total
+        
+    hpp_suffix = _config_info["hpp_suffix"]
+    
+    print  hpp_suffix, "files", list_common_total
 
+    
+    
     content = "#pragma once\n"
     for wrap in list_common_total:
         content += "#include \"%s\"\n" % wrap
 
-    full_name = "%s%s" % (_thrift_dir_name, "wraps_common.hpp")
+    full_name = "%s%ss_common.hpp" % (_thrift_dir_name, hpp_suffix)
     file = open(full_name, "w")
     file.write(content)
     file.close()
@@ -444,18 +458,18 @@ if __name__ == "__main__":
     print dst_dir
     copy_dir(src_dir, dst_dir)
 
-    full_name = "%s/%s" % (dst_dir, "custom_wraps.hpp")
+    full_name = "%s/custom_%ss.hpp" % (dst_dir, hpp_suffix)
     if not os.path.exists(full_name):
         content = "#pragma once\n"
         file = open(full_name, "w")
         file.write(content)
         file.close()
 
-    full_name = "%s/%s" % (dst_dir, "all_wraps.hpp")
+    full_name = "%s/all_%ss.hpp" % (dst_dir, hpp_suffix)
     if not os.path.exists(full_name):
         content = "#pragma once\n"
-        content += "#include \"wraps_common.hpp\"\n"
-        content += "#include \"custom_wraps.hpp\"\n"
+        content += "#include \"%ss_common.hpp\"\n" % hpp_suffix
+        content += "#include \"custom_%ss.hpp\"\n" % hpp_suffix
         file = open(full_name, "w")
         file.write(content)
         file.close()
