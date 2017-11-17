@@ -205,5 +205,19 @@ namespace cytx
 
             char a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
         }
+
+        template<typename T>
+        auto unpack_msg(detail::gos_t& gos)
+        {
+            return detail::unpack_msg_impl<T>(gos, detail::header_t::big_endian());
+        }
+
+        template<typename ... ARGS>
+        void unpack_msg(detail::gos_t& gos, ARGS& ... args)
+        {
+            bool is_big_endian = detail::header_t::big_endian();
+
+            char a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
+        }
     }
 }

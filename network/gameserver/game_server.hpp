@@ -73,7 +73,7 @@ namespace cytx
                     if (depend_db_)
                     {
                         db_conn_ptr_ = server_->create_connection();
-                        connect_db_timer_ = timer_mgr_->set_auto_timer(db_info_.connect_interval, connect_db_func);
+                        connect_db_timer_ = timer_mgr_->set_auto_timer(info.connect_interval, connect_db_func);
                         get_db_info_timer_ = timer_mgr_->set_auto_timer(20 * 1000, get_db_info_func);
                     }
 
