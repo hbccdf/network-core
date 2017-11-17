@@ -73,6 +73,11 @@ namespace cytx
                 t.pack(gos);
             }
 
+            inline void pack_msg_impl(gos_t& gos, const msg_ptr& msgp, bool is_big_endian)
+            {
+                gos.pushBinary(msgp->data(), (short)msgp->length());
+            }
+
             template<typename T>
             auto pack_msg_impl(const T& t, bool is_big_endian) -> std::enable_if_t<is_thrift_msg<T>::value, buffer_t>
             {

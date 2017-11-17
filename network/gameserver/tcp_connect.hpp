@@ -467,7 +467,7 @@ namespace cytx
                     CONN_TRACE("connection {} write msg, queue size {}", conn_id_, write_msg_queue_.size());
                     msg_ptr msgp = write_msg_queue_.front();
                     msgp->hton();
-                    async_write(socket_, msgp->to_buffers(), boost::bind(&this_t::handle_write, shared_from_this(), placeholders::error, msgp));
+                    async_write(socket_, msgp->to_buffers(), boost::bind(&this_t::handle_write, shared_from_this(), boost::asio::placeholders::error, msgp));
                 }
                 //批量发送消息
                 else
@@ -495,7 +495,7 @@ namespace cytx
                         batch_msg_ptr_->full(), batch_msg_ptr_->length_full());
 
                     batch_msg_ptr_->hton();
-                    async_write(socket_, batch_msg_ptr_->to_buffers(), boost::bind(&this_t::handle_write_batch, shared_from_this(), placeholders::error));
+                    async_write(socket_, batch_msg_ptr_->to_buffers(), boost::bind(&this_t::handle_write_batch, shared_from_this(), boost::asio::placeholders::error));
                 }
             }
 

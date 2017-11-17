@@ -31,9 +31,13 @@ namespace cytx
                         depend_db_ = it != info.depends.end();
                     }
 
-                    SERVER_DEBUG("server depend_db {}", depend_db_);
+                    if (depend_center_)
+                    {
+                        auto it = std::find(info.depends.begin(), info.depends.end(), server_unique_id::center_server);
+                        depend_center_ = it != info.depends.end();
+                    }
 
-                    center_conn_ptr_ = server_->create_connection();
+                    SERVER_DEBUG("server depend_db {}, depend_center {}", depend_db_, depend_center_);
 
                     auto connect_func = [this]
                     {
@@ -58,9 +62,13 @@ namespace cytx
                     };
 
                     //连接各个服务
-                    const server_info& center_info = config_mgr_[server_unique_id::center_server];
-                    connect_center_timer_ = timer_mgr_->set_auto_timer(center_info.connect_interval, connect_func);
-                    connect_center_timer_.start(true);
+                    if (depend_center_)
+                    {
+                        center_conn_ptr_ = server_->create_connection();
+                        const server_info& center_info = config_mgr_[server_unique_id::center_server];
+                        connect_center_timer_ = timer_mgr_->set_auto_timer(center_info.connect_interval, connect_func);
+                        connect_center_timer_.start(true);
+                    }
 
                     if (depend_db_)
                     {
@@ -170,7 +178,7 @@ namespace cytx
             protected:
                 void on_connect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-                    if (conn_ptr == center_conn_ptr_)
+                    if (depend_center_ && conn_ptr == center_conn_ptr_)
                     {
                         if (err)
                         {
@@ -205,7 +213,7 @@ namespace cytx
                 }
                 void on_disconnect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-                    if (conn_ptr == center_conn_ptr_)
+                    if (depend_center_ && conn_ptr == center_conn_ptr_)
                     {
                         LOG_ERROR("center connect disconnected, {}", err.message());
                         connect_center_timer_.start();
@@ -261,6 +269,7 @@ namespace cytx
                 }
 
             protected:
+                bool depend_center_ = true;
                 connection_ptr center_conn_ptr_;
                 timer_t connect_center_timer_;
 

@@ -308,6 +308,56 @@ if(log_)                                        \
                 }
 
             public:
+                //给服务端发送消息
+                uint32_t send_server_msg(server_unique_id unique_id, msg_ptr& msgp, const msg_ptr& request_msgp = nullptr)
+                {
+                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
+                        return 0;
+                    }
+
+                    msgp->header().from_unique_id = (uint16_t)this->unique_id_;
+                    msgp->header().to_unique_id = (uint16_t)unique_id;
+
+                    if (request_msgp)
+                    {
+                        msgp->header().call_id = request_msgp->header().call_id;
+                    }
+                    send_raw_msg(conn_ptr, msgp);
+                    return msgp->total_length();
+                }
+
+                uint32_t send_client_msg(int32_t user_id, msg_ptr& msgp)
+                {
+                    connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("gateway is not connected");
+                        return 0;
+                    }
+
+                    msgp->header().user_id = user_id;
+
+                    send_raw_msg(conn_ptr, msgp);
+                    return msgp->total_length();
+                }
+
+                uint32_t broadcast_client_msg(const std::vector<int32_t>& users, msg_ptr& msgp)
+                {
+                    connection_ptr conn_ptr = get_connection_ptr(server_unique_id::gateway_server);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("gateway is not connected");
+                        return 0;
+                    }
+
+                    msg_ptr new_msgp = server_pack_msg(BroadcastMsg, server_unique_id::gateway_server, msgp->header().protocol_id, users, msgp);
+                    send_raw_msg(conn_ptr, new_msgp);
+                    return new_msgp->total_length();
+                }
+            public:
                 template<typename RETURN_T, typename MSG_ID, typename T>
                 void async_await_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t, std::function<void(RETURN_T)>&& func, const msg_ptr& request_msgp = nullptr)
                 {
@@ -364,7 +414,7 @@ if(log_)                                        \
                             LOG_DEBUG("connect register, server is {}", to_unique_str(unique_id));
                         }
                     }
-                    else
+                    else if(!handle_msg(conn_ptr, msgp))
                     {
                         LOG_DEBUG("receive msg {}", protocol_id);
                     }
@@ -388,6 +438,11 @@ if(log_)                                        \
                         return get_running_conn(gate_conn_ptr_);
                     else
                         return nullptr;
+                }
+
+                virtual bool handle_msg(connection_ptr& conn_ptr, const msg_ptr& msgp)
+                {
+                    return false;
                 }
             protected:
                 template<typename MSG_ID, typename T>
