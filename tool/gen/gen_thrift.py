@@ -11,6 +11,7 @@ _thrift_dir_name = "gen-cpp/"
 _generate_dir_name = "gen_files"
 
 _config_info = {}
+_proto_dic = {}
 
 _args = (
     #'--gen csharp',
@@ -114,25 +115,36 @@ class _base:
     rigth_brace="}"
     base_class_name="Proto"
 
-    def __init__(self, key_name, thrift):
+    def __init__(self, key_name, thrift, finded_struct):
         self.key_name = key_name
         self.new_name = _remove_underline(key_name)
+        self.base_name = self.key_name
+        self.finded_struct = finded_struct
+        
+        if not finded_struct:
+            if self.key_name in _proto_dic:
+                self.finded_struct = True
+                self.base_name = _proto_dic[self.key_name]
+                print self.key_name, "find struct in _proto_dic, name is", self.base_name
+                
         self.class_name = "%s%s" % (self.new_name, _config_info["class_suffix"])
-        n = key_name.find("_")
+        n = self.base_name.find("_")
         if n >= 0:
-            self.ref_inst_name = key_name[:n].lower() + key_name[n+1:]
+            self.ref_inst_name = self.base_name[:n].lower() + self.base_name[n+1:]
         else:
-            self.ref_inst_name = key_name[:2].lower() + key_name[2:]
+            self.ref_inst_name = self.base_name[:2].lower() + self.base_name[2:]
+            
+        self.base_name = _remove_underline(self.base_name)
 
         self.namespace = "namespace %s" % thrift.space
         self.proto_id_namespace = thrift.proto_id_namespace
 
 class _base_hpp(_base):
     def __init__(self, key_name, thrift, finded_struct):
-        _base.__init__(self, key_name, thrift)
+        _base.__init__(self, key_name, thrift, finded_struct)
         self.gen_file_name = "%s_%s.hpp" % (self.new_name, _config_info["hpp_suffix"])
         self.thrift = thrift
-        self.finded_struct = finded_struct
+        
 
     def get_file_name(self):
         return self.gen_file_name
@@ -187,7 +199,7 @@ class _base_hpp(_base):
             content += "        }\n"
             content += "        void unpack(msg_ptr& msgp) override\n"
             content += "        {\n"
-            content += "            %s = unpack_msg<%s>(msgp);\n" % (self.ref_inst_name, self.new_name)
+            content += "            %s = unpack_msg<%s>(msgp);\n" % (self.ref_inst_name, self.base_name)
             content += "        }\n"
 
         content += "        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;\n\n"
@@ -199,7 +211,7 @@ class _base_hpp(_base):
 
         if self.finded_struct:
             content += "    public:\n"
-            content += "        %s %s;\n" % (self.new_name, self.ref_inst_name)
+            content += "        %s %s;\n" % (self.base_name, self.ref_inst_name)
 
         content += "    };\n"
 
@@ -207,7 +219,7 @@ class _base_hpp(_base):
 
 class _full_hpp(_base):
     def __init__(self, key_name, thrift):
-        _base.__init__(self, key_name, thrift)
+        _base.__init__(self, key_name, thrift, True)
         self.gen_file_name = "%s_%ss.hpp" % (key_name, _config_info["hpp_suffix"])
         self.hpps = []
         self.thrift = thrift
@@ -239,7 +251,7 @@ class _full_hpp(_base):
 
 class _cpp(_base):
     def __init__(self, key_name, thrift):
-        _base.__init__(self, key_name, thrift)
+        _base.__init__(self, key_name, thrift, True)
         self.gen_file_name = "%s%s.cpp" % (self.new_name, _config_info["cpp_suffix"])
         self.thrift = thrift
 
