@@ -1,5 +1,13 @@
 #pragma once
 
+#ifndef GAME_PLAY_CLIENT
+
+#define NEW_MP(type, ...)							MemoryPoolManager::get_mutable_instance().new_memorypool<type>(sizeof(type), 1, ##__VA_ARGS__)
+#define NEW_ARRAY_MP(type, length, ...)				MemoryPoolManager::get_mutable_instance().new_memorypool<type>(sizeof(type) * length, length, ##__VA_ARGS__)
+#define DELETE_MP(type, ptr)						MemoryPoolManager::get_mutable_instance().delete_memorypool<type>(ptr, sizeof(type), 1)
+#define DELETE_ARRAY_MP(type, ptr, length)			MemoryPoolManager::get_mutable_instance().delete_memorypool<type>(ptr, sizeof(type) * length, length)
+
+
 #include <boost/serialization/singleton.hpp>
 #include <boost/pool/pool.hpp>
 #include <boost/thread/mutex.hpp>
@@ -7,11 +15,6 @@
 
 namespace cytx
 {
-#define NEW_MP(type, ...)							MemoryPoolManager::get_mutable_instance().new_memorypool<type>(sizeof(type), 1, ##__VA_ARGS__)
-#define NEW_ARRAY_MP(type, length, ...)				MemoryPoolManager::get_mutable_instance().new_memorypool<type>(sizeof(type) * length, length, ##__VA_ARGS__)
-#define DELETE_MP(type, ptr)						MemoryPoolManager::get_mutable_instance().delete_memorypool<type>(ptr, sizeof(type), 1)
-#define DELETE_ARRAY_MP(type, ptr, length)			MemoryPoolManager::get_mutable_instance().delete_memorypool<type>(ptr, sizeof(type) * length, length)
-
     class MemoryPoolManager : public boost::serialization::singleton<MemoryPoolManager>
     {
     public:
@@ -325,3 +328,28 @@ namespace cytx
         bool is_init_ = false;
     };
 }
+
+
+#else
+#define NEW_MP(type, ...)							new type(__VA_ARGS__)
+#define NEW_ARRAY_MP(type, length, ...)				new type[length]
+#define DELETE_MP(type, ptr)						delete ptr
+#define DELETE_ARRAY_MP(type, ptr, length)			delete [] ptr
+
+namespace cytx
+{
+    class MemoryPoolManager
+    {
+    public:
+        static MemoryPoolManager& get_mutable_instance()
+        {
+            static MemoryPoolManager mp;
+            return mp;
+        }
+
+        void init()
+        {
+        }
+    };
+}
+#endif
