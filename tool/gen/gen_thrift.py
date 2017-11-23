@@ -16,6 +16,7 @@ _proto_dic = {}
 _args = (
     #'--gen csharp',
     '--gen cpp',
+    #'--gen cpp:moveable_types',
     #'--gen js:node'
     )
 
@@ -173,10 +174,6 @@ class _base_hpp(_base):
         if self.finded_struct:
             content += "            , %s(rhs.%s)\n" % (self.ref_inst_name, self.ref_inst_name)
         content += "        {}\n"
-        content += "        proto_ptr_t clone() override\n"
-        content += "        {\n"
-        content += "            return std::make_shared<this_t>(*this);\n"
-        content += "        }\n"
         if not self.finded_struct:
             content += "        msg_ptr pack() const\n"
             content += "        {\n"
@@ -202,8 +199,7 @@ class _base_hpp(_base):
             content += "            %s = unpack_msg<%s>(msgp);\n" % (self.ref_inst_name, self.base_name)
             content += "        }\n"
 
-        content += "        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;\n\n"
-        content += "    public:\n"
+        content += "\n    public:\n"
         content += "        static uint32_t ProtoId()\n"
         content += "        {\n"
         content += "            return %s::%s::%s;\n" % (self.thrift.gene_space, self.proto_id_namespace, self.key_name)
@@ -252,7 +248,8 @@ class _full_hpp(_base):
 class _cpp(_base):
     def __init__(self, key_name, thrift):
         _base.__init__(self, key_name, thrift, True)
-        self.gen_file_name = "%s%s.cpp" % (self.new_name, _config_info["cpp_suffix"])
+        self.action_class_name = "%s%s" % (self.new_name, _config_info["cpp_suffix"])
+        self.gen_file_name = "%s.cpp" % self.action_class_name
         self.thrift = thrift
 
     def get_file_name(self):
@@ -262,8 +259,22 @@ class _cpp(_base):
         
         content = "#include \"%s/all_%ss.hpp\"\n\n" % (_config_info["proto_dir"], _config_info["hpp_suffix"])
         content += "%s\n{\n" % self.namespace
-        content += "    REGISTER_PROTOCOL(%s);\n\n" % self.class_name
-        content += "    void %s::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)\n" % self.class_name
+        content += "    class %s : public %s\n" % (self.action_class_name, self.class_name)
+        content += "        using this_t = %s;\n" % self.action_class_name
+        content += "        using base_t = %s;\n" % self.class_name
+        content += "        %s(const this_t& rhs)\n" % self.action_class_name
+        content += "            : base_t(rhs)\n"
+        content += "        {}\n"
+        content += "    public:\n"
+        content += "        proto_ptr_t clone() override\n"
+        content += "        {\n"
+        content += "            return std::make_shared<this_t>(*this);\n"
+        content += "        }\n"
+        content += "        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;\n"
+        content += "    };\n\n"
+        
+        content += "    REGISTER_PROTOCOL(%s);\n\n" % self.action_class_name
+        content += "    void %s::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)\n" % self.action_class_name
         content += "    {\n\n"
         content += "    }\n"
         content += "}\n"
@@ -395,7 +406,7 @@ _list_thrift.append(f2)
 _config_info["proto_dir"] = "proto"
 _config_info["hpp_suffix"] = "action"
 _config_info["cpp_suffix"] = "_Action"
-_config_info["class_suffix"] = "_Action"
+_config_info["class_suffix"] = "_Msg"
 
 copy_dst_dir = "../../example/common/proto"
 

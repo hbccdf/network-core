@@ -36,9 +36,14 @@ namespace cytx
                 }
                 uint32_t get_protocol_id() const { return protocol_id_; }
             public:
-                virtual proto_ptr_t clone() = 0;
+                virtual proto_ptr_t clone()
+                {
+                    return nullptr;
+                }
+                virtual void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+                {
+                }
                 virtual void unpack(msg_ptr& msgp) = 0;
-                virtual void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) = 0;
             public:
                 static proto_map_t& GetMap()
                 {
