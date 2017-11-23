@@ -168,12 +168,9 @@ class _base_hpp(_base):
         content += "        using base_t = %s;\n" % self.base_class_name
         content += "    public:\n"
         content += "        %s()\n" % self.class_name
-        content += "            : base_t(ProtoId()) {}\n"
-        content += "        %s(const this_t& rhs)\n" % self.class_name
-        content += "            : base_t(rhs)\n"
-        if self.finded_struct:
-            content += "            , %s(rhs.%s)\n" % (self.ref_inst_name, self.ref_inst_name)
-        content += "        {}\n"
+        content += "            : base_t(ProtoId())\n"
+        content += "        {\n"
+        content += "        }\n"
         if not self.finded_struct:
             content += "        msg_ptr pack() const\n"
             content += "        {\n"
@@ -260,22 +257,21 @@ class _cpp(_base):
         content = "#include \"%s/all_%ss.hpp\"\n\n" % (_config_info["proto_dir"], _config_info["hpp_suffix"])
         content += "%s\n{\n" % self.namespace
         content += "    class %s : public %s\n" % (self.action_class_name, self.class_name)
+        content += "    {\n"
         content += "        using this_t = %s;\n" % self.action_class_name
         content += "        using base_t = %s;\n" % self.class_name
-        content += "        %s(const this_t& rhs)\n" % self.action_class_name
-        content += "            : base_t(rhs)\n"
-        content += "        {}\n"
         content += "    public:\n"
         content += "        proto_ptr_t clone() override\n"
         content += "        {\n"
-        content += "            return std::make_shared<this_t>(*this);\n"
+        content += "            return std::make_shared<this_t>();\n"
         content += "        }\n"
         content += "        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;\n"
         content += "    };\n\n"
         
         content += "    REGISTER_PROTOCOL(%s);\n\n" % self.action_class_name
         content += "    void %s::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)\n" % self.action_class_name
-        content += "    {\n\n"
+        content += "    {\n"
+        content += "        //auto generated\n"    
         content += "    }\n"
         content += "}\n"
 
