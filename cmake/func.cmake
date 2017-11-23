@@ -38,6 +38,24 @@ function(optimize_target)
     #target_compile_options(${ARGV0} PUBLIC "/FR")
 endfunction()
 
+function(setup_target target folder)
+    if(${folder} STREQUAL "")
+    else()
+        set_target_properties(${target} PROPERTIES FOLDER ${folder})
+    endif()
+    
+    target_use_pch(${target})
+    set_target_workdir(${target})
+    optimize_target(${target})
+endfunction()
+
+function(setup_target_folder target folder)
+    if(${folder} STREQUAL "")
+    else()
+        set_target_properties(${target} PROPERTIES FOLDER ${folder})
+    endif()
+endfunction()
+
 macro(add_files)
     file(GLOB NEW_FILES LIST_DIRECTORIES false "${ARGV2}/*")
     list(APPEND ${ARGV0} ${NEW_FILES})
@@ -58,4 +76,41 @@ macro(add_more_files arg name)
     file(GLOB NEW_FILES LIST_DIRECTORIES false ${ARGN})
     list(APPEND ${arg} ${NEW_FILES})
     source_group("${name}" FILES ${NEW_FILES})
+endmacro()
+
+macro(internal_append_files var includePath path begin_path group_path)
+    # init variable
+    set(FULL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${begin_path}/${path}/*")
+    set(NEW_FILES "")
+    set(INC_DIR "")
+    set(NEW_STRING "")
+    set(GROUP_PATH "${group_path}")
+
+    # root path
+    if(${path} STREQUAL "*")
+        set(FULL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${begin_path}/*")
+    # not root path
+    else()
+        string(REPLACE "/" "\\" NEW_STRING ${path})
+        set(GROUP_PATH "${group_path}\\${NEW_STRING}")
+    endif()
+
+    file(GLOB NEW_FILES LIST_DIRECTORIES false "${FULL_PATH}")
+    list(APPEND ${var} ${NEW_FILES})
+    source_group("${GROUP_PATH}" FILES ${NEW_FILES})
+
+    # need include current directory
+    if(${includePath})
+        string(FIND "${path}" "/" END_POS REVERSE)
+        if("${END_POS}" STREQUAL "-1")
+        else()
+            string(SUBSTRING "${path}" 0 ${END_POS} INC_DIR)
+            include_directories("${begin_path}/${INC_DIR}")
+        endif()
+    endif()
+endmacro()
+
+macro(append_files var includePath path)
+    internal_append_files(${var} ${includePath} ${path} "include" "header")
+    internal_append_files(${var} ${includePath} ${path} "src" "source")
 endmacro()
