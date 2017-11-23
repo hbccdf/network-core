@@ -1,12 +1,24 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/player_service.h"
 #include "service/common_check.hpp"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(SLoginGame_Wrap);
+    class SLoginGame_Action : public SLoginGame_Msg
+    {
+        using this_t = SLoginGame_Action;
+        using base_t = SLoginGame_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void SLoginGame_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(SLoginGame_Action);
+
+    void SLoginGame_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         CHECK_PLAYER_SERVICE(player_svc);
         auto& header = msgp->header();
@@ -24,7 +36,7 @@ namespace CytxGame
             LOG_INFO("player {} login game, info:[{}]", header.user_id, player->info());
             player->update_to_login_status();
 
-            SCServerInfo_Wrap data;
+            SCServerInfo_Msg data;
             data.scServerInfo.currentServerTime = cytx::date_time::now().total_milliseconds();
             server.send_client_msg(header.user_id, data);
         }

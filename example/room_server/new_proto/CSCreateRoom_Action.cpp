@@ -1,13 +1,25 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/common_check.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(CSCreateRoom_Wrap);
+    class CSCreateRoom_Action : public CSCreateRoom_Msg
+    {
+        using this_t = CSCreateRoom_Action;
+        using base_t = CSCreateRoom_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void CSCreateRoom_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(CSCreateRoom_Action);
+
+    void CSCreateRoom_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         auto& header = msgp->header();
         int32_t user_id = header.user_id;
@@ -17,7 +29,7 @@ namespace CytxGame
 
         CSCreateRoom& data = csCreateRoom;
 
-        SCCreateRoom_Wrap send_data;
+        SCCreateRoom_Msg send_data;
         send_data.scCreateRoom.result = 0;
         auto& ret = send_data.scCreateRoom.result;
 
@@ -36,7 +48,7 @@ namespace CytxGame
 
         server.send_client_msg(user_id, send_data);
 
-        SCRoomInfo_Wrap send_wrap;
+        SCRoomInfo_Msg send_wrap;
         send_wrap.scRoomInfo = room->get_room_info();
         room_svc->broadcast_msg(room, send_wrap);
     }

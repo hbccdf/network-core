@@ -1,13 +1,25 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/common_check.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(CSRequestRoomList_Wrap);
+    class CSRequestRoomList_Action : public CSRequestRoomList_Msg
+    {
+        using this_t = CSRequestRoomList_Action;
+        using base_t = CSRequestRoomList_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void CSRequestRoomList_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(CSRequestRoomList_Action);
+
+    void CSRequestRoomList_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         CHECK_PLAYER_SERVICE(player_svc);
         CHECK_ROOM_SERVICE(room_svc);
@@ -15,7 +27,7 @@ namespace CytxGame
         auto& header = msgp->header();
         CSRequestRoomList& data = csRequestRoomList;
 
-        SCRequestRoomList_Wrap data_wrap;
+        SCRequestRoomList_Msg data_wrap;
         auto& ret = data_wrap.scRequestRoomList.result;
         auto player = player_svc->find_player(header.user_id);
         if (!check_player(ret, player) || !check_not_matched(ret, player) ||

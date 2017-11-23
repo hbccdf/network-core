@@ -1,13 +1,25 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/common_check.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(CSSwitchSeat_Wrap);
+    class CSSwitchSeat_Action : public CSSwitchSeat_Msg
+    {
+        using this_t = CSSwitchSeat_Action;
+        using base_t = CSSwitchSeat_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void CSSwitchSeat_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(CSSwitchSeat_Action);
+
+    void CSSwitchSeat_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         CHECK_PLAYER_SERVICE(player_svc);
         CHECK_ROOM_SERVICE(room_svc);
@@ -15,7 +27,7 @@ namespace CytxGame
         auto& header = msgp->header();
 
         CSSwitchSeat& data = csSwitchSeat;
-        SCSwitchSeat_Wrap switch_seat_wrap;
+        SCSwitchSeat_Msg switch_seat_wrap;
         auto& ret = switch_seat_wrap.scSwitchSeat.result;
 
         auto player = player_svc->find_player(header.user_id);
@@ -43,7 +55,7 @@ namespace CytxGame
 
         server.send_client_msg(header.user_id, switch_seat_wrap);
 
-        SCRoomInfo_Wrap room_info;
+        SCRoomInfo_Msg room_info;
         room_info.scRoomInfo = room->get_room_info();
         room_svc->broadcast_msg(room, room_info);
     }

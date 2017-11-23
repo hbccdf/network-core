@@ -1,7 +1,7 @@
 #include "room_service.h"
 #include "room_config.h"
 #include "game_player.h"
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 
 namespace CytxGame
 {
@@ -84,7 +84,7 @@ namespace CytxGame
 
     void room_service::deal_destroy_room(room_ptr_t& room)
     {
-        SCRoomDestroyed_Wrap data;
+        SCRoomDestroyed_Msg data;
         data.scRoomDestroyed.result = 0;
         broadcast_msg(room, data);
         destroy_room(room);

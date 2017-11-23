@@ -21,4 +21,4 @@
 #include <network/base/thread_pool.h>
 #include <network/base/cast.hpp>
 
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"

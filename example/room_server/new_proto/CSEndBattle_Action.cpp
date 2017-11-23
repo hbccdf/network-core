@@ -1,13 +1,25 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/common_check.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(CSEndBattle_Wrap);
+    class CSEndBattle_Action : public CSEndBattle_Msg
+    {
+        using this_t = CSEndBattle_Action;
+        using base_t = CSEndBattle_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void CSEndBattle_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(CSEndBattle_Action);
+
+    void CSEndBattle_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         CHECK_PLAYER_SERVICE(player_svc);
         CHECK_ROOM_SERVICE(room_svc);
@@ -15,7 +27,7 @@ namespace CytxGame
         auto& header = msgp->header();
         CSEndBattle& data = csEndBattle;
 
-        SCEndBattle_Wrap data_wrap;
+        SCEndBattle_Msg data_wrap;
         auto& ret = data_wrap.scEndBattle.result;
 
         auto player = player_svc->find_player(header.user_id);

@@ -1,13 +1,25 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/common_check.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(CSEndLoadResource_Wrap);
+    class CSEndLoadResource_Action : public CSEndLoadResource_Msg
+    {
+        using this_t = CSEndLoadResource_Action;
+        using base_t = CSEndLoadResource_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void CSEndLoadResource_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(CSEndLoadResource_Action);
+
+    void CSEndLoadResource_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         CHECK_PLAYER_SERVICE(player_svc);
         CHECK_ROOM_SERVICE(room_svc);
@@ -28,7 +40,7 @@ namespace CytxGame
         auto room = player->room();
         if (room->all_ready())
         {
-            RBStartBattle_Wrap data_wrap;
+            RBStartBattle_Msg data_wrap;
             data_wrap.scRoomInfo = room->get_room_info();
             server.send_server_msg(server_unique_id::battle_server, data_wrap);
         }

@@ -3,15 +3,13 @@
 namespace CytxGame
 {
     class SCExitRoom_Action : public SCExitRoom_Msg
+    {
         using this_t = SCExitRoom_Action;
         using base_t = SCExitRoom_Msg;
-        SCExitRoom_Action(const this_t& rhs)
-            : base_t(rhs)
-        {}
     public:
         proto_ptr_t clone() override
         {
-            return std::make_shared<this_t>(*this);
+            return std::make_shared<this_t>();
         }
         void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
     };
@@ -20,6 +18,6 @@ namespace CytxGame
 
     void SCExitRoom_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
-
+        //auto generated
     }
 }

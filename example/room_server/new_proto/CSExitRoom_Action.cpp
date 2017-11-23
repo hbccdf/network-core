@@ -1,13 +1,25 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/common_check.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(CSExitRoom_Wrap);
+    class CSExitRoom_Action : public CSExitRoom_Msg
+    {
+        using this_t = CSExitRoom_Action;
+        using base_t = CSExitRoom_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void CSExitRoom_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(CSExitRoom_Action);
+
+    void CSExitRoom_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         CHECK_PLAYER_SERVICE(player_svc);
         CHECK_ROOM_SERVICE(room_svc);
@@ -15,7 +27,7 @@ namespace CytxGame
         auto& header = msgp->header();
 
         CSExitRoom& data = csExitRoom;
-        SCExitRoom_Wrap exit_room_wrap;
+        SCExitRoom_Msg exit_room_wrap;
         auto& ret = exit_room_wrap.scExitRoom.result;
 
         auto player = player_svc->find_player(header.user_id);

@@ -15,11 +15,9 @@
         using base_t = Proto;
     public:
         CLoginGame_Msg()
-            : base_t(ProtoId()) {}
-        CLoginGame_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , cLoginGame(rhs.cLoginGame)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(cLoginGame);
@@ -49,11 +47,9 @@
         using base_t = Proto;
     public:
         SLoginGame_Msg()
-            : base_t(ProtoId()) {}
-        SLoginGame_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , sLoginGame(rhs.sLoginGame)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(sLoginGame);
@@ -83,10 +79,9 @@
         using base_t = Proto;
     public:
         SCConnect_Msg()
-            : base_t(ProtoId()) {}
-        SCConnect_Msg(const this_t& rhs)
-            : base_t(rhs)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg();
@@ -112,10 +107,9 @@
         using base_t = Proto;
     public:
         SCDisConnect_Msg()
-            : base_t(ProtoId()) {}
-        SCDisConnect_Msg(const this_t& rhs)
-            : base_t(rhs)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg();
@@ -141,11 +135,9 @@
         using base_t = Proto;
     public:
         CSCreateRoom_Msg()
-            : base_t(ProtoId()) {}
-        CSCreateRoom_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csCreateRoom(rhs.csCreateRoom)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csCreateRoom);
@@ -175,11 +167,9 @@
         using base_t = Proto;
     public:
         SCCreateRoom_Msg()
-            : base_t(ProtoId()) {}
-        SCCreateRoom_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scCreateRoom(rhs.scCreateRoom)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scCreateRoom);
@@ -209,11 +199,9 @@
         using base_t = Proto;
     public:
         CSJoinRoom_Msg()
-            : base_t(ProtoId()) {}
-        CSJoinRoom_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csJoinRoom(rhs.csJoinRoom)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csJoinRoom);
@@ -243,11 +231,9 @@
         using base_t = Proto;
     public:
         SCJoinRoom_Msg()
-            : base_t(ProtoId()) {}
-        SCJoinRoom_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scJoinRoom(rhs.scJoinRoom)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scJoinRoom);
@@ -277,11 +263,9 @@
         using base_t = Proto;
     public:
         SCRoomInfo_Msg()
-            : base_t(ProtoId()) {}
-        SCRoomInfo_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scRoomInfo(rhs.scRoomInfo)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scRoomInfo);
@@ -311,11 +295,9 @@
         using base_t = Proto;
     public:
         CSSwitchSeat_Msg()
-            : base_t(ProtoId()) {}
-        CSSwitchSeat_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csSwitchSeat(rhs.csSwitchSeat)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csSwitchSeat);
@@ -345,11 +327,9 @@
         using base_t = Proto;
     public:
         SCSwitchSeat_Msg()
-            : base_t(ProtoId()) {}
-        SCSwitchSeat_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scSwitchSeat(rhs.scSwitchSeat)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scSwitchSeat);
@@ -379,11 +359,9 @@
         using base_t = Proto;
     public:
         CSExitRoom_Msg()
-            : base_t(ProtoId()) {}
-        CSExitRoom_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csExitRoom(rhs.csExitRoom)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csExitRoom);
@@ -413,11 +391,9 @@
         using base_t = Proto;
     public:
         SCExitRoom_Msg()
-            : base_t(ProtoId()) {}
-        SCExitRoom_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scExitRoom(rhs.scExitRoom)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scExitRoom);
@@ -447,11 +423,9 @@
         using base_t = Proto;
     public:
         SCRoomDestroyed_Msg()
-            : base_t(ProtoId()) {}
-        SCRoomDestroyed_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scRoomDestroyed(rhs.scRoomDestroyed)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scRoomDestroyed);
@@ -481,11 +455,9 @@
         using base_t = Proto;
     public:
         CSStartBattle_Msg()
-            : base_t(ProtoId()) {}
-        CSStartBattle_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csStartBattle(rhs.csStartBattle)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csStartBattle);
@@ -515,11 +487,9 @@
         using base_t = Proto;
     public:
         SCBeginLoadResource_Msg()
-            : base_t(ProtoId()) {}
-        SCBeginLoadResource_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scBeginLoadResource(rhs.scBeginLoadResource)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scBeginLoadResource);
@@ -549,11 +519,9 @@
         using base_t = Proto;
     public:
         CSEndLoadResource_Msg()
-            : base_t(ProtoId()) {}
-        CSEndLoadResource_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csEndLoadResource(rhs.csEndLoadResource)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csEndLoadResource);
@@ -583,11 +551,9 @@
         using base_t = Proto;
     public:
         SCStartBattle_Msg()
-            : base_t(ProtoId()) {}
-        SCStartBattle_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scStartBattle(rhs.scStartBattle)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scStartBattle);
@@ -617,11 +583,9 @@
         using base_t = Proto;
     public:
         SCBattleResult_Msg()
-            : base_t(ProtoId()) {}
-        SCBattleResult_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scBattleResult(rhs.scBattleResult)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scBattleResult);
@@ -651,11 +615,9 @@
         using base_t = Proto;
     public:
         CSEndBattle_Msg()
-            : base_t(ProtoId()) {}
-        CSEndBattle_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csEndBattle(rhs.csEndBattle)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csEndBattle);
@@ -685,11 +647,9 @@
         using base_t = Proto;
     public:
         SCEndBattle_Msg()
-            : base_t(ProtoId()) {}
-        SCEndBattle_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scEndBattle(rhs.scEndBattle)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scEndBattle);
@@ -719,11 +679,9 @@
         using base_t = Proto;
     public:
         SCServerInfo_Msg()
-            : base_t(ProtoId()) {}
-        SCServerInfo_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scServerInfo(rhs.scServerInfo)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scServerInfo);
@@ -753,11 +711,9 @@
         using base_t = Proto;
     public:
         CSRequestRoomList_Msg()
-            : base_t(ProtoId()) {}
-        CSRequestRoomList_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csRequestRoomList(rhs.csRequestRoomList)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csRequestRoomList);
@@ -787,11 +743,9 @@
         using base_t = Proto;
     public:
         SCRequestRoomList_Msg()
-            : base_t(ProtoId()) {}
-        SCRequestRoomList_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scRequestRoomList(rhs.scRequestRoomList)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scRequestRoomList);
@@ -821,11 +775,9 @@
         using base_t = Proto;
     public:
         CSSwitchShip_Msg()
-            : base_t(ProtoId()) {}
-        CSSwitchShip_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csSwitchShip(rhs.csSwitchShip)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csSwitchShip);
@@ -855,11 +807,9 @@
         using base_t = Proto;
     public:
         SCSwitchShip_Msg()
-            : base_t(ProtoId()) {}
-        SCSwitchShip_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scSwitchShip(rhs.scSwitchShip)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scSwitchShip);
@@ -889,11 +839,9 @@
         using base_t = Proto;
     public:
         CSSwitchSlot_Msg()
-            : base_t(ProtoId()) {}
-        CSSwitchSlot_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csSwitchSlot(rhs.csSwitchSlot)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csSwitchSlot);
@@ -923,11 +871,9 @@
         using base_t = Proto;
     public:
         SCSwitchSlot_Msg()
-            : base_t(ProtoId()) {}
-        SCSwitchSlot_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scSwitchSlot(rhs.scSwitchSlot)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scSwitchSlot);
@@ -957,11 +903,9 @@
         using base_t = Proto;
     public:
         CSPlayerInput_Msg()
-            : base_t(ProtoId()) {}
-        CSPlayerInput_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csPlayerInput(rhs.csPlayerInput)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csPlayerInput);
@@ -991,11 +935,9 @@
         using base_t = Proto;
     public:
         SCPlayerInput_Msg()
-            : base_t(ProtoId()) {}
-        SCPlayerInput_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scPlayerInput(rhs.scPlayerInput)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scPlayerInput);
@@ -1025,11 +967,9 @@
         using base_t = Proto;
     public:
         CSSyncCommandMsg_Msg()
-            : base_t(ProtoId()) {}
-        CSSyncCommandMsg_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csSyncCommandMsg(rhs.csSyncCommandMsg)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csSyncCommandMsg);
@@ -1059,11 +999,9 @@
         using base_t = Proto;
     public:
         SCSyncCommandMsg_Msg()
-            : base_t(ProtoId()) {}
-        SCSyncCommandMsg_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scSyncCommandMsg(rhs.scSyncCommandMsg)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scSyncCommandMsg);
@@ -1093,11 +1031,9 @@
         using base_t = Proto;
     public:
         SCInstantiate_Msg()
-            : base_t(ProtoId()) {}
-        SCInstantiate_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scInstantiate(rhs.scInstantiate)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scInstantiate);
@@ -1127,11 +1063,9 @@
         using base_t = Proto;
     public:
         SCFactionMsg_Msg()
-            : base_t(ProtoId()) {}
-        SCFactionMsg_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scFactionMsg(rhs.scFactionMsg)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scFactionMsg);
@@ -1161,11 +1095,9 @@
         using base_t = Proto;
     public:
         CSPing_Msg()
-            : base_t(ProtoId()) {}
-        CSPing_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , csPing(rhs.csPing)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(csPing);
@@ -1195,11 +1127,9 @@
         using base_t = Proto;
     public:
         SCPing_Msg()
-            : base_t(ProtoId()) {}
-        SCPing_Msg(const this_t& rhs)
-            : base_t(rhs)
-            , scPing(rhs.scPing)
-        {}
+            : base_t(ProtoId())
+        {
+        }
         msg_ptr pack() const
         {
             return pack_msg(scPing);

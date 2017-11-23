@@ -1,13 +1,25 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 #include "service/player_service.h"
 #include "service/room_service.h"
 #include "service/common_check.hpp"
 
 namespace CytxGame
 {
-    REGISTER_PROTOCOL(BRStartBattle_Wrap);
+    class BRStartBattle_Action : public BRStartBattle_Msg
+    {
+        using this_t = BRStartBattle_Action;
+        using base_t = BRStartBattle_Msg;
+    public:
+        proto_ptr_t clone() override
+        {
+            return std::make_shared<this_t>();
+        }
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
+    };
 
-    void BRStartBattle_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    REGISTER_PROTOCOL(BRStartBattle_Action);
+
+    void BRStartBattle_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
         CHECK_PLAYER_SERVICE(player_svc);
         CHECK_ROOM_SERVICE(room_svc);
@@ -24,7 +36,7 @@ namespace CytxGame
         }
 
         auto room = player->room();
-        SCStartBattle_Wrap data_wrap;
+        SCStartBattle_Msg data_wrap;
         data_wrap.scStartBattle.result = brStartBattle.result ? 0 : 1;
         data_wrap.scStartBattle.startTime = cytx::date_time::now().total_milliseconds();
 

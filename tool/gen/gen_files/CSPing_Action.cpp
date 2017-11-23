@@ -3,15 +3,13 @@
 namespace CytxGame
 {
     class CSPing_Action : public CSPing_Msg
+    {
         using this_t = CSPing_Action;
         using base_t = CSPing_Msg;
-        CSPing_Action(const this_t& rhs)
-            : base_t(rhs)
-        {}
     public:
         proto_ptr_t clone() override
         {
-            return std::make_shared<this_t>(*this);
+            return std::make_shared<this_t>();
         }
         void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
     };
@@ -20,6 +18,6 @@ namespace CytxGame
 
     void CSPing_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
-
+        //auto generated
     }
 }

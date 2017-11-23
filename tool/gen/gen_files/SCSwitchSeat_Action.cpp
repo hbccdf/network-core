@@ -3,15 +3,13 @@
 namespace CytxGame
 {
     class SCSwitchSeat_Action : public SCSwitchSeat_Msg
+    {
         using this_t = SCSwitchSeat_Action;
         using base_t = SCSwitchSeat_Msg;
-        SCSwitchSeat_Action(const this_t& rhs)
-            : base_t(rhs)
-        {}
     public:
         proto_ptr_t clone() override
         {
-            return std::make_shared<this_t>(*this);
+            return std::make_shared<this_t>();
         }
         void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
     };
@@ -20,6 +18,6 @@ namespace CytxGame
 
     void SCSwitchSeat_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
-
+        //auto generated
     }
 }

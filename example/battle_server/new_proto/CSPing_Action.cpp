@@ -1,36 +1,24 @@
-#include "proto/all_wraps.hpp"
+#include "proto/all_actions.hpp"
 
 namespace CytxGame
-{/*
-    REGISTER_PROTOCOL(CSPing_Wrap);
-
-    void CSPing_Wrap::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+{
+    class CSPing_Action : public CSPing_Msg
     {
-        SCPing_Wrap data_wrap;
-        server.send_client_msg(msgp->header().user_id, data_wrap);
-    }*/
-
-
-    class CSPing_Process : public CSPing_Wrap
-    {
-
+        using this_t = CSPing_Action;
+        using base_t = CSPing_Msg;
     public:
-        virtual proto_ptr_t clone() override
+        proto_ptr_t clone() override
         {
-            return std::make_shared<CSPing_Process>();
+            return std::make_shared<this_t>();
         }
-
-
-        virtual void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
-
+        void process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server) override;
     };
 
+    REGISTER_PROTOCOL(CSPing_Action);
 
-    REGISTER_PROTOCOL(CSPing_Process);
-
-    void CSPing_Process::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
+    void CSPing_Action::process(msg_ptr& msgp, connection_ptr& conn_ptr, game_server_t& server)
     {
-        SCPing_Wrap data_wrap;
+        SCPing_Msg data_wrap;
         server.send_client_msg(msgp->header().user_id, data_wrap);
     }
 }
