@@ -301,7 +301,7 @@ template<typename T> struct is_##token : is_specialization_of<detail::decay_t<T>
         constexpr static int value = -1;
     };
 
-    
+
     template<typename T, class = std::void_t<>>
     struct tuple_total_size_impl
     {

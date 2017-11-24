@@ -1,16 +1,16 @@
 #pragma once
+#include <vector>
+#include <map>
+#include <memory>
+#include <cstdint>
+#include <fmt/format.h>
+#include <boost/optional.hpp>
+
 #include "base_meta.hpp"
 #include "enum_meta.hpp"
 #include "db_meta.hpp"
 
 #include "../traits/traits.hpp"
-
-#include <fmt/format.h>
-#include <boost/optional.hpp>
-#include <vector>
-#include <map>
-#include <memory>
-#include <cstdint>
 
 template<typename T>
 struct enum_meta : public std::false_type {};
@@ -20,204 +20,151 @@ struct enum_ignore_meta : public std::false_type {};
 
 namespace cytx
 {
-    template<typename T> struct is_db_meta : is_specialization_of<std::decay_t<T>, db_meta> {};
-
-    template <typename T, class = std::void_t<>>
-    struct is_reflection : std::false_type
+    namespace detail
     {
-    };
+        template<typename T, class = std::void_t<>>
+        struct get_meta_impl;
 
-    // this way of using SFINEA is type reference and cv qualifiers immuned
-    template <typename T>
-    struct is_reflection<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>> : std::true_type
-    {
-    };
+        template<typename T>
+        struct get_meta_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
+        {
+            static auto meta(T&& t)
+            {
+                return t.Meta();
+            }
+        };
 
-    template <typename T>
-    struct is_reflection<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>> : std::true_type
-    {
-    };
+        template<typename T>
+        struct get_meta_impl<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
+        {
+            static auto meta(T&& t)
+            {
+                return enum_meta<T>::Meta();
+            }
+
+            static auto meta()
+            {
+                return enum_meta<T>::Meta();
+            }
+        };
+
+        template<typename T>
+        struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+        {
+            static auto meta(T&& t)
+            {
+                return t.Meta();
+            }
+        };
+
+        template<typename T> struct is_db_meta : is_specialization_of<std::decay_t<T>, db_meta> {};
+
+        template<typename T, class = std::void_t<>>
+        struct get_meta_t { };
+
+        template<typename T>
+        struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+        {
+            using type = db_meta<std::decay_t<T>>;
+        };
+
+        template<typename T>
+        struct get_meta_t<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
+        {
+            using type = enum_meta<T>;
+        };
+
+        template<typename T>
+        struct get_meta_t<T, std::void_t<std::enable_if_t<is_db_meta<T>::value>>>
+        {
+            using type = std::decay_t<T>;
+        };
+
+        template <typename T, class = std::void_t<>>
+        struct is_reflection : std::false_type
+        {
+        };
+
+        // this way of using SFINEA is type reference and cv qualifiers immuned
+        template <typename T>
+        struct is_reflection<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>> : std::true_type
+        {
+        };
+
+        template <typename T>
+        struct is_reflection<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>> : std::true_type
+        {
+        };
+
+        template<typename T>
+        struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta<T>::value>>> : std::true_type
+        {};
+
+
+        template<typename T, class = std::void_t<>>
+        struct get_meta_elem_impl;
+
+        template<typename T>
+        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
+        {
+            template<size_t I, typename MetaTuple>
+            static auto get(T&& t, MetaTuple&& tp)
+            {
+                return std::get<I>(tp);
+            }
+
+            template<size_t I>
+            static auto get(T&& t)
+            {
+                return get<I>(std::forward<T>(t), get_meta_impl<T>::meta(std::forward<T>(t)));
+            }
+        };
+
+        template<typename T>
+        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+        {
+            template<size_t I, typename MetaTuple>
+            static auto get(T&& t, MetaTuple&& tp)
+            {
+                return std::forward<T>(t).*(std::get<I>(tp));
+            }
+
+            template<size_t I>
+            static auto get(T&& t)
+            {
+                return get<I>(std::forward<T>(t), get_meta_impl<T>::meta(std::forward<T>(t)));
+            }
+        };
+
+        template<typename T>
+        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<is_tuple<T>::value>>>
+        {
+            template<size_t I>
+            static auto get(T&& t)
+            {
+                return std::get<I>(std::forward<T>(t));
+            }
+        };
+    }
+
 
     template<typename T>
-    struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta<T>::value>>> : std::true_type
-    {};
-
-    template<typename T, class = std::void_t<>>
-    struct get_meta_t { };
+    using meta_t = typename detail::get_meta_t<T>::type;
 
     template<typename T>
-    struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
-    {
-        using type = db_meta<std::decay_t<T>>;
-    };
-
-    template<typename T>
-    struct get_meta_t<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
-    {
-        using type = enum_meta<T>;
-    };
-
-    template<typename T>
-    struct get_meta_t<T, std::void_t<std::enable_if_t<is_db_meta<T>::value>>>
-    {
-        using type = std::decay_t<T>;
-    };
-
-    template<typename T>
-    using meta_t = typename get_meta_t<T>::type;
+    using is_reflection = detail::is_reflection<T>;
 
 
     template<typename T>
     auto get_meta()
     {
-        return get_meta_impl<T>::meta();
+        return detail::get_meta_impl<T>::meta();
     }
 
     template<typename T>
     auto get_meta(T&& t)
     {
-        return get_meta_impl<T>::meta(std::forward<T>(t));
-    }
-
-    template<typename T, class = std::void_t<>>
-    struct get_meta_impl;
-
-    template<typename T>
-    struct get_meta_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
-    {
-        static auto meta(T&& t)
-        {
-            return t.Meta();
-        }
-    };
-
-    template<typename T>
-    struct get_meta_impl<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
-    {
-        static auto meta(T&& t)
-        {
-            return enum_meta<T>::Meta();
-        }
-
-        static auto meta()
-        {
-            return enum_meta<T>::Meta();
-        }
-    };
-
-    template<typename T>
-    struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
-    {
-        static auto meta(T&& t)
-        {
-            return t.Meta();
-        }
-    };
-
-    template<size_t I, typename F, typename T>
-    void apply_value(F&& f, T&& t, bool is_last)
-    {
-        std::forward<F>(f)(std::forward<T>(t), I, is_last);
-    };
-
-    template<size_t I, typename F, typename T>
-    constexpr void for_each_impl(F&& f, T&&t, bool is_last, std::void_t<std::enable_if_t<is_reflection<T>::value>> *)
-    {
-        apply(std::forward<F>(f), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
-    }
-
-    //-------------------------------------------------------------------------------------------------------------//
-    //-------------------------------------------------------------------------------------------------------------//
-    template<size_t I, typename F, typename F1, typename T>
-    std::enable_if_t<is_reflection<T>::value> apply_value(F&& f, F1&& f1, T&& t, bool is_last)
-    {
-        std::forward<F1>(f1)(std::forward<T>(t), I, is_last);
-    }
-
-    template<size_t I, typename F, typename F1, typename T>
-    std::enable_if_t<!is_reflection<T>::value> apply_value(F&& f, F1&& f1, T&& t, bool is_last)
-    {
-        std::forward<F>(f)(std::forward<T>(t), I, is_last);
-    }
-
-    template<size_t I, typename F, typename F1, typename T>
-    constexpr void for_each_impl(F&& f, F1&& f1, T&&t, bool is_last, std::void_t<std::enable_if_t<is_reflection<T>::value>> *)
-    {
-        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
-    }
-
-    template<typename F, typename F1, typename T, typename... Rest, std::size_t I0, std::size_t... I>
-    constexpr void apply(F&& f, F1&& f1, T&&t, std::tuple<Rest...>&& tp, std::index_sequence<I0, I...>)
-    {
-        apply_value<I0>(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t).*(std::get<I0>(tp)), sizeof...(I) == 0);
-        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), (std::tuple<Rest...>&&)tp, std::index_sequence<I...>{});
-    }
-
-    template<typename F, typename F1, typename T, typename... Rest>
-    constexpr void apply(F&& f, F1&&, T&& t, std::tuple<Rest...>&&, std::index_sequence<>)
-    {
-    }
-    //-------------------------------------------------------------------------------------------------------------//
-    //-------------------------------------------------------------------------------------------------------------//
-
-    template<typename F, typename T, typename... Rest, std::size_t I0, std::size_t... I>
-    constexpr void apply(F&& f, T&&t, std::tuple<Rest...>&& tp, std::index_sequence<I0, I...>)
-    {
-        apply_value<I0>(std::forward<F>(f), (std::get<I0>(tp)), sizeof...(I) == 0);
-        apply(std::forward<F>(f), std::forward<T>(t), (std::tuple<Rest...>&&)tp, std::index_sequence<I...>{});
-    }
-
-    template<typename F, typename T, typename... Rest>
-    constexpr void apply(F&& f, T&& t, std::tuple<Rest...>&&, std::index_sequence<>)
-    {
-    }
-
-    template<typename F, typename... Rest, std::size_t I0, std::size_t... I>
-    constexpr void apply_tuple(F&& f, std::tuple<Rest...>& tp, std::index_sequence<I0, I...>)
-    {
-        apply_value<I0>(std::forward<F>(f), std::get<I0>(tp), sizeof...(I) == 0);
-        apply_tuple(std::forward<F>(f), tp, std::index_sequence<I...>{});
-    }
-
-    template<typename F, typename... Rest>
-    constexpr void apply_tuple(F&& f, std::tuple<Rest...>&, std::index_sequence<>)
-    {
-    }
-
-    template<typename F, typename... Rest, std::size_t I0, std::size_t... I>
-    constexpr void apply_tuple(F&& f, const std::tuple<Rest...>& tp, std::index_sequence<I0, I...>)
-    {
-        apply_value<I0>(std::forward<F>(f), std::get<I0>(tp), sizeof...(I) == 0);
-        apply_tuple(std::forward<F>(f), tp, std::index_sequence<I...>{});
-    }
-
-    template<typename F, typename... Rest>
-    constexpr void apply_tuple(F&& f, const std::tuple<Rest...>&, std::index_sequence<>)
-    {
-    }
-
-    template<size_t I, typename T>
-    constexpr decltype(auto) get(T&& t)
-    {
-        return std::forward<T>(t).*(std::get<I>(get_meta(std::forward<T>(t))));
-    }
-
-    template<typename T, typename F>
-    constexpr auto for_each(T&& t, F&& f) -> std::enable_if_t<is_reflection<T>::value>
-    {
-        for_each_impl<0>(std::forward<F>(f), std::forward<T>(t), false, (void *)nullptr);
-    }
-
-    template<typename T, typename F, typename F1>
-    constexpr auto for_each(T&& t, F&& f, F1&& f1) -> std::enable_if_t<is_reflection<T>::value>
-    {
-        for_each_impl<0>(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), false, (void *)nullptr);
-    }
-
-    template<typename T, typename F>
-    constexpr auto for_each(T&& tp, F&& f) -> std::enable_if_t<!is_reflection<T>::value>
-    {
-        apply_tuple(std::forward<F>(f), std::forward<T>(tp), std::make_index_sequence<std::tuple_size<std::remove_reference_t <T>>::value>{});
+        return detail::get_meta_impl<T>::meta(std::forward<T>(t));
     }
 
     template<typename T, size_t  I>
@@ -249,6 +196,87 @@ namespace cytx
     constexpr auto get_value() -> std::enable_if_t<!is_reflection<T>::value, size_t>
     {
         return 0;
+    }
+
+    template<size_t I, typename T>
+    constexpr auto get(T&& t)
+    {
+        return detail::get_meta_elem_impl<T>::get<I>(std::forward<T>(t));
+    }
+
+    template<size_t I, typename T, typename MetaTuple>
+    constexpr auto get(T&& t, MetaTuple&& tp)
+    {
+        return detail::get_meta_elem_impl<T>::get<I>(std::forward<T>(t), std::forward<MetaTuple>(tp));
+    }
+
+
+
+
+    template<size_t I, typename F, typename T>
+    void apply_value(F&& f, T&& t, bool is_last)
+    {
+        std::forward<F>(f)(std::forward<T>(t), I, is_last);
+    };
+
+    template<size_t I, typename F, typename F1, typename T>
+    auto apply_value(F&& f, F1&& f1, T&& t, bool is_last) -> std::enable_if_t<is_reflection<T>::value>
+    {
+        std::forward<F1>(f1)(std::forward<T>(t), I, is_last);
+    }
+
+    template<size_t I, typename F, typename F1, typename T>
+    auto apply_value(F&& f, F1&& f1, T&& t, bool is_last) -> std::enable_if_t<!is_reflection<T>::value>
+    {
+        std::forward<F>(f)(std::forward<T>(t), I, is_last);
+    }
+
+    template<typename ... Args>
+    constexpr void apply(Args&& ... args)
+    {
+    }
+
+    //meta
+    template<typename F, typename F1, typename T, typename Tuple, std::size_t I0, std::size_t... I>
+    constexpr void apply(F&& f, F1&& f1, T&& t, Tuple&& tp, std::index_sequence<I0, I...>)
+    {
+        apply_value<I0>(std::forward<F>(f), std::forward<F1>(f1), get<I0>(t, tp), sizeof...(I) == 0);
+        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), std::forward<Tuple>(tp), std::index_sequence<I...>{});
+    }
+
+    //meta
+    template<typename F, typename T, typename Tuple, std::size_t I0, std::size_t... I>
+    constexpr void apply(F&& f, T&& t, Tuple&& tp, std::index_sequence<I0, I...>)
+    {
+        apply_value<I0>(std::forward<F>(f), get<I0>(t, tp), sizeof...(I) == 0);
+        apply(std::forward<F>(f), std::forward<T>(t), std::forward<Tuple>(tp), std::index_sequence<I...>{});
+    }
+
+    //tuple
+    template<typename F, typename Tuple, std::size_t I0, std::size_t... I>
+    constexpr auto apply(F&& f, Tuple&& tp, std::index_sequence<I0, I...>) -> std::enable_if_t<is_tuple<Tuple>::value>
+    {
+        apply_value<I0>(std::forward<F>(f), std::get<I0>(tp), sizeof...(I) == 0);
+        apply(std::forward<F>(f), std::forward<Tuple>(tp), std::index_sequence<I...>{});
+    }
+
+
+    template<typename T, typename F>
+    constexpr auto for_each(T&& t, F&& f) -> std::enable_if_t<is_reflection<T>::value>
+    {
+        apply(std::forward<F>(f), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
+    }
+
+    template<typename T, typename F, typename F1>
+    constexpr auto for_each(T&& t, F&& f, F1&& f1) -> std::enable_if_t<is_reflection<T>::value>
+    {
+        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
+    }
+
+    template<typename T, typename F>
+    constexpr auto for_each(T&& tp, F&& f) -> std::enable_if_t<!is_reflection<T>::value>
+    {
+        apply(std::forward<F>(f), std::forward<T>(tp), std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>{});
     }
 }
 
