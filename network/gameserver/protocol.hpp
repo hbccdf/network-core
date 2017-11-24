@@ -8,17 +8,19 @@ namespace cytx
         {
             enum MsgId
             {
+                //Gateway msg ids
                 SimpleRegisterServer = 0x40a0009,
                 BroadcastMsg = 0x60a001a,
 
-                BroadcastServerMsg,     //向服务器广播消息
-                CS_RegisterServer,      //注册服务，类型，ip，端口
-                SC_RegisterServer,      //回复自动生成的id
+                //center msg ids, ids is simple msg id
+                BroadcastServerMsg = 170000,    //向服务器广播消息
+                CS_RegisterServer = 170001,     //注册服务，类型，ip，端口
+                SC_RegisterServer = 170002,     //回复自动生成的id
 
-                CS_GetServerInfo,
-                SC_GetServerInfo,
+                CS_GetServerInfo = 170003,      //获取服务信息
+                SC_GetServerInfo = 170004,
 
-                SC_ServerEvent,
+                SC_ServerEvent = 170006,
             };
 
             using InterMsgId = MsgId;
