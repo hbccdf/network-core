@@ -282,250 +282,250 @@ namespace cytx
 
 namespace cytx
 {
-    class enum_factory;
-
-    inline boost::optional<std::pair<std::string, std::string>> split_enum_str(std::string str, std::vector<const char*>&& splits)
+    namespace detail
     {
-        boost::optional<std::pair<std::string, std::string>> result;
-        for (auto & s : splits)
+        class enum_factory;
+
+        inline boost::optional<std::pair<std::string, std::string>> split_enum_str(std::string str, std::vector<const char*>&& splits)
         {
-            auto pos = str.find(s);
-            if (pos != std::string::npos)
+            boost::optional<std::pair<std::string, std::string>> result;
+            for (auto & s : splits)
             {
-                std::pair<std::string, std::string> p;
-                p.first = str.substr(0, pos);
-                p.second = str.substr(pos + std::string(s).length());
-                result = p;
-                break;
-            }
-        }
-        return result;
-    }
-
-    class enum_helper
-    {
-        friend enum_factory;
-    public:
-        using pair_t = std::pair<std::string, uint32_t>;
-        using vec_t = std::vector<pair_t>;
-        using map_t = std::map<std::string, uint32_t>;
-
-        void init(std::string name, vec_t&& vec)
-        {
-            name_ = name;
-            vec_ = vec;
-
-            for (auto& p : vec_)
-            {
-                map_.insert(p);
-            }
-        }
-
-        template<typename T>
-        boost::optional<std::string> to_string(T t, const char* split_field = "::")
-        {
-            boost::optional<std::string> result;
-
-            for (auto& p : vec_)
-            {
-                if ((uint32_t)t == p.second)
+                auto pos = str.find(s);
+                if (pos != std::string::npos)
                 {
-                    if (split_field == nullptr || split_field[0] == 0)
-                    {
-                        result = p.first;
-                    }
-                    else
-                    {
-                        result = fmt::format("{}{}{}", name_, split_field, p.first);
-                    }
+                    std::pair<std::string, std::string> p;
+                    p.first = str.substr(0, pos);
+                    p.second = str.substr(pos + std::string(s).length());
+                    result = p;
                     break;
                 }
             }
             return result;
         }
 
-        template<typename T>
-        boost::optional<T> to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
+        class enum_helper
         {
-            boost::optional<T> result;
-            auto r = to_enum_value<T>(str);
-            if (r)
+            friend enum_factory;
+        public:
+            using pair_t = std::pair<std::string, uint32_t>;
+            using vec_t = std::vector<pair_t>;
+            using map_t = std::map<std::string, uint32_t>;
+
+            void init(std::string name, vec_t&& vec)
             {
-                return r;
-            }
-            else if (has_enum_name)
-            {
-                auto r = split_enum_str(str, std::forward<std::vector<const char*>>(splits));
-                if (r && r->first == name_)
+                name_ = name;
+                vec_ = vec;
+
+                for (auto& p : vec_)
                 {
-                    return to_enum_value<T>(str);
+                    map_.insert(p);
                 }
             }
-            return result;
+
+            template<typename T>
+            boost::optional<std::string> to_string(T t, const char* split_field = "::")
+            {
+                boost::optional<std::string> result;
+
+                for (auto& p : vec_)
+                {
+                    if ((uint32_t)t == p.second)
+                    {
+                        if (split_field == nullptr || split_field[0] == 0)
+                        {
+                            result = p.first;
+                        }
+                        else
+                        {
+                            result = fmt::format("{}{}{}", name_, split_field, p.first);
+                        }
+                        break;
+                    }
+                }
+                return result;
+            }
+
+            template<typename T>
+            boost::optional<T> to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
+            {
+                boost::optional<T> result;
+                auto r = to_enum_value<T>(str);
+                if (r)
+                {
+                    return r;
+                }
+                else if (has_enum_name)
+                {
+                    auto r = split_enum_str(str, std::forward<std::vector<const char*>>(splits));
+                    if (r && r->first == name_)
+                    {
+                        return to_enum_value<T>(str);
+                    }
+                }
+                return result;
+            }
+
+            template<typename T>
+            boost::optional<T> to_enum_value(const char* str)
+            {
+                boost::optional<T> result;
+                auto it = map_.find(std::string(str));
+                if (it != map_.end())
+                    result = (T)it->second;
+                return result;
+            }
+
+        private:
+            enum_helper() {}
+            std::string name_;
+            vec_t vec_;
+            map_t map_;
+        };
+
+        template< typename ENUM_T, typename T>
+        std::vector<std::pair<const char*, ENUM_T>> get_vec(T& t)
+        {
+            std::vector<std::pair<const char*, ENUM_T>> vec;
+            for_each(t, [&vec](const auto& p, size_t I, bool is_last)
+            {
+                vec.push_back(p);
+            });
+            return std::move(vec);
         }
 
-        template<typename T>
-        boost::optional<T> to_enum_value(const char* str)
-        {
-            boost::optional<T> result;
-            auto it = map_.find(std::string(str));
-            if (it != map_.end())
-                result = (T)it->second;
-            return result;
-        }
-
-    private:
-        enum_helper() {}
-        std::string name_;
-        vec_t vec_;
-        map_t map_;
-    };
-
-    template< typename ENUM_T, typename T>
-    std::vector<std::pair<const char*, ENUM_T>> get_vec(T& t)
-    {
-        std::vector<std::pair<const char*, ENUM_T>> vec;
-        for_each(t, [&vec](const auto& p, size_t I, bool is_last)
-        {
-            vec.push_back(p);
-        });
-        return std::move(vec);
-    }
-
-    namespace detail
-    {
         template<typename T>
         int reg_enum()
         {
             enum_factory::instance().reg<T>();
             return 0;
         }
-    }
 
-    class enum_factory
-    {
-    public:
-
-        using pair_t = enum_helper::pair_t;
-        using vec_t = enum_helper::vec_t;
-        using enum_helper_ptr = std::unique_ptr<enum_helper>;
-        using value_t = std::vector<enum_helper_ptr>;
-        using value_ptr = std::shared_ptr<value_t>;
-        using map_t = std::map<std::string, value_ptr>;
-
-        static enum_factory& instance()
+        class enum_factory
         {
-            static enum_factory ef;
-            return ef;
-        }
+        public:
 
-        template<typename T>
-        void reg()
-        {
-            const char* enum_name = enum_meta<T>::name();
-            auto it = enums_.find(std::string(enum_name));
-            if (it != enums_.end())
-                return;
+            using pair_t = enum_helper::pair_t;
+            using vec_t = enum_helper::vec_t;
+            using enum_helper_ptr = std::unique_ptr<enum_helper>;
+            using value_t = std::vector<enum_helper_ptr>;
+            using value_ptr = std::shared_ptr<value_t>;
+            using map_t = std::map<std::string, value_ptr>;
 
-            auto enum_vec = get_vec<T>(get_meta<T>());
-            vec_t vec;
-            for (auto& p : enum_vec)
+            static enum_factory& instance()
             {
-                vec.push_back({ p.first, (uint32_t)p.second });
+                static enum_factory ef;
+                return ef;
             }
-            reg(enum_name, enum_meta<T>::alias_name(), std::move(vec));
-        }
 
-        void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
-        {
-            //std::cout << fmt::format("reg enum {}, alias {}, field count {}", enum_name, alias_name ? alias_name : "null", enum_fields.size()) << std::endl;
-            auto helper_ptr = std::unique_ptr<enum_helper>(new enum_helper());
-            helper_ptr->init(enum_name, std::forward<vec_t>(enum_fields));
-
-            value_ptr val_ptr = nullptr;
-            if (alias_name != nullptr)
+            template<typename T>
+            void reg()
             {
-                auto it = enums_.find(alias_name);
+                const char* enum_name = enum_meta<T>::name();
+                auto it = enums_.find(std::string(enum_name));
                 if (it != enums_.end())
+                    return;
+
+                auto enum_vec = get_vec<T>(get_meta<T>());
+                vec_t vec;
+                for (auto& p : enum_vec)
                 {
-                    val_ptr = it->second;
+                    vec.push_back({ p.first, (uint32_t)p.second });
+                }
+                reg(enum_name, enum_meta<T>::alias_name(), std::move(vec));
+            }
+
+            void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
+            {
+                //std::cout << fmt::format("reg enum {}, alias {}, field count {}", enum_name, alias_name ? alias_name : "null", enum_fields.size()) << std::endl;
+                auto helper_ptr = std::unique_ptr<enum_helper>(new enum_helper());
+                helper_ptr->init(enum_name, std::forward<vec_t>(enum_fields));
+
+                value_ptr val_ptr = nullptr;
+                if (alias_name != nullptr)
+                {
+                    auto it = enums_.find(alias_name);
+                    if (it != enums_.end())
+                    {
+                        val_ptr = it->second;
+                    }
+                    else
+                    {
+                        val_ptr = std::make_shared<value_t>();
+                    }
                 }
                 else
                 {
                     val_ptr = std::make_shared<value_t>();
                 }
-            }
-            else
-            {
-                val_ptr = std::make_shared<value_t>();
-            }
 
-            val_ptr->emplace_back(std::move(helper_ptr));
-            enums_.emplace(enum_name, val_ptr);
-            if (alias_name)
-            {
-                enums_.emplace(alias_name, val_ptr);
-            }
-        }
-
-        template<typename T>
-        boost::optional<std::string> to_string(T t, const char* split_field = "::")
-        {
-            boost::optional<std::string> result;
-            auto name = enum_meta<T>().name();
-            auto it = enums_.find(name);
-            if (it != enums_.end())
-            {
-                for (auto& v : *it->second)
+                val_ptr->emplace_back(std::move(helper_ptr));
+                enums_.emplace(enum_name, val_ptr);
+                if (alias_name)
                 {
-                    result = v->to_string(t, split_field);
-                    if (result)
-                        return result;
+                    enums_.emplace(alias_name, val_ptr);
                 }
             }
-            return result;
-        }
 
-        boost::optional<std::string> to_string(uint32_t t, const char* enum_name, const char* split_field = "::")
-        {
-            boost::optional<std::string> result;
-            auto it = enums_.find(enum_name);
-            if (it != enums_.end())
+            template<typename T>
+            boost::optional<std::string> to_string(T t, const char* split_field = "::")
             {
-                for (auto& v : *it->second)
+                boost::optional<std::string> result;
+                auto name = enum_meta<T>().name();
+                auto it = enums_.find(name);
+                if (it != enums_.end())
                 {
-                    result = v->to_string(t, split_field);
-                    if (result)
-                        return result;
+                    for (auto& v : *it->second)
+                    {
+                        result = v->to_string(t, split_field);
+                        if (result)
+                            return result;
+                    }
                 }
+                return result;
             }
-            return result;
-        }
 
-        template<typename T>
-        boost::optional<T> to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
-        {
-            boost::optional<T> result;
-
-            auto name = enum_meta<T>().name();
-            auto it = enums_.find(name);
-            if (it != enums_.end())
+            boost::optional<std::string> to_string(uint32_t t, const char* enum_name, const char* split_field = "::")
             {
-                for (auto& v : *it->second)
+                boost::optional<std::string> result;
+                auto it = enums_.find(enum_name);
+                if (it != enums_.end())
                 {
-                    result = v->to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
-                    if (result)
-                        return result;
+                    for (auto& v : *it->second)
+                    {
+                        result = v->to_string(t, split_field);
+                        if (result)
+                            return result;
+                    }
                 }
+                return result;
             }
-            return result;
-        }
 
-    private:
-        enum_factory() {}
+            template<typename T>
+            boost::optional<T> to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
+            {
+                boost::optional<T> result;
 
-        map_t enums_;
-    };
+                auto name = enum_meta<T>().name();
+                auto it = enums_.find(name);
+                if (it != enums_.end())
+                {
+                    for (auto& v : *it->second)
+                    {
+                        result = v->to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
+                        if (result)
+                            return result;
+                    }
+                }
+                return result;
+            }
+
+        private:
+            enum_factory() {}
+
+            map_t enums_;
+        };
+    }
 
 #ifdef ENUM_META_RALAX_CHECK
 #define ENUM_META_CHECK(name) enum_meta<name>::value
@@ -536,7 +536,7 @@ namespace cytx
     template<typename T>
     auto to_string(T t, const char* split_str = "::")  -> std::enable_if_t<ENUM_META_CHECK(T), boost::optional<std::string>>
     {
-        return enum_factory::instance().to_string<T>(t, split_str);
+        return detail::enum_factory::instance().to_string<T>(t, split_str);
     }
 
     template<typename T>
@@ -547,14 +547,14 @@ namespace cytx
 
     inline auto to_string(uint32_t t, const char* enum_name, const char* split_str = "::")  -> boost::optional<std::string>
     {
-        return enum_factory::instance().to_string(t, enum_name, split_str);
+        return detail::enum_factory::instance().to_string(t, enum_name, split_str);
     }
 
     template<typename T>
     auto to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
         -> std::enable_if_t<ENUM_META_CHECK(T), boost::optional<T>>
     {
-        return enum_factory::instance().to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
+        return detail::enum_factory::instance().to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
     }
 
     template<typename T>
@@ -568,7 +568,7 @@ namespace cytx
     template<typename T>
     auto ralax_to_string(T t, const char* split_str = "::")  -> std::enable_if_t<enum_meta<T>::value, boost::optional<std::string>>
     {
-        return enum_factory::instance().to_string<T>(t, split_str);
+        return detail::enum_factory::instance().to_string<T>(t, split_str);
     }
 
     template<typename T>
@@ -581,7 +581,7 @@ namespace cytx
     auto ralax_to_enum(const char* str, bool has_enum_name = false, std::vector<const char*>&& splits = { ".", "::", ":" })
         -> std::enable_if_t<enum_meta<T>::value, boost::optional<T>>
     {
-        return enum_factory::instance().to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
+        return detail::enum_factory::instance().to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
     }
 
     template<typename T>

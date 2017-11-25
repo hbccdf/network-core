@@ -25,7 +25,7 @@ __VA_ARGS__; \
     db_meta(const db_meta& o) \
     {   \
         __VA_ARGS__; \
-    } 
+    }
 
 
 #define EMMBED_DB_TUPLE(name, N, ...) \
@@ -39,11 +39,11 @@ public: \
     value_type& Value() { return st_; } \
     db_meta(){} \
     db_meta(value_type& v) { st_ptr_ = &v; } \
-MAKE_DB_CONSTRACT(name, MAKE_GENERAL_SEM_ARG_LIST(name, N, MAKE_DB_CONSTRACT_FILED, __VA_ARGS__)) \
-MAKE_FIELD_PROXY_TUPLE(name, MAKE_GENERAL_SEM_ARG_LIST(name, N, MAKE_FIELD_PROXY, __VA_ARGS__)) \
-MAKE_DB_TUPLE(name, MAKE_GENERAL_ARG_LIST(name, N, DB_PAIR_OBJECT, __VA_ARGS__)) \
-MAKE_DB_META_TYPE(name, MAKE_GENERAL_ARG_LIST(name, N, RAW_DB_SINGLE_OBJECT, __VA_ARGS__)) \
-constexpr static const std::array<const char*, N> _arr = {MAKE_DB_NAMES(name, MAKE_GENERAL_ARG_LIST(name, N, DB_OBJ_NAME, __VA_ARGS__))}; \
+MAKE_DB_CONSTRACT(name, MAKE_ARG_LIST(name, N, MAKE_DB_CONSTRACT_FILED, SEM_DELIMITER, __VA_ARGS__)) \
+MAKE_FIELD_PROXY_TUPLE(name, MAKE_ARG_LIST(name, N, MAKE_FIELD_PROXY, SEM_DELIMITER, __VA_ARGS__)) \
+MAKE_DB_TUPLE(name, MAKE_ARG_LIST(name, N, DB_PAIR_OBJECT, COMMA_DELIMITER, __VA_ARGS__)) \
+MAKE_DB_META_TYPE(name, MAKE_ARG_LIST(name, N, RAW_DB_SINGLE_OBJECT, COMMA_DELIMITER, __VA_ARGS__)) \
+constexpr static const std::array<const char*, N> _arr = {MAKE_DB_NAMES(name, MAKE_ARG_LIST(name, N, DB_OBJ_NAME, COMMA_DELIMITER, __VA_ARGS__))}; \
 }; \
 using name##_query = db_meta<name>
 

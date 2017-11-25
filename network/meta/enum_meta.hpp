@@ -8,7 +8,7 @@
 
 
 #define EMMBED_ENUM_TUPLE(name, N, ...) \
-MAKE_ENUM_TUPLE(name, MAKE_GENERAL_ARG_LIST(name, N, PAIR_ENUM, __VA_ARGS__))
+MAKE_ENUM_TUPLE(name, MAKE_ARG_LIST(name, N, PAIR_ENUM, COMMA_DELIMITER, __VA_ARGS__))
 
 #define REG_ENUM(name, ...) EMMBED_ENUM_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__) \
     static const char* alias_name() { return nullptr; } \
