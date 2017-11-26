@@ -19,3 +19,9 @@ namespace ___reg_enum_helper_value___ ## name ## __LINE__ { static int val = cyt
     static const char* alias_name() { return #alias_name_str; } \
 }; \
 namespace ___reg_enum_helper_value___ ## name ## __LINE__ { static int val = cytx::detail::reg_enum<name>(); }
+
+template<typename T>
+struct enum_meta : public std::false_type {};
+
+template<typename T>
+constexpr bool enum_meta_v = enum_meta<std::decay_t<T>>::value;

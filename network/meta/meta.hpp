@@ -9,14 +9,9 @@
 #include "base_meta.hpp"
 #include "enum_meta.hpp"
 #include "db_meta.hpp"
+#include "struct_meta.hpp"
 
 #include "../traits/traits.hpp"
-
-template<typename T>
-struct enum_meta : public std::false_type {};
-
-template<typename T>
-struct enum_ignore_meta : public std::false_type {};
 
 namespace cytx
 {
@@ -35,7 +30,7 @@ namespace cytx
         };
 
         template<typename T>
-        struct get_meta_impl<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
+        struct get_meta_impl<T, std::void_t<std::enable_if_t<enum_meta_v<T>>>>
         {
             static auto meta(T&& t)
             {
@@ -49,11 +44,20 @@ namespace cytx
         };
 
         template<typename T>
-        struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+        struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta_v<T>>>>
         {
             static auto meta(T&& t)
             {
                 return t.Meta();
+            }
+        };
+
+        template<typename T>
+        struct get_meta_impl<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
+        {
+            static auto meta(T&& t)
+            {
+                return st_meta<std::decay_t<T>>::Meta(t);
             }
         };
 
@@ -63,13 +67,19 @@ namespace cytx
         struct get_meta_t { };
 
         template<typename T>
-        struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+        struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta_v<T>>>>
         {
             using type = db_meta<std::decay_t<T>>;
         };
 
         template<typename T>
-        struct get_meta_t<T, std::void_t<std::enable_if_t<enum_meta<T>::value>>>
+        struct get_meta_t<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
+        {
+            using type = st_meta<std::decay_t<T>>;
+        };
+
+        template<typename T>
+        struct get_meta_t<T, std::void_t<std::enable_if_t<enum_meta_v<T>>>>
         {
             using type = enum_meta<T>;
         };
@@ -87,7 +97,12 @@ namespace cytx
 
         // this way of using SFINEA is type reference and cv qualifiers immuned
         template <typename T>
-        struct is_reflection<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>> : std::true_type
+        struct is_reflection<T, std::void_t<std::enable_if_t<db_meta_v<T>>>> : std::true_type
+        {
+        };
+
+        template <typename T>
+        struct is_reflection<T, std::void_t<std::enable_if_t<st_meta_v<T>>>> : std::true_type
         {
         };
 
@@ -97,7 +112,7 @@ namespace cytx
         };
 
         template<typename T>
-        struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta<T>::value>>> : std::true_type
+        struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta_v<T>>>> : std::true_type
         {};
 
 
@@ -121,12 +136,28 @@ namespace cytx
         };
 
         template<typename T>
-        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<db_meta<std::decay_t<T>>::value>>>
+        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<db_meta_v<T>>>>
         {
             template<size_t I, typename MetaTuple>
             static auto get(T&& t, MetaTuple&& tp)
             {
                 return std::forward<T>(t).*(std::get<I>(tp));
+            }
+
+            template<size_t I>
+            static auto get(T&& t)
+            {
+                return get<I>(std::forward<T>(t), get_meta_impl<T>::meta(std::forward<T>(t)));
+            }
+        };
+
+        template<typename T>
+        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
+        {
+            template<size_t I, typename MetaTuple>
+            static auto get(T&& t, MetaTuple&& tp)
+            {
+                return std::get<I>(tp);
             }
 
             template<size_t I>
@@ -167,7 +198,7 @@ namespace cytx
         return detail::get_meta_impl<T>::meta(std::forward<T>(t));
     }
 
-    template<typename T, size_t  I>
+    template<typename T, size_t I>
     constexpr const char* get_name()
     {
         static_assert(I < get_value<T>(), "out of range");
@@ -189,7 +220,7 @@ namespace cytx
     template<typename T>
     constexpr auto get_value() -> std::enable_if_t<is_reflection<T>::value, size_t>
     {
-        return std::tuple_size<typename std::decay_t<T>::meta_type>::value;
+        return std::tuple_size<typename meta_t<T>::meta_type>::value;
     }
 
     template<typename T>

@@ -264,7 +264,7 @@ namespace cytx
         auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<is_user_class<T>::value>
         {
             rd_.begin_object();
-            auto target_meta = t.Meta();
+            auto target_meta = get_meta(t);
             ReadTuple(target_meta);
             rd_.end_object();
         }

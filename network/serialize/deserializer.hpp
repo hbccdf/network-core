@@ -126,7 +126,7 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_user_class<T>::value>
         {
-            ReadTuple(t.Meta(), val, 0, std::false_type{});
+            ReadTuple(get_meta(t), val, 0, std::false_type{});
         }
 
         template<typename T, typename BeginObject>

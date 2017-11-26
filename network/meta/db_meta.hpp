@@ -51,3 +51,6 @@ using name##_query = db_meta<name>
 
 template<typename T>
 struct db_meta : public std::false_type {};
+
+template<typename T>
+constexpr bool db_meta_v = db_meta<std::decay_t<T>>::value;
