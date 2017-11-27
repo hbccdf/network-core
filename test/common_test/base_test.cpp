@@ -131,3 +131,42 @@ TEST(cast_string, test)
     cytx::date_time t = cytx::date_time::parse("2013-11-22 12:11:11");
     assert_streq("2013-11-22 12:11:11", cytx::util::cast_string(t).c_str());
 }
+
+struct st_ext_test
+{
+    int i = 3;
+    int c = 99;
+};
+
+REG_META(st_ext_test, i, c);
+
+
+struct st_base_test
+{
+    int i = 5;
+};
+
+REG_META(st_base_test, i);
+
+struct st_derived_test : st_base_test
+{
+    int c = 100;
+};
+
+REG_METAB(st_derived_test, st_base_test, c);
+
+TEST(tuple_total_size, struct_ext)
+{
+    int size_2 = tuple_total_size<st_ext_test>::value;
+    int size_3 = tuple_total_size<st_base_test>::value;
+    int size_4 = tuple_total_size<st_derived_test>::value;
+
+    int size_5 = cytx::tuple_total_size_v<int, double>;
+    int size_6 = cytx::tuple_total_size<int, double>::value;
+
+    assert_eq(tuple_total_size<st_ext_test>::value, 8);
+    assert_eq(tuple_total_size<st_base_test>::value, 4);
+    assert_eq(tuple_total_size<st_derived_test>::value, 8);
+    assert_eq((cytx::tuple_total_size_v<int, double>), 12);
+    assert_eq((cytx::tuple_total_size<int, double>::value), 12);
+}
