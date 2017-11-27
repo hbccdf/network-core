@@ -19,27 +19,22 @@ static const char* meta_name() { return #name; } \
 #define REG_META(name, ...) EMBED_ST_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
 
 
-namespace cytx
-{
-    namespace detail
-    {
-        /*template<typename T, typename Field>
-        struct field_proxy
-        {
-            using type_t = T;
-            using val_t = Field;
 
-        private:
-            val_t* val;
 
-        public:
-            val_t& value(T& t)
-            {
-                return
-            }
-        };*/
-    }
+#define MAKEB_ST_META_TYPE(name, ...)    using meta_type = decltype(std::tuple_cat(typename cytx::meta_t<base_t>::meta_type{}, std::make_tuple(__VA_ARGS__)));
+#define MAKEB_ST_TUPLE(name, ...)        static auto Meta(name& val) { return std::tuple_cat(get_meta((base_t&)val), std::make_tuple(__VA_ARGS__)); }
+
+#define EMBEDB_ST_TUPLE(name, base_name, N, ...) \
+template<>  \
+struct st_meta<name> : public std::true_type {  \
+using base_t = base_name;   \
+MAKEB_ST_TUPLE(name, MAKE_ARG_LIST(name, N, ST_PAIR_OBJECT, COMMA_DELIMITER, __VA_ARGS__))   \
+MAKEB_ST_META_TYPE(name, MAKE_ARG_LIST(name, N, ST_SINGLE_OBJECT, COMMA_DELIMITER, __VA_ARGS__)) \
+static const char* meta_name() { return #name; } \
 }
+
+#define REG_METAB(name, base_name, ...) EMBEDB_ST_TUPLE(name, base_name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
+
 
 template<typename T>
 struct st_meta : public std::false_type {};
