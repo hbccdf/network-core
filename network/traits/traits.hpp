@@ -224,7 +224,7 @@ namespace cytx {
         static constexpr bool value = result_type::value;
     };
     template<typename T>
-    constexpr bool has_meta_macro_v = has_meta_macro<T>::value;
+    constexpr bool has_meta_macro_v = has_meta_macro<std::decay_t<T>>::value;
 
 #define IS_TEMPLATE_CLASS(token) \
 template<typename T> struct is_##token : is_specialization_of<detail::decay_t<T>, std::token>{}; \
@@ -302,59 +302,68 @@ template<typename T> struct is_##token : is_specialization_of<detail::decay_t<T>
     };
 
 
-    template<typename T, class = std::void_t<>>
-    struct tuple_total_size_impl
+    namespace detail
     {
-        constexpr static int value = -1;
-    };
+        template<typename T, class = std::void_t<>>
+        struct tuple_total_size_impl
+        {
+            constexpr static int value = -1;
+        };
 
-    template<typename T>
-    struct tuple_total_size
-    {
-        constexpr static int value = tuple_total_size_impl<T>::value;
-    };
+        template<typename T>
+        struct tuple_total_size
+        {
+            constexpr static int value = tuple_total_size_impl<T>::value;
+        };
 
-    template<> struct tuple_total_size<bool> { constexpr static int value = 1; };
-    template<> struct tuple_total_size<char> { constexpr static int value = 1; };
-    template<> struct tuple_total_size<unsigned char> { constexpr static int value = 1; };
-    template<> struct tuple_total_size<short> { constexpr static int value = 2; };
-    template<> struct tuple_total_size<unsigned short> { constexpr static int value = 2; };
-    template<> struct tuple_total_size<int> { constexpr static int value = 4; };
-    template<> struct tuple_total_size<unsigned int> { constexpr static int value = 4; };
-    template<> struct tuple_total_size<int64_t> { constexpr static int value = 8; };
-    template<> struct tuple_total_size<uint64_t> { constexpr static int value = 8; };
-    template<> struct tuple_total_size<float> { constexpr static int value = 4; };
-    template<> struct tuple_total_size<double> { constexpr static int value = 8; };
-    template<typename T, size_t N> struct tuple_total_size<std::array<T, N>> { constexpr static int value = tuple_total_size<T[N]>::value; };
-    template<typename T, size_t N> struct tuple_total_size<T[N]> { constexpr static int value = tuple_total_size<T>::value < 0 ? -1 : tuple_total_size<T>::value * (int)N; };
+        template<> struct tuple_total_size<bool> { constexpr static int value = 1; };
+        template<> struct tuple_total_size<char> { constexpr static int value = 1; };
+        template<> struct tuple_total_size<unsigned char> { constexpr static int value = 1; };
+        template<> struct tuple_total_size<short> { constexpr static int value = 2; };
+        template<> struct tuple_total_size<unsigned short> { constexpr static int value = 2; };
+        template<> struct tuple_total_size<int> { constexpr static int value = 4; };
+        template<> struct tuple_total_size<unsigned int> { constexpr static int value = 4; };
+        template<> struct tuple_total_size<int64_t> { constexpr static int value = 8; };
+        template<> struct tuple_total_size<uint64_t> { constexpr static int value = 8; };
+        template<> struct tuple_total_size<float> { constexpr static int value = 4; };
+        template<> struct tuple_total_size<double> { constexpr static int value = 8; };
+        template<typename T, size_t N> struct tuple_total_size<std::array<T, N>> { constexpr static int value = tuple_total_size<T[N]>::value; };
+        template<typename T, size_t N> struct tuple_total_size<T[N]> { constexpr static int value = tuple_total_size<T>::value < 0 ? -1 : tuple_total_size<T>::value * (int)N; };
 
-    template<>
-    struct tuple_total_size<std::tuple<>>
-    {
-        constexpr static int value = 0;
-    };
+        template<>
+        struct tuple_total_size<std::tuple<>>
+        {
+            constexpr static int value = 0;
+        };
 
-    template<typename Arg0, typename ... Args>
-    struct tuple_total_size<std::tuple<Arg0, Args ...>>
-    {
-        constexpr static int first_value = tuple_total_size<Arg0>::value;
-        constexpr static int other_value = tuple_total_size<std::tuple<Args...>>::value;
-        constexpr static int value = first_value < 0 || other_value < 0 ? -1 : first_value + other_value;
-    };
+        template<typename Arg0, typename ... Args>
+        struct tuple_total_size<std::tuple<Arg0, Args ...>>
+        {
+            constexpr static int first_value = tuple_total_size<Arg0>::value;
+            constexpr static int other_value = tuple_total_size<std::tuple<Args...>>::value;
+            constexpr static int value = first_value < 0 || other_value < 0 ? -1 : first_value + other_value;
+        };
 
-    template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<std::is_enum<std::decay_t<T>>::value>>>
-    {
-        constexpr static int value = tuple_total_size<std::underlying_type_t<std::decay_t<T>>>::value;
-    };
+        template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<std::is_enum<std::decay_t<T>>::value>>>
+        {
+            constexpr static int value = tuple_total_size<std::underlying_type_t<std::decay_t<T>>>::value;
+        };
 
-    template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<has_meta_macro<std::decay_t<T>>::value>>>
-    {
-        constexpr static int value = tuple_total_size<typename std::decay_t<T>::meta_type>::value;
-    };
+        template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
+        {
+            constexpr static int value = tuple_total_size<typename meta_t<T>::meta_type>::value;
+        };
 
-    template<typename K, typename V>
-    struct tuple_total_size<std::pair<K, V>>
-    {
-        constexpr static int value = tuple_total_size<std::tuple<K, V>>::value;
-    };
+        template<typename K, typename V>
+        struct tuple_total_size<std::pair<K, V>>
+        {
+            constexpr static int value = tuple_total_size<std::tuple<K, V>>::value;
+        };
+    }
+
+    template<typename ... Args>
+    using tuple_total_size = detail::tuple_total_size<std::tuple<Args ...>>;
+
+    template<typename ... Args>
+    constexpr int tuple_total_size_v = detail::tuple_total_size<std::tuple<Args ...>>::value;
 }

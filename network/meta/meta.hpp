@@ -17,6 +17,11 @@ namespace cytx
 {
     namespace detail
     {
+        template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
+        {
+            constexpr static int value = tuple_total_size<typename meta_t<T>::meta_type>::value;
+        };
+
         template<typename T, class = std::void_t<>>
         struct get_meta_impl;
 
