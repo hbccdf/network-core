@@ -95,8 +95,10 @@ namespace cytx
             template<typename T>
             auto pack_msg_impl(const T& t, bool is_big_endian) -> std::enable_if_t<is_custom_msg<T>::value, buffer_t>
             {
-                cytx::codec::gos_codec codec{ is_big_endian };
-                return codec.pack(t);
+                gos_t gos;
+                t.pack(gos);
+                buffer_t buffer(gos);
+                return buffer;
             }
 
             template<typename T>
