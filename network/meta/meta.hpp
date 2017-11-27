@@ -23,6 +23,8 @@ namespace cytx
         template<typename T>
         struct get_meta_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
         {
+            using type = std::decay_t<T>;
+
             static auto meta(T&& t)
             {
                 return t.Meta();
@@ -32,6 +34,8 @@ namespace cytx
         template<typename T>
         struct get_meta_impl<T, std::void_t<std::enable_if_t<enum_meta_v<T>>>>
         {
+            using type = enum_meta<std::decay_t<T>>;
+
             static auto meta(T&& t)
             {
                 return enum_meta<T>::Meta();
@@ -46,6 +50,8 @@ namespace cytx
         template<typename T>
         struct get_meta_impl<T, std::void_t<std::enable_if_t<db_meta_v<T>>>>
         {
+            using type = db_meta<std::decay_t<T>>;
+
             static auto meta(T&& t)
             {
                 return t.Meta();
@@ -55,39 +61,12 @@ namespace cytx
         template<typename T>
         struct get_meta_impl<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
         {
+            using type = st_meta<std::decay_t<T>>;
+
             static auto meta(T&& t)
             {
                 return st_meta<std::decay_t<T>>::Meta(t);
             }
-        };
-
-        template<typename T> struct is_db_meta : is_specialization_of<std::decay_t<T>, db_meta> {};
-
-        template<typename T, class = std::void_t<>>
-        struct get_meta_t { };
-
-        template<typename T>
-        struct get_meta_t<T, std::void_t<std::enable_if_t<db_meta_v<T>>>>
-        {
-            using type = db_meta<std::decay_t<T>>;
-        };
-
-        template<typename T>
-        struct get_meta_t<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
-        {
-            using type = st_meta<std::decay_t<T>>;
-        };
-
-        template<typename T>
-        struct get_meta_t<T, std::void_t<std::enable_if_t<enum_meta_v<T>>>>
-        {
-            using type = enum_meta<T>;
-        };
-
-        template<typename T>
-        struct get_meta_t<T, std::void_t<std::enable_if_t<is_db_meta<T>::value>>>
-        {
-            using type = std::decay_t<T>;
         };
 
         template <typename T, class = std::void_t<>>
@@ -180,7 +159,7 @@ namespace cytx
 
 
     template<typename T>
-    using meta_t = typename detail::get_meta_t<T>::type;
+    using meta_t = typename detail::get_meta_impl<T>::type;
 
     template<typename T>
     using is_reflection = detail::is_reflection<T>;
@@ -198,13 +177,6 @@ namespace cytx
         return detail::get_meta_impl<T>::meta(std::forward<T>(t));
     }
 
-    template<typename T, size_t I>
-    constexpr const char* get_name()
-    {
-        static_assert(I < get_value<T>(), "out of range");
-        return meta_t<T>::_arr[i];
-    }
-
     template<typename T>
     const char* get_name()
     {
@@ -212,19 +184,32 @@ namespace cytx
     }
 
     template<typename T>
-    const char* get_name(size_t i)
+    const char* get_elem_name(size_t i)
     {
         return i >= get_value<T>() ? "" : meta_t<T>::_arr[i];
     }
 
+    template<typename T, size_t I>
+    constexpr const char* get_elem_name()
+    {
+        static_assert(I < get_value<T>(), "out of range");
+        return meta_t<T>::_arr[i];
+    }
+
     template<typename T>
-    constexpr auto get_value() -> std::enable_if_t<is_reflection<T>::value, size_t>
+    constexpr auto get_meta_size() -> std::enable_if_t<is_reflection<T>::value, size_t>
     {
         return std::tuple_size<typename meta_t<T>::meta_type>::value;
     }
 
     template<typename T>
-    constexpr auto get_value() -> std::enable_if_t<!is_reflection<T>::value, size_t>
+    constexpr auto get_meta_size() -> std::enable_if_t<is_tuple<T>::value, size_t>
+    {
+        return std::tuple_size<std::decay_t<T>>::value;
+    }
+
+    template<typename T>
+    constexpr auto get_meta_size() -> std::enable_if_t<!is_reflection<T>::value && !is_tuple<T>::value, size_t>
     {
         return 0;
     }
@@ -295,19 +280,19 @@ namespace cytx
     template<typename T, typename F>
     constexpr auto for_each(T&& t, F&& f) -> std::enable_if_t<is_reflection<T>::value>
     {
-        apply(std::forward<F>(f), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
+        apply(std::forward<F>(f), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_meta_size<T>()>{});
     }
 
     template<typename T, typename F, typename F1>
     constexpr auto for_each(T&& t, F&& f, F1&& f1) -> std::enable_if_t<is_reflection<T>::value>
     {
-        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_value<T>()>{});
+        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_meta_size<T>()>{});
     }
 
     template<typename T, typename F>
     constexpr auto for_each(T&& tp, F&& f) -> std::enable_if_t<!is_reflection<T>::value>
     {
-        apply(std::forward<F>(f), std::forward<T>(tp), std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>{});
+        apply(std::forward<F>(f), std::forward<T>(tp), std::make_index_sequence<get_meta_size<T>()>{});
     }
 }
 
@@ -317,7 +302,7 @@ namespace cytx
     {
         class enum_factory;
 
-        inline boost::optional<std::pair<std::string, std::string>> split_enum_str(std::string str, std::vector<const char*>&& splits)
+        static boost::optional<std::pair<std::string, std::string>> split_enum_str(std::string str, std::vector<const char*>&& splits)
         {
             boost::optional<std::pair<std::string, std::string>> result;
             for (auto & s : splits)
@@ -480,12 +465,8 @@ namespace cytx
                     {
                         val_ptr = it->second;
                     }
-                    else
-                    {
-                        val_ptr = std::make_shared<value_t>();
-                    }
                 }
-                else
+                if(!val_ptr)
                 {
                     val_ptr = std::make_shared<value_t>();
                 }
