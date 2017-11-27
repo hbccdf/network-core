@@ -169,6 +169,9 @@ namespace cytx
     template<typename T>
     using is_reflection = detail::is_reflection<T>;
 
+    template<typename T>
+    constexpr static bool is_reflection_v = is_reflection<T>::value;
+
 
     template<typename T>
     auto get_meta()
@@ -202,7 +205,7 @@ namespace cytx
     }
 
     template<typename T>
-    constexpr auto get_meta_size() -> std::enable_if_t<is_reflection<T>::value, size_t>
+    constexpr auto get_meta_size() -> std::enable_if_t<is_reflection_v<T>, size_t>
     {
         return std::tuple_size<typename meta_t<T>::meta_type>::value;
     }
@@ -232,25 +235,28 @@ namespace cytx
     }
 
 
+    namespace detail
+    {
+        template<typename F, typename T>
+        struct is_result_bool
+        {
+            constexpr static bool value = !std::is_void_v<std::result_of_t<F(T, size_t, bool)>>;
+        };
+    }
 
 
     template<size_t I, typename F, typename T>
-    void apply_value(F&& f, T&& t, bool is_last)
+    auto apply_value(F&& f, T&& t, bool is_last) -> std::enable_if_t<detail::is_result_bool<F, T>::value, bool>
     {
-        std::forward<F>(f)(std::forward<T>(t), I, is_last);
+        return std::forward<F>(f)(std::forward<T>(t), I, is_last);
     };
 
-    template<size_t I, typename F, typename F1, typename T>
-    auto apply_value(F&& f, F1&& f1, T&& t, bool is_last) -> std::enable_if_t<is_reflection<T>::value>
-    {
-        std::forward<F1>(f1)(std::forward<T>(t), I, is_last);
-    }
-
-    template<size_t I, typename F, typename F1, typename T>
-    auto apply_value(F&& f, F1&& f1, T&& t, bool is_last) -> std::enable_if_t<!is_reflection<T>::value>
+    template<size_t I, typename F, typename T>
+    auto apply_value(F&& f, T&& t, bool is_last) -> std::enable_if_t<!detail::is_result_bool<F, T>::value, bool>
     {
         std::forward<F>(f)(std::forward<T>(t), I, is_last);
-    }
+        return true;
+    };
 
     template<typename ... Args>
     constexpr void apply(Args&& ... args)
@@ -258,27 +264,23 @@ namespace cytx
     }
 
     //meta
-    template<typename F, typename F1, typename T, typename Tuple, std::size_t I0, std::size_t... I>
-    constexpr void apply(F&& f, F1&& f1, T&& t, Tuple&& tp, std::index_sequence<I0, I...>)
-    {
-        apply_value<I0>(std::forward<F>(f), std::forward<F1>(f1), get<I0>(t, tp), sizeof...(I) == 0);
-        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), std::forward<Tuple>(tp), std::index_sequence<I...>{});
-    }
-
-    //meta
     template<typename F, typename T, typename Tuple, std::size_t I0, std::size_t... I>
     constexpr void apply(F&& f, T&& t, Tuple&& tp, std::index_sequence<I0, I...>)
     {
-        apply_value<I0>(std::forward<F>(f), get<I0>(t, tp), sizeof...(I) == 0);
-        apply(std::forward<F>(f), std::forward<T>(t), std::forward<Tuple>(tp), std::index_sequence<I...>{});
+        if (apply_value<I0>(std::forward<F>(f), get<I0>(t, tp), sizeof...(I) == 0))
+        {
+            apply(std::forward<F>(f), std::forward<T>(t), std::forward<Tuple>(tp), std::index_sequence<I...>{});
+        }
     }
 
     //tuple
     template<typename F, typename Tuple, std::size_t I0, std::size_t... I>
     constexpr auto apply(F&& f, Tuple&& tp, std::index_sequence<I0, I...>) -> std::enable_if_t<is_tuple<Tuple>::value>
     {
-        apply_value<I0>(std::forward<F>(f), std::get<I0>(tp), sizeof...(I) == 0);
-        apply(std::forward<F>(f), std::forward<Tuple>(tp), std::index_sequence<I...>{});
+        if (apply_value<I0>(std::forward<F>(f), std::get<I0>(tp), sizeof...(I) == 0))
+        {
+            apply(std::forward<F>(f), std::forward<Tuple>(tp), std::index_sequence<I...>{});
+        }
     }
 
 
@@ -288,16 +290,10 @@ namespace cytx
         apply(std::forward<F>(f), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_meta_size<T>()>{});
     }
 
-    template<typename T, typename F, typename F1>
-    constexpr auto for_each(T&& t, F&& f, F1&& f1) -> std::enable_if_t<is_reflection<T>::value>
-    {
-        apply(std::forward<F>(f), std::forward<F1>(f1), std::forward<T>(t), get_meta(std::forward<T>(t)), std::make_index_sequence<get_meta_size<T>()>{});
-    }
-
     template<typename T, typename F>
-    constexpr auto for_each(T&& tp, F&& f) -> std::enable_if_t<!is_reflection<T>::value>
+    constexpr auto for_each(T&& t, F&& f) -> std::enable_if_t<!is_reflection<T>::value>
     {
-        apply(std::forward<F>(f), std::forward<T>(tp), std::make_index_sequence<get_meta_size<T>()>{});
+        apply(std::forward<F>(f), std::forward<T>(t), std::make_index_sequence<get_meta_size<T>()>{});
     }
 }
 

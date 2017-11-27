@@ -25,8 +25,7 @@ namespace cytx
     struct function_traits_impl;
 
     template<typename T>
-    struct function_traits : function_traits_impl<
-        std::remove_cv_t<std::remove_reference_t<T>>>
+    struct function_traits : function_traits_impl<std::remove_cv_t<std::remove_reference_t<T>>>
     {};
 
     template<typename Ret, typename... Args>
@@ -46,25 +45,26 @@ namespace cytx
             using type = typename std::tuple_element<I, std::tuple<Args...>>::type;
         };
 
-        typedef std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...> tuple_type;
+        using tuple_type = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...> ;
         using raw_tuple_type = std::tuple<Args...>;
 
         constexpr static bool is_class_member_func = false;
+        constexpr static bool has_result = !std::is_void_v<result_type>;
     };
 
     // function pointer
     template<typename Ret, typename... Args>
-    struct function_traits_impl<Ret(*)(Args...)> : function_traits<Ret(Args...)> {};
+    struct function_traits_impl<Ret(*)(Args...)> : function_traits_impl<Ret(Args...)> {};
 
     // std::function
     template <typename Ret, typename... Args>
     struct function_traits_impl<std::function<Ret(Args...)>> : function_traits_impl<Ret(Args...)> {};
 
     // pointer of non-static member function
-    FUNCTION_TRAITS()
-    FUNCTION_TRAITS(const)
-    FUNCTION_TRAITS(volatile)
-    FUNCTION_TRAITS(const volatile)
+    FUNCTION_TRAITS();
+    FUNCTION_TRAITS(const);
+    FUNCTION_TRAITS(volatile);
+    FUNCTION_TRAITS(const volatile);
 
     // functor
     template<typename Callable>
