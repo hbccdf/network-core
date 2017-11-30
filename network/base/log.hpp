@@ -47,6 +47,9 @@ namespace cytx
     using console_sink_t = spdlog::sinks::wincolor_stdout_sink_mt;
     using console_sink_ptr_t = std::shared_ptr<console_sink_t>;
 
+    using log_msg_t = spdlog::details::log_msg;
+    using sink_ptr = spdlog::sink_ptr;
+
     class log_sink_manager
     {
     public:
@@ -91,13 +94,90 @@ namespace cytx
         console_sink_ptr_t console_sink_;
     };
 
+    class log_adapter_base : public spdlog::sinks::base_sink<std::mutex>
+    {
+    public:
+        log_adapter_base(bool use_lock)
+            : use_lock_(use_lock)
+        {}
+
+    protected:
+        void log(const log_msg_t& msg) override
+        {
+            if (use_lock_)
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                _sink_it(msg);
+            }
+            else
+            {
+                _sink_it(msg);
+            }
+        }
+
+        void flush() override
+        {
+
+        }
+
+    private:
+        bool use_lock_;
+    };
+
+    class log_adapter : public log_adapter_base
+    {
+    public:
+        using log_func_t = std::function<void(int, const char*)>;
+
+    public:
+        log_adapter(log_func_t func, bool use_lock = true)
+            : log_adapter_base(use_lock)
+            , func_(func)
+        {
+        }
+
+    protected:
+        void _sink_it(const log_msg_t& msg) override
+        {
+            func_((int)msg.level, msg.formatted.c_str());
+        }
+
+    private:
+        log_func_t func_;
+    };
+
     class log
     {
+    private:
+        static log_adapter_base* log_adapter_impl(log_adapter_base* adapter_base = nullptr)
+        {
+            static log_adapter_base* adapter = nullptr;
+            if (adapter_base)
+            {
+                adapter = adapter_base;
+            }
+            return adapter;
+        }
     public:
         static log& get()
         {
             static log _log;
             return _log;
+        }
+
+        static log_adapter_base* get_log_adpater()
+        {
+            return log_adapter_impl();
+        }
+
+        static void set_log_adpater(log_adapter_base* adapter)
+        {
+            log_adapter_impl(adapter);
+        }
+
+        static sink_ptr get_log_adapter_sink()
+        {
+            return sink_ptr(get_log_adpater(), [](auto ptr) {});
         }
 
         static log_ptr_t get_log(const std::string& log_name)
@@ -135,14 +215,22 @@ namespace cytx
         void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
         {
             auto rotating = log_sink_manager::get_file_sink(file_name);
-            if (console_log)
+            auto adapter_sink = get_log_adapter_sink();
+
+            std::vector<spdlog::sink_ptr> sinks;
+            sinks.push_back(rotating);
+
+            if (adapter_sink)
             {
-                log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating, log_sink_manager::get_console_sink() });
+                sinks.push_back(adapter_sink);
             }
-            else
+            else if (console_log)
             {
-                log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ rotating });
+                sinks.push_back(log_sink_manager::get_console_sink());
             }
+
+            log_ = spdlog::create(logger_name, sinks.begin(), sinks.end());
+
             log_->set_level(lvl);
             log_->flush_on(log_level_t::err);
             log_->set_formatter(std::make_shared<my_formater>());
@@ -150,8 +238,35 @@ namespace cytx
 
         void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
         {
-            log_ = spdlog::create(logger_name, spdlog::sinks_init_list{ log_sink_manager::get_console_sink() });
+            auto adapter_sink = get_log_adapter_sink();
+
+            std::vector<spdlog::sink_ptr> sinks;
+            if (adapter_sink)
+            {
+                sinks.push_back(adapter_sink);
+            }
+            else
+            {
+                sinks.push_back(log_sink_manager::get_console_sink());
+            }
+
+            log_ = spdlog::create(logger_name, sinks.begin(), sinks.end());
+
             log_->set_level(lvl);
+            log_->flush_on(log_level_t::err);
+            log_->set_formatter(std::make_shared<my_formater>());
+        }
+
+        void init(log_adapter_base* adapter, const std::string& logger_name = "logger")
+        {
+            if (!adapter)
+                return;
+
+            auto adapter_sink = sink_ptr(adapter, [](auto ptr) {});
+
+            log_ = spdlog::create(logger_name, adapter_sink);
+
+            log_->set_level(log_level_t::trace);
             log_->flush_on(log_level_t::err);
             log_->set_formatter(std::make_shared<my_formater>());
         }
