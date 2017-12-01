@@ -36,7 +36,9 @@ namespace cytx
             ~gos_buffer()
             {
                 if (data_)
+                {
                     DELETE_ARRAY_MP(char, data_, (int)size_);
+                }
             }
 
             char* data() const { return data_; }
@@ -45,8 +47,12 @@ namespace cytx
             char* begin() const { return data_; }
             char* end() const { return data_ + size_; }
 
-            void reset()
+            void reset(bool release_memory = false)
             {
+                if (release_memory && data_)
+                {
+                    DELETE_ARRAY_MP(char, data_, (int)size_);
+                }
                 data_ = nullptr;
                 size_ = 0;
             }
