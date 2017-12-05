@@ -296,40 +296,41 @@ namespace cytx
         log_ptr_t log_;
     };
 
+}
 
-    template<typename... Args>
-    static inline void LOG_TRACE(const char* fmt, const Args&... args)
-    {
-        log::get().get_log()->trace(fmt, args...);
-    }
 
-    template<typename... Args>
-    static inline void LOG_DEBUG(const char* fmt, const Args&... args)
-    {
-        log::get().get_log()->debug(fmt, args...);
-    }
+template<typename... Args>
+static inline void LOG_TRACE(const char* fmt, const Args&... args)
+{
+    cytx::log::get().get_log()->trace(fmt, args...);
+}
 
-    template<typename... Args>
-    static inline void LOG_INFO(const char* fmt, const Args&... args)
-    {
-        log::get().get_log()->info(fmt, args...);
-    }
+template<typename... Args>
+static inline void LOG_DEBUG(const char* fmt, const Args&... args)
+{
+    cytx::log::get().get_log()->debug(fmt, args...);
+}
 
-    template<typename... Args>
-    static inline void LOG_WARN(const char* fmt, const Args&... args)
-    {
-        log::get().get_log()->warn(fmt, args...);
-    }
+template<typename... Args>
+static inline void LOG_INFO(const char* fmt, const Args&... args)
+{
+    cytx::log::get().get_log()->info(fmt, args...);
+}
 
-    template<typename... Args>
-    static inline void LOG_ERROR(const char* fmt, const Args&... args)
-    {
-        log::get().get_log()->error(fmt, args...);
-    }
+template<typename... Args>
+static inline void LOG_WARN(const char* fmt, const Args&... args)
+{
+    cytx::log::get().get_log()->warn(fmt, args...);
+}
 
-    template<typename... Args>
-    static inline void LOG_CRITICAL(const char* fmt, const Args&... args)
-    {
-        log::get().get_log()->critical(fmt, args...);
-    }
+template<typename... Args>
+static inline void LOG_ERROR(const char* fmt, const Args&... args)
+{
+    cytx::log::get().get_log()->error(fmt, args...);
+}
+
+template<typename... Args>
+static inline void LOG_CRITICAL(const char* fmt, const Args&... args)
+{
+    cytx::log::get().get_log()->critical(fmt, args...);
 }
