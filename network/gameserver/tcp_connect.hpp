@@ -473,7 +473,7 @@ namespace cytx
                 else
                 {
                     batch_msg_ptr_ = std::make_shared<batch_msg_t>();
-                    while (true)
+                    while (!write_msg_queue_.empty())
                     {
                         msg_ptr msgp = write_msg_queue_.front();
                         if (batch_msg_ptr_->add_msg(msgp))
