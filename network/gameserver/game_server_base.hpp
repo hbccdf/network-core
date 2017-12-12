@@ -76,7 +76,7 @@ if(log_)                                        \
 
                     //初始化日志
                     const server_info& info = config_mgr_[unique_id_];
-                    cytx::log::get().init(fmt::format("logs/{}", info.name), log_level_t::debug);
+                    cytx::log::get().init(fmt::format("logs/{}", info.name), log_level_t::trace);
 
                     for (auto& log_cfg : info.logs)
                     {
