@@ -366,7 +366,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, const std::string& val) -> std::enable_if_t<is_optional<T>::value>
+        auto ReadBase(T& t, const std::string& val) -> std::enable_if_t<is_optional<T>::value>
         {
             using value_type = typename T::value_type;
             if (val != "null")
@@ -378,7 +378,7 @@ namespace cytx
         }
 
         template <typename T>
-        auto ReadObject(T& t, const std::string& val) ->std::enable_if_t<std::is_enum<
+        auto ReadBase(T& t, const std::string& val) ->std::enable_if_t<std::is_enum<
             std::remove_reference_t<std::remove_cv_t<T>>>::value>
         {
             using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
@@ -389,7 +389,7 @@ namespace cytx
             }
             else
             {
-                t = cytx::util::cast<enum_t>(str);
+                t = cytx::util::cast<enum_t>(val);
             }
         }
 
