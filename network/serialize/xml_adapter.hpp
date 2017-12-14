@@ -4,7 +4,7 @@
 #include "../traits/traits.hpp"
 #include "../meta/meta.hpp"
 #include "../base/cast.hpp"
-#include "parser.hpp"
+#include "detail/parser.hpp"
 
 namespace cytx
 {

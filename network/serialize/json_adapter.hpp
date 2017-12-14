@@ -1,6 +1,6 @@
 #pragma once
 #include <fmt/format.h>
-#include "json_util.hpp"
+#include "detail/json_util.hpp"
 
 namespace cytx {
 
