@@ -66,6 +66,11 @@ namespace cytx
             }
             return false;
         }
+
+        csv& get_csv()
+        {
+            return csv_;
+        }
     private:
         csv csv_;
     };
@@ -155,13 +160,155 @@ namespace cytx
             auto& pair = std::get<I>(t);
             auto& key_name = pair.first;
             auto& pair_val = pair.second;
+            ReadObject(pair_val, val, key_name);
+            ReadTuple<I + 1>(t, val);
+        }
 
+        template<typename T>
+        auto ReadObject(T& t, val_t& val, const std::string& key_name) ->std::enable_if_t<is_user_class<T>::value>
+        {
+            auto meta_tuple = get_meta(t);
+            auto meta_name = get_name<T>();
+            std::string new_key_name = fmt::format("{}(", meta_name);
+
+            //find struct start index and end index
+            auto& headers = rd_.get_csv().header();
+
+            int start_index = -1;
+            int end_index = -1;
+
+            for (size_t i = 0; i < headers.size(); ++i)
+            {
+                if (headers[i] == new_key_name)
+                {
+                    start_index = (int)i;
+                }
+
+                if (i > start_index && headers[i] == ")")
+                {
+                    end_index = (int)i;
+                    break;
+                }
+            }
+
+            if (start_index < 0 || end_index < 0 || (start_index + 1) == end_index)
+                return;
+
+            int field_count = end_index - (start_index + 1);
+
+            int val_index = start_index + 1;
+            int val_count = 0;
+
+            std::map<std::string, int> name_map;
+            for (int i = start_index + 1; i < end_index; ++i)
+            {
+                std::string name = headers[i];
+                name_map[name] = i - (start_index + 1);
+            }
+
+            while ((val_index + 1) < val.size())
+            {
+                if (val[val_index + 1] == ")" || val[val_index + 1] == "(")
+                {
+                    ++val_index;
+                    continue;
+                }
+
+                cytx::for_each(meta_tuple, [&val_index, &name_map, &val, this](auto& p, size_t I, bool is_last)
+                {
+                    auto it = name_map.find(p.first);
+                    if (it == name_map.end())
+                        return;
+
+                    int index = it->second;
+                    int field_index = index + val_index;
+                    auto& str = val[field_index];
+                    ReadBase(p.second, str);
+                });
+
+                ++val_count;
+                val_index += field_count;
+            }
+        }
+
+        template<typename T>
+        auto ReadObject(std::vector<T>& t, val_t& val, const std::string& key_name) ->std::enable_if_t<is_user_class<T>::value>
+        {
+            auto meta_name = get_name<T>();
+            std::string new_key_name = fmt::format("{}(", meta_name);
+
+            //find struct start index and end index
+            auto& headers = rd_.get_csv().header();
+
+            int start_index = -1;
+            int end_index = -1;
+
+            for (size_t i = 0; i < headers.size(); ++i)
+            {
+                if (headers[i] == new_key_name)
+                {
+                    start_index = (int)i;
+                }
+
+                if (i > start_index && headers[i] == ")")
+                {
+                    end_index = (int)i;
+                    break;
+                }
+            }
+
+            if (start_index < 0 || end_index < 0 || (start_index + 1) == end_index)
+                return;
+
+            int field_count = end_index - (start_index + 1);
+
+            int val_index = start_index + 1;
+            int val_count = 0;
+
+            std::map<std::string, int> name_map;
+            for (int i = start_index + 1; i < end_index; ++i)
+            {
+                std::string name = headers[i];
+                name_map[name] = i - (start_index + 1);
+            }
+
+            while ((val_index + 1) < val.size())
+            {
+                if (val[val_index] == ")" || val[val_index] == "(")
+                {
+                    ++val_index;
+                    continue;
+                }
+
+                T tt{};
+                auto meta_tuple = get_meta(tt);
+                cytx::for_each(meta_tuple, [&val_index, &name_map, &val, this](auto& p, size_t I, bool is_last)
+                {
+                    auto it = name_map.find(p.first);
+                    if (it == name_map.end())
+                        return;
+
+                    int index = it->second;
+                    int field_index = index + val_index;
+                    auto& str = val[field_index];
+                    ReadBase(p.second, str);
+                });
+
+                t.emplace_back(tt);
+
+                ++val_count;
+                val_index += field_count;
+            }
+        }
+
+        template<typename T>
+        auto ReadObject(T& t, val_t& val, const std::string& key_name) ->std::enable_if_t<!is_user_class<T>::value>
+        {
             if (rd_.has_field(key_name))
             {
                 const std::string& val_str = rd_.get_field_val(val, key_name);
-                ReadBase(pair_val, val_str);
+                ReadBase(t, val_str);
             }
-            ReadTuple<I + 1>(t, val);
         }
 
         template <typename T, size_t N>
@@ -201,7 +348,7 @@ namespace cytx
         }
 
         template<typename Array>
-        inline void ReadFixedLengthArray(Array & v, size_t array_size, const std::string& val)
+        void ReadFixedLengthArray(Array & v, size_t array_size, const std::string& val)
         {
             std::vector<string> vals = process_array(val);
             auto it = vals.begin();
