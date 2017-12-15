@@ -6,6 +6,7 @@
 #include <fstream>
 #include <memory>
 #include <boost/algorithm/string.hpp>
+#include <fmt/format.h>
 
 namespace cytx
 {
@@ -55,17 +56,17 @@ namespace cytx
                     if (index < size())
                         return values_[index];
 
-                    throw csv_exception(csv_error::index_overflow, "index overflowed the column size");
+                    throw csv_exception(csv_error::index_overflow, fmt::format("index {} overflowed the column size {}", index, size()));
                 }
 
                 const string& operator[](const string& key) const
                 {
                     if (header_ == nullptr)
-                        throw csv_exception(csv_error::no_header, "there is no header, can not find the key");
+                        throw csv_exception(csv_error::no_header, fmt::format("there is no header, can not find the key {}", key));
 
                     auto it = std::find(header_->begin(), header_->end(), key);
                     if (it == header_->end())
-                        throw csv_exception(csv_error::no_key, "can not find the key");
+                        throw csv_exception(csv_error::no_key, fmt::format("can not find the key {}", key));
 
                     return values_[it - header_->begin()];
                 }
@@ -97,9 +98,10 @@ namespace cytx
             class csv
             {
             public:
-                csv(bool first_line_is_header = true, bool header_is_in_rows = false)
+                csv(bool first_line_is_header = true, bool has_type = true, bool has_desc = true, bool header_is_in_rows = false)
                     : first_line_is_header_(first_line_is_header)
-                    , header_is_in_rows_(header_is_in_rows) {};
+                    , header_is_in_rows_(header_is_in_rows)
+                {};
 
                 void parse_string(const string& csv_string)
                 {
@@ -359,7 +361,7 @@ namespace cytx
                     if (length == 0)
                         return;
                     if (length > 50 * 1024 * 1024)
-                        throw csv_exception(csv_error::over_max_size, "this file over the max size 50M");
+                        throw csv_exception(csv_error::over_max_size, "this file over the max size 50M, size {}");
 
                     vector<char> buffer(length);
                     file_stream.read(buffer.data(), buffer.size());
@@ -375,41 +377,56 @@ namespace cytx
                     if (index < row_size())
                         return *content_[index];
 
-                    throw csv_exception(csv_error::index_overflow, "index overflowed the row size");
+                    throw csv_exception(csv_error::index_overflow, fmt::format("index {} overflowed the row size {}", index, row_size()));
                 }
 
                 size_t row_size() const { return content_.size(); }
                 size_t column_size() const { return header_.size(); }
 
-                const vector<string>& header() const { return header_; }
+                const std::vector<std::string>& header() const { return header_; }
+                const std::vector<std::string>& desc() const { return desc_; }
+                const std::vector<std::string>& types() const { return types_; }
             private:
                 void set_header()
                 {
-                    if (!first_line_is_header_)
-                        return;
-                    header_.clear();
-                    if (content_.empty())
+                    if (!first_line_is_header_ || content_.size() < 3)
                         return;
 
-                    auto tmp_row = content_[0];
-                    for (size_t i = 0; i < tmp_row->size(); ++i)
-                    {
-                        header_.push_back((*tmp_row)[i]);
-                    }
+                    header_.clear();
+                    types_.clear();
+                    desc_.clear();
+
+                    add_content(header_, content_[0]);
+                    add_content(types_, content_[1]);
+                    add_content(desc_, content_[2]);
 
                     if (!header_is_in_rows_)
-                        content_.erase(content_.begin());
+                    {
+                        content_.erase(content_.begin(), content_.begin() + 3);
+                    }
 
                     for (size_t i = 0; i < content_.size(); ++i)
                     {
                         content_[i]->set_header(&header_);
                     }
                 }
+
+                void add_content(std::vector<std::string>& list, const std::shared_ptr<csv_row>& row)
+                {
+                    for (size_t i = 0; i < row->size(); ++i)
+                    {
+                        list.push_back((*row)[i]);
+                    }
+                }
             private:
-                bool first_line_is_header_ = true;
-                bool header_is_in_rows_ = false;
-                vector<std::shared_ptr<csv_row>> content_;
-                vector<string> header_;
+                bool first_line_is_header_;
+                bool has_type_;
+                bool has_desc_;
+                bool header_is_in_rows_;
+                std::vector<std::shared_ptr<csv_row>> content_;
+                std::vector<std::string> header_;
+                std::vector<std::string> types_;
+                std::vector<std::string> desc_;
             };
         }
     }

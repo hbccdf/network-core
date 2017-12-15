@@ -169,7 +169,7 @@ namespace cytx
         {
             auto meta_tuple = get_meta(t);
             auto meta_name = get_name<T>();
-            std::string new_key_name = fmt::format("{}(", meta_name);
+            std::string new_key_name = fmt::format("{}(", key_name);
 
             //find struct start index and end index
             auto& headers = rd_.get_csv().header();
@@ -235,7 +235,7 @@ namespace cytx
         auto ReadObject(std::vector<T>& t, val_t& val, const std::string& key_name) ->std::enable_if_t<is_user_class<T>::value>
         {
             auto meta_name = get_name<T>();
-            std::string new_key_name = fmt::format("{}(", meta_name);
+            std::string new_key_name = fmt::format("{}(", key_name);
 
             //find struct start index and end index
             auto& headers = rd_.get_csv().header();
@@ -336,7 +336,7 @@ namespace cytx
             typedef decltype((t)[0]) element_t;
             using ele_t = std::remove_reference_t<element_t>;
 
-            std::vector<string> vals = process_array(val);
+            std::vector<std::string> vals = process_array(val);
             auto it = vals.begin();
             auto it_end = vals.end();
             for (; it != it_end; ++it)
@@ -350,7 +350,7 @@ namespace cytx
         template<typename Array>
         void ReadFixedLengthArray(Array & v, size_t array_size, const std::string& val)
         {
-            std::vector<string> vals = process_array(val);
+            std::vector<std::string> vals = process_array(val);
             auto it = vals.begin();
             auto it_end = vals.end();
             for (size_t i = 0; i < array_size && it != it_end; ++i, ++it)
@@ -396,7 +396,10 @@ namespace cytx
         auto process_array(const std::string& val)
         {
             std::vector<std::string> result;
-            boost::algorithm::split(result, val, boost::algorithm::is_any_of(",|"));
+            if (!val.empty())
+            {
+                boost::algorithm::split(result, val, boost::algorithm::is_any_of(",|"), boost::algorithm::token_compress_on);
+            }
             return result;
         }
 
