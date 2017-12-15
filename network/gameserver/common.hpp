@@ -58,6 +58,7 @@ namespace cytx
         std::string password;
         server_unique_id unique_id;
         uint32_t connect_interval;
+        log_level_t level = log_level_t::debug;
         uint32_t disconnect_heartbeat = 0;
         server_thread_mode thread_mode = server_thread_mode::no_io_thread;
         bool batch_send_msg = true;
