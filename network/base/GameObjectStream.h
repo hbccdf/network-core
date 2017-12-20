@@ -140,7 +140,7 @@ namespace cytx
         unsigned short* pushUShort(unsigned short val) { return pushValue(val); }
         int* pushInt(int val) { return pushValue(val); }
         unsigned int* pushUInt(unsigned int val) { return pushValue(val); }
-        void pushUint32(boost::uint32_t val) { pushValue(val); }
+        void pushUint32(uint32_t val) { pushValue(val); }
         void pushFloat(float val) { pushValue(val); }
         void pushDouble(double val) { pushValue(val); }
         void pushInt64(int64_t val) { pushValue(val); }
@@ -310,11 +310,11 @@ namespace cytx
 
             rd_pos_ += len * sizeof(wchar_t);
         }
-        bool getBKUint64(boost::uint64_t& val)
+        bool getBKUint64(uint64_t& val)
         {
             return getBKValue(val);
         }
-        bool getBKUint32(boost::uint32_t& val)
+        bool getBKUint32(uint32_t& val)
         {
             return getBKValue(val);
         }
