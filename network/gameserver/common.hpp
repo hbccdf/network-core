@@ -58,7 +58,7 @@ namespace cytx
         std::string password;
         server_unique_id unique_id;
         uint32_t connect_interval;
-        log_level_t level = log_level_t::debug;
+        log_level_t log_level = log_level_t::debug;
         uint32_t disconnect_heartbeat = 0;
         server_thread_mode thread_mode = server_thread_mode::no_io_thread;
         bool batch_send_msg = true;
@@ -68,7 +68,7 @@ namespace cytx
         boost::optional<std::vector<std::string>> services;
 
         int32_t flush_log_time = 10;
-        META(name, ip, port, password, unique_id, connect_interval, disconnect_heartbeat, thread_mode, batch_send_msg,
+        META(name, ip, port, password, unique_id, connect_interval, log_level, disconnect_heartbeat, thread_mode, batch_send_msg,
             depends, logs, services, flush_log_time);
 
         std::string host_ip;
