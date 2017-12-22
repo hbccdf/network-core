@@ -102,14 +102,14 @@ namespace cytx
             }
 
             template<typename T>
-            auto unpack_msg_impl(char const* data, size_t length, bool is_big_endian) ->std::enable_if_t<is_thrift_msg<T>::value, T>
+            auto unpack_msg_impl(const char* data, size_t length, bool is_big_endian) ->std::enable_if_t<is_thrift_msg<T>::value, T>
             {
                 cytx::codec::thrift_codec codec{ is_big_endian };
                 return codec.unpack<T>(data, length);
             }
 
             template<typename T>
-            auto unpack_msg_impl(char const* data, size_t length, bool is_big_endian) ->std::enable_if_t<is_gos_msg<T>::value, T>
+            auto unpack_msg_impl(const char* data, size_t length, bool is_big_endian) ->std::enable_if_t<is_gos_msg<T>::value, T>
             {
                 cytx::codec::gos_codec codec{ is_big_endian };
                 return codec.unpack<T>(data, length);
@@ -220,6 +220,12 @@ namespace cytx
             bool is_big_endian = detail::header_t::big_endian();
 
             char a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
+        }
+
+        template<typename T>
+        auto unpack_msg(const char* data, size_t length)
+        {
+            return detail::unpack_msg_impl<T>(data, length, detail::header_t::big_endian());
         }
     }
 }
