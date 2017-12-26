@@ -35,7 +35,7 @@ namespace cytx
         template<typename T>
         auto cast(const std::string& str) -> std::enable_if_t<std::is_same<T, bool>::value, T>
         {
-            return str == "true" || str == "1" || str == "on" || (!str.empty() && str[0] != '0');
+            return !(str.empty() || str == "false" || str == "FALSE" || str == "0" || str == "off" || str == "OFF");
         }
 
         template<typename T>
