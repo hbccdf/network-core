@@ -228,6 +228,24 @@ namespace cytx
 
                 ++val_count;
                 val_index += field_count;
+
+                while ((val_index + 1) < val.size())
+                {
+                    ++val_index;
+                    if (val[val_index] == ")")
+                    {
+                        break;
+                    }
+                }
+
+                while ((val_index + 1) < val.size())
+                {
+                    ++val_index;
+                    if (val[val_index] == "(")
+                    {
+                        break;
+                    }
+                }
             }
         }
 
@@ -298,6 +316,24 @@ namespace cytx
 
                 ++val_count;
                 val_index += field_count;
+
+                while ((val_index + 1) < val.size())
+                {
+                    ++val_index;
+                    if (val[val_index] == ")")
+                    {
+                        break;
+                    }
+                }
+
+                while ((val_index + 1) < val.size())
+                {
+                    ++val_index;
+                    if (val[val_index] == "(")
+                    {
+                        break;
+                    }
+                }
             }
         }
 
