@@ -130,20 +130,29 @@ namespace cytx
         using log_func_t = std::function<void(int, const char*)>;
 
     public:
-        log_adapter(log_func_t func, bool use_lock = true)
+        log_adapter(log_func_t func, bool show_time, bool use_lock = true)
             : log_adapter_base(use_lock)
             , func_(func)
+            , show_time_(show_time)
         {
         }
 
     protected:
         void _sink_it(const log_msg_t& msg) override
         {
-            func_((int)msg.level, msg.formatted.c_str());
+            if (show_time_)
+            {
+                func_((int)msg.level, msg.formatted.c_str());
+            }
+            else
+            {
+                func_((int)msg.level, msg.raw.c_str());
+            }
         }
 
     private:
         log_func_t func_;
+        bool show_time_;
     };
 
     class log

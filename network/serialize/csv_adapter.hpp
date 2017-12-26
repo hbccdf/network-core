@@ -400,6 +400,11 @@ namespace cytx
             {
                 boost::algorithm::split(result, val, boost::algorithm::is_any_of(",|"), boost::algorithm::token_compress_on);
             }
+
+            for (auto& v : result)
+            {
+                boost::algorithm::trim_if(v, boost::algorithm::is_any_of(" \t\r\n"));
+            }
             return result;
         }
 
