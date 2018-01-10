@@ -39,96 +39,96 @@ namespace cytx {
             template <typename Handler, typename PostFunc>
             bool register_handler(std::string const& name, Handler&& handler, PostFunc&& post_func)
             {
-                return router_.register_invoker(name, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
+                return router_.template register_invoker(name, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
             }
 
             template <typename CallCodecPolicy, typename Handler, typename PostFunc>
             bool register_codec_handler(std::string const& name, Handler&& handler, PostFunc&& post_func)
             {
-                return router_.register_codec_invoker<CallCodecPolicy>(name, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
+                return router_.template register_codec_invoker<CallCodecPolicy>(name, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
             }
 
             template <typename Handler>
             bool register_handler(std::string const& name, Handler&& handler)
             {
-                return router_.register_invoker(name, std::forward<Handler>(handler));
+                return router_.template register_invoker(name, std::forward<Handler>(handler));
             }
 
             template <typename CallCodecPolicy, typename Handler>
             bool register_codec_handler(std::string const& name, Handler&& handler)
             {
-                return router_.register_codec_invoker<CallCodecPolicy>(name, std::forward<Handler>(handler));
+                return router_.template register_codec_invoker<CallCodecPolicy>(name, std::forward<Handler>(handler));
             }
 
             template <typename Handler, typename PostFunc>
             bool register_handler(uint32_t protocol, Handler&& handler, PostFunc&& post_func)
             {
-                return router_.register_invoker(protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
+                return router_.template register_invoker(protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
             }
 
             template <typename CallCodecPolicy, typename Handler, typename PostFunc>
             bool register_codec_handler(uint32_t protocol, Handler&& handler, PostFunc&& post_func)
             {
-                return router_.register_codec_invoker<CallCodecPolicy>(protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
+                return router_.template register_codec_invoker<CallCodecPolicy>(protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
             }
 
             template <typename Handler>
             bool register_handler(uint32_t protocol, Handler&& handler)
             {
-                return router_.register_invoker(protocol, std::forward<Handler>(handler));
+                return router_.template register_invoker(protocol, std::forward<Handler>(handler));
             }
 
             template <typename CallCodecPolicy, typename Handler>
             bool register_codec_handler(uint32_t protocol, Handler&& handler)
             {
-                return router_.register_codec_invoker<CallCodecPolicy>(protocol, std::forward<Handler>(handler));
+                return router_.template register_codec_invoker<CallCodecPolicy>(protocol, std::forward<Handler>(handler));
             }
 
             template <typename proto_type, typename Handler, typename PostFunc>
             auto register_handler(proto_type protocol, Handler&& handler, PostFunc&& post_func)
                 -> std::enable_if_t<std::is_enum<proto_type>::value, bool>
             {
-                return router_.register_invoker((uint32_t)protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
+                return router_.template register_invoker((uint32_t)protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
             }
 
             template <typename CallCodecPolicy, typename proto_type, typename Handler, typename PostFunc>
             auto register_codec_handler(proto_type protocol, Handler&& handler, PostFunc&& post_func)
                 -> std::enable_if_t<std::is_enum<proto_type>::value, bool>
             {
-                return router_.register_codec_invoker<CallCodecPolicy>((uint32_t)protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
+                return router_.template register_codec_invoker<CallCodecPolicy>((uint32_t)protocol, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
             }
 
             template <typename proto_type, typename Handler>
             auto register_handler(proto_type protocol, Handler&& handler)
                 -> std::enable_if_t<std::is_enum<proto_type>::value, bool>
             {
-                return router_.register_invoker((uint32_t)protocol, std::forward<Handler>(handler));
+                return router_.template register_invoker((uint32_t)protocol, std::forward<Handler>(handler));
             }
 
             template <typename CallCodecPolicy, typename proto_type, typename Handler>
             auto register_codec_handler(proto_type protocol, Handler&& handler)
                 -> std::enable_if_t<std::is_enum<proto_type>::value, bool>
             {
-                return router_.register_codec_invoker<CallCodecPolicy>((uint32_t)protocol, std::forward<Handler>(handler));
+                return router_.template register_codec_invoker<CallCodecPolicy>((uint32_t)protocol, std::forward<Handler>(handler));
             }
 
             template <typename Handler>
             bool register_raw_handler(std::string const& name, Handler&& handler)
             {
-                return router_.register_raw_invoker(name, std::forward<Handler>(handler));
+                return router_.template register_raw_invoker(name, std::forward<Handler>(handler));
             }
 
             template <typename Handler>
             bool register_raw_handler(uint32_t protocol, Handler&& handler)
             {
-                return router_.register_raw_invoker(protocol, std::forward<Handler>(handler));
+                return router_.template register_raw_invoker(protocol, std::forward<Handler>(handler));
             }
 
             template <typename proto_type, typename Handler>
             auto register_raw_handler(proto_type protocol, Handler&& handler)
                 ->std::enable_if_t<std::is_enum<proto_type>::value, bool>
             {
-                return router_.register_raw_invoker((uint32_t)protocol, std::forward<Handler>(handler));
+                return router_.template register_raw_invoker((uint32_t)protocol, std::forward<Handler>(handler));
             }
 
             inline void set_before_invoker(before_invoke_func&& before_invoker)

@@ -36,7 +36,7 @@ namespace cytx {
                     GameObjectStream gos(const_cast<char*>(data), (int)length, 0);
                     DeSerializer<gos_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple), gos, is_big_endian_);
 
-                    return dr.GetTuple<T>();
+                    return dr.template GetTuple<T>();
                 }
                 catch (std::exception& e)
                 {

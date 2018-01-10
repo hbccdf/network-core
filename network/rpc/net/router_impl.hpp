@@ -123,7 +123,7 @@ namespace cytx
         bool router<T, H>::has_invoker(std::string const& name) const
         {
             auto name_hash = hash_(name);
-            return router_base::has_invoker(name_hash);
+            return base_t::has_invoker(name_hash);
         }
 
         template<typename T, typename H>
@@ -134,7 +134,7 @@ namespace cytx
                 if (this->before_invoker_ && !this->before_invoker_(conn, header, data, size))
                     return;
 
-                for (auto& invoker : proto_invokers_)
+                for (auto& invoker : this->proto_invokers_)
                 {
                     if (invoker.func(header))
                     {
@@ -215,7 +215,7 @@ namespace cytx
         bool router<T, H>::register_invoker(proto_func func, Handler&& handler)
         {
             invoker_t invoker = std::forward<Handler>(handler);
-            this->proto_invokers_.emplace(proto_func_invoker{ func, std::move(invoker) });
+            this->proto_invokers_.emplace(typename base_t::proto_func_invoker{ func, std::move(invoker) });
             return true;
         }
     }

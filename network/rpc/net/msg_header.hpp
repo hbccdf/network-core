@@ -1,6 +1,6 @@
 #pragma once
-#include "../base/common.h"
-#include "../base/utils.hpp"
+#include "network/base/common.h"
+#include "network/base/utils.hpp"
 
 namespace cytx {
     namespace rpc

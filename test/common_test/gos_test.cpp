@@ -1,6 +1,4 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <network/base/auto_mocker.h>
+#include "common.h"
 
 #define ENUM_META_RALAX_CHECK
 #include <network/serialize.hpp>
@@ -78,6 +76,28 @@ struct foo
         return a + b;
     }
 };
+
+TEST(test, t)
+{
+    auto f = cytx::bind(func_test);
+    auto r = f(2, 9);
+    assert_eq(r, 11);
+
+    foo ff;
+    auto f1 = cytx::bind(&foo::add, &ff);
+
+    auto ff2 = std::make_shared<foo>();
+    auto f2 = cytx::bind(&foo::add, ff2);
+
+    auto r1 = f1(2, 4);
+    auto r2 = f2(2, 4);
+    assert_eq(r1, 6);
+    assert_eq(r2, 6);
+
+    /*auto f3 = cytx::bind(&foo::add, ff2, std::placeholders::_1, 3);
+    auto r3 = f3(4);
+    assert_eq(r3, 7);*/
+}
 
 TEST_F(gos_type, bool)
 {

@@ -15,37 +15,38 @@
 #define MAKE_DB_NAMES(db_name, ...)     __VA_ARGS__
 
 
-#define MAKE_FIELD_PROXY(name, t) cytx::orm::field_proxy<value_type, decltype(st_.##t)> t{ st_ptr_, &value_type::##t, #t }
+#define MAKE_FIELD_PROXY(name, t) cytx::orm::field_proxy<db_meta_##name, decltype(st_.t)> t{ st_ptr_, &value_type::t, #t }
 #define MAKE_FIELD_PROXY_TUPLE(db_name, ...) \
 static const char* meta_name() { return #db_name; } \
 __VA_ARGS__; \
 
 #define MAKE_DB_CONSTRACT_FILED(name, t) t = o.t
 #define MAKE_DB_CONSTRACT(db_name, ...) \
-    db_meta(const db_meta& o) \
+    db_meta_##db_name(const db_meta_##db_name& o) \
     {   \
         __VA_ARGS__; \
     }
 
-
 #define EMMBED_DB_TUPLE(name, N, ...) \
-template<> \
-struct db_meta<name> : public std::true_type { \
+struct db_meta_##name : public cytx::base_db_meta { \
 private: \
     name st_; \
     name* st_ptr_{&st_}; \
 public: \
     using value_type = name; \
     value_type& Value() { return st_; } \
-    db_meta(){} \
-    db_meta(value_type& v) { st_ptr_ = &v; } \
+    db_meta_##name(){} \
+    db_meta_##name(value_type& v) { st_ptr_ = &v; } \
 MAKE_DB_CONSTRACT(name, MAKE_ARG_LIST(name, N, MAKE_DB_CONSTRACT_FILED, SEM_DELIMITER, __VA_ARGS__)) \
 MAKE_FIELD_PROXY_TUPLE(name, MAKE_ARG_LIST(name, N, MAKE_FIELD_PROXY, SEM_DELIMITER, __VA_ARGS__)) \
 MAKE_DB_TUPLE(name, MAKE_ARG_LIST(name, N, DB_PAIR_OBJECT, COMMA_DELIMITER, __VA_ARGS__)) \
 MAKE_DB_META_TYPE(name, MAKE_ARG_LIST(name, N, RAW_DB_SINGLE_OBJECT, COMMA_DELIMITER, __VA_ARGS__)) \
 constexpr static const std::array<const char*, N> _arr = {MAKE_DB_NAMES(name, MAKE_ARG_LIST(name, N, DB_OBJ_NAME, COMMA_DELIMITER, __VA_ARGS__))}; \
 }; \
-using name##_query = db_meta<name>
+inline auto to_db_extend(name const*) {  \
+return db_meta_##name{}; \
+}\
+using name##_query = cytx::get_db_extend_type_t<name>
 
 #define DB_META(name, ...) EMMBED_DB_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
 

@@ -1,6 +1,4 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <network/base/auto_mocker.h>
+#include "common.h"
 
 #include <network/serialize.hpp>
 #include <network/serialize/json_adapter.hpp>

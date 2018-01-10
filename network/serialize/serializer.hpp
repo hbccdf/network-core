@@ -51,7 +51,7 @@ namespace cytx {
             adapter_begin_object();
             for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)
             {
-                WriteObject(v, is_last, std::false_type{});
+                this->WriteObject(v, is_last, std::false_type{});
             });
             adapter_end_object(is_last);
         }
@@ -62,7 +62,7 @@ namespace cytx {
             adapter_begin_fixed_array(std::tuple_size<T>::value);
             for_each(t, [this, bo](auto& v, size_t I, bool is_last)
             {
-                WriteObject(v, is_last, bo);
+                this->WriteObject(v, is_last, bo);
             });
             adapter_end_fixed_array(is_last);
         }

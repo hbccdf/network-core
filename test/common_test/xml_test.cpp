@@ -1,6 +1,4 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <network/base/auto_mocker.h>
+#include "common.h"
 
 #define ENUM_META_RALAX_CHECK
 #include <network/serialize.hpp>
@@ -239,7 +237,7 @@ TEST_F(xml_type, tuple)
 
 TEST_F(xml_type, tuple_and_tuple)
 {
-    std::tuple<int, int, std::tuple<string, double, bool>> v{ 5, -1234, {"hello", 3.158, true} };
+    std::tuple<int, int, std::tuple<string, double, bool>> v{ 5, -1234, std::tuple<string, double, bool>{"hello", 3.158, true} };
     assert_equal(v);
 }
 
@@ -505,19 +503,19 @@ TEST_F(xml_type, pair_with_pair)
 
 TEST_F(xml_type, tuple_with_tuple)
 {
-    std::tuple<int, std::tuple<string, int>> v{ 5,{ "world", -1234 } };
+    std::tuple<int, std::tuple<string, int>> v{ 5,std::tuple<string, int>{ "world", -1234 } };
     assert_equal(v);
 }
 
 TEST_F(xml_type, tuple_with_tuple1)
 {
-    std::tuple<int, std::tuple<string, int>, std::tuple<int, string, bool, float>> v{ 5,{ "world", -1234 }, {4, "hello", true, 3.1415926f} };
+    std::tuple<int, std::tuple<string, int>, std::tuple<int, string, bool, float>> v{ 5,std::tuple<string, int>{ "world", -1234 }, std::tuple<int, string, bool, float>{4, "hello", true, 3.1415926f} };
     assert_equal(v);
 }
 
 TEST_F(xml_type, pair_with_tuple)
 {
-    std::pair<int, std::tuple<std::tuple<string, int>, std::tuple<int, string, bool, float>, std::pair<int, int>>> v{ 5,{ { "world", -1234 },{ 4, "hello", true, 3.1415926f } , {3, 4} } };
+    std::pair<int, std::tuple<std::tuple<string, int>, std::tuple<int, string, bool, float>, std::pair<int, int>>> v{ 5,std::tuple<std::tuple<string, int>, std::tuple<int, string, bool, float>, std::pair<int, int>>{ std::tuple<string, int>{ "world", -1234 },std::tuple<int, string, bool, float>{ 4, "hello", true, 3.1415926f } , {3, 4} } };
     assert_equal(v);
 }
 
@@ -529,7 +527,7 @@ TEST_F(xml_type, tuple_with_pair)
 
 TEST_F(xml_type, tuple_with_pair_with_tuple)
 {
-    std::tuple<int, std::pair<string, std::tuple<int, string, int>>> v{ 5,{ "world", {3, "hello", -1234 } } };
+    std::tuple<int, std::pair<string, std::tuple<int, string, int>>> v{ 5,{ "world", std::tuple<int, string, int>{3, "hello", -1234 } } };
     assert_equal(v);
 }
 
@@ -552,7 +550,7 @@ TEST_F(xml_type, struct_with_tuple)
         std::tuple<int, string, int> p;
         META(p);
     };
-    st v{ { 3, "test", -19 } };
+    st v{ std::tuple<int, string, int>{ 3, "test", -19 } };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
 }
@@ -564,7 +562,7 @@ TEST_F(xml_type, struct_with_pair_with_tuple)
         std::pair<string, std::tuple<int, string, int>> p;
         META(p);
     };
-    st v{ {"just_test",{ 3, "test", -19 } } };
+    st v{ {"just_test",std::tuple<int, string, int>{ 3, "test", -19 } } };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
 }
@@ -576,7 +574,7 @@ TEST_F(xml_type, struct_with_tuple_with_pair)
         std::tuple<string, int, std::tuple<string, int>> p;
         META(p);
     };
-    st v{ { "just_test",3, { "test", -19 } } };
+    st v{ std::tuple<string, int, std::tuple<string, int>>{ "just_test",3, std::tuple<string, int>{ "test", -19 } } };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
 }
@@ -589,7 +587,7 @@ TEST_F(xml_type, struct_with_tuple_and_pair)
         std::pair<float, string> p;
         META(t, p);
     };
-    st v{ { "just_test",3,{ "test", -19 } }, {-3.14f, "helow"} };
+    st v{ std::tuple<string, int, std::tuple<string, int>>{ "just_test",3,std::tuple<string, int>{ "test", -19 } }, {-3.14f, "helow"} };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
     assert_val_equal(v.t, dv.t);
@@ -604,7 +602,7 @@ TEST_F(xml_type, struct_with_reverse_order)
         int i;
         META(i, p, t);
     };
-    st v{ { "just test",3,{ "test", -19 } },{ -3.14f, "helow" }, 9 };
+    st v{ std::tuple<string, int, std::tuple<string, int>>{ "just test",3,std::tuple<string, int>{ "test", -19 } },{ -3.14f, "helow" }, 9 };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
     assert_val_equal(v.t, dv.t);
@@ -833,7 +831,7 @@ TEST_F(xml_type, not_all_xml_with_tuple)
         std::tuple<int, int> p;
         META(i, p);
     };
-    st v{ 1,{ 2, 3 } };
+    st v{ 1,std::tuple<int, int>{ 2, 3 } };
     auto dv = get_de<st>(R"(<+><p><+>2</+><+>3</+></p></+>)");
     assert_val_equal(v.p, dv.p);
 }
@@ -853,7 +851,7 @@ TEST_F(xml_type, not_all_xml_with_struct)
         person pe;
         META(i, p, pe);
     };
-    st v{ 1,{ 2, 3 }, {3, 3.9f} };
+    st v{ 1,std::tuple<int, int>{ 2, 3 }, {3, 3.9f} };
     auto dv = get_de<st>(R"(<+><i>1</i><pe><f>3.9</f></pe></+>)");
     assert_val_equal(v.i, dv.i);
     assert_val_equal(v.pe.f, dv.pe.f);

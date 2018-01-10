@@ -7,7 +7,37 @@
 using namespace cytx;
 using namespace std;
 using namespace boost::program_options;
-namespace bpo = boost::program_options;
+
+template<typename T>
+void assert_val_equal(T&& v, T&& dv)
+{
+    assert_eq(v, dv);
+}
+template<>
+void assert_val_equal<float>(float&& v, float&& dv)
+{
+    assert_float_eq(v, dv);
+}
+template<>
+void assert_val_equal<double>(double&& v, double&& dv)
+{
+    assert_double_eq(v, dv);
+}
+
+template<typename T, size_t N>
+void assert_val_equal(T(&v)[N], T(&dv)[N])
+{
+    for (size_t i = 0; i < N; ++i)
+    {
+        assert_val_equal(v[i], dv[i]);
+    }
+}
+
+template<size_t N>
+void assert_val_equal(char(&v)[N], char(&dv)[N])
+{
+    assert_streq(v, dv);
+}
 
 class bpo_type : public ::testing::Test
 {
@@ -20,61 +50,6 @@ public:
     }
 
     virtual void TearDown() {}
-
-    template<typename T>
-    void assert_val_equal(T&& v, T&& dv)
-    {
-        assert_eq(v, dv);
-    }
-    template<>
-    void assert_val_equal<float>(float&& v, float&& dv)
-    {
-        assert_float_eq(v, dv);
-    }
-    template<>
-    void assert_val_equal<double>(double&& v, double&& dv)
-    {
-        assert_double_eq(v, dv);
-    }
-
-    template<typename T, size_t N>
-    void assert_val_equal(T(&v)[N], T(&dv)[N])
-    {
-        for (size_t i = 0; i < N; ++i)
-        {
-            assert_val_equal(v[i], dv[i]);
-        }
-    }
-
-    template<size_t N>
-    void assert_val_equal(char(&v)[N], char(&dv)[N])
-    {
-        assert_streq(v, dv);
-    }
-
-    template<typename T>
-    void assert_equal(T&& v)
-    {
-        using value_t = std::decay_t<T>;
-        value_t dv;
-        se.Serialize(v);
-        auto str = se.get_adapter().str();
-        de.parse(str);
-        de.DeSerialize(dv);
-        assert_val_equal(v, dv);
-    }
-
-    template<typename T, size_t N>
-    void assert_equal(T(&v)[N])
-    {
-        using value_t = std::decay_t<T>;
-        value_t dv[N];
-        se.Serialize(v);
-        auto str = se.get_adapter().str();
-        de.parse(str);
-        de.DeSerialize(dv);
-        assert_val_equal(v, dv);
-    }
 
     template<typename T>
     T get_de(const bpo::options_description& op, vector<string>& v)

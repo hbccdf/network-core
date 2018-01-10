@@ -26,9 +26,9 @@ DB_META(t_server, id, name, ip, port, valid);
 
 int main(int argc, char **argv)
 {
-    cout << db_meta<t_server>::value << endl;
+    /*cout << db_meta<t_server>::value << endl;
     cout << db_meta<t_server>::meta_name() << endl;
-    cout << get_name<t_server>() << endl;
+    cout << get_name<t_server>() << endl;*/
 
     auto t_server_size = sizeof(t_server);
     auto str_size = sizeof(string);
@@ -44,7 +44,11 @@ int main(int argc, char **argv)
 
     table_factory::instance().register_table<t_server>(sql);
 
+#ifdef LINUX
     smart_db db("ip=localhost;port=3306;user=root;pwd=123456");
+#else
+    smart_db db("ip=localhost;port=3306;user=root;pwd=123456");
+#endif
     try
     {
         db.connect();

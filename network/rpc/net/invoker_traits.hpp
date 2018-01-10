@@ -1,5 +1,5 @@
 #pragma once
-#include "../traits/traits.hpp"
+#include "network/traits/traits.hpp"
 
 namespace cytx {
     namespace rpc
@@ -85,7 +85,7 @@ namespace cytx {
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
                     invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
@@ -96,7 +96,7 @@ namespace cytx {
 
                         header.reply(true);
                     }
-                    auto ctx = context_t::make_message(conn->get_io_service(), header, context_t::buffer_t{});
+                    auto ctx = context_t::make_message(conn->get_io_service(), header, typename context_t::buffer_t{});
                     conn->response(ctx);
                 };
                 return invoker;
@@ -118,7 +118,7 @@ namespace cytx {
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
                     invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
@@ -129,7 +129,7 @@ namespace cytx {
 
                         header.reply(true);
                     }
-                    auto ctx = context_t::make_message(conn->get_io_service(), header, context_t::buffer_t{}, [conn, &p] { p(conn); });
+                    auto ctx = context_t::make_message(conn->get_io_service(), header, typename context_t::buffer_t{}, [conn, &p] { p(conn); });
                     conn->response(ctx);
                 };
                 return invoker;
@@ -157,7 +157,7 @@ namespace cytx {
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
@@ -191,7 +191,7 @@ namespace cytx {
                     auto recv_proto = header.proto();
                     using tuple_type = std::tuple<connection_ptr, header_type&>;
                     using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
-                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), { conn, header });
+                    auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
                     auto result = invoker_call_handler(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
