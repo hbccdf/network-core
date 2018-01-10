@@ -39,7 +39,7 @@ namespace cytx {
             template <typename Handler, typename PostFunc>
             bool register_handler(std::string const& name, Handler&& handler, PostFunc&& post_func)
             {
-                return router_.template register_invoker(name, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
+                return router_.template register_invoker<Handler, PostFunc>(name, std::forward<Handler>(handler), std::forward<PostFunc>(post_func));
             }
 
             template <typename CallCodecPolicy, typename Handler, typename PostFunc>
@@ -51,7 +51,7 @@ namespace cytx {
             template <typename Handler>
             bool register_handler(std::string const& name, Handler&& handler)
             {
-                return router_.template register_invoker(name, std::forward<Handler>(handler));
+                return router_.template register_invoker<Handler>(name, std::forward<Handler>(handler));
             }
 
             template <typename CallCodecPolicy, typename Handler>

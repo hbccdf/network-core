@@ -46,12 +46,6 @@ constexpr static const std::array<const char*, N> _arr = {MAKE_DB_NAMES(name, MA
 inline auto to_db_extend(name const*) {  \
 return db_meta_##name{}; \
 }\
-using name##_query = cytx::get_db_extend_type_t<name>
+using name##_query = cytx::detail::get_db_extend_type_t<name>
 
 #define DB_META(name, ...) EMMBED_DB_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
-
-template<typename T>
-struct db_meta : public std::false_type {};
-
-template<typename T>
-constexpr bool db_meta_v = db_meta<std::decay_t<T>>::value;

@@ -21,7 +21,7 @@ namespace CytxGame
     };
     REG_ENUM(room_mode, moba, tripartite, free);
 
-    using player_type = ::ClassType::type;
-    REG_ENUM(player_type, DRIVER, SHOOTER);
-
 }
+
+using player_type = ::ClassType::type;
+REG_ENUM(player_type, DRIVER, SHOOTER);

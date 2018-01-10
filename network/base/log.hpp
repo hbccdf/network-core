@@ -2,7 +2,7 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <boost/filesystem.hpp>
-#include "../meta/meta.hpp"
+#include "network/meta/meta.hpp"
 
 namespace cytx
 {
@@ -39,12 +39,18 @@ namespace cytx
         }
     };
 
+#ifdef LINUX
+    using color_out_t = spdlog::sinks::ansicolor_sink;
+#else
+    using color_out_t = spdlog::sinks::wincolor_stdout_sink_mt;
+#endif
+
     using log_ptr_t = std::shared_ptr<spdlog::logger>;
 
     using file_sink_t = spdlog::sinks::rotating_file_sink_mt;
     using file_sink_ptr_t = std::shared_ptr<file_sink_t>;
 
-    using console_sink_t = spdlog::sinks::wincolor_stdout_sink_mt;
+    using console_sink_t = color_out_t;
     using console_sink_ptr_t = std::shared_ptr<console_sink_t>;
 
     using log_msg_t = spdlog::details::log_msg;
@@ -55,7 +61,7 @@ namespace cytx
     public:
         log_sink_manager()
         {
-            console_sink_ = std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>();
+            console_sink_ = std::make_shared<color_out_t>();
         }
     public:
         static console_sink_ptr_t get_console_sink()
@@ -154,12 +160,6 @@ namespace cytx
         log_func_t func_;
         bool show_time_;
     };
-
-#ifdef LINUX
-    using color_out_t = spdlog::sinks::ansicolor_sink;
-#else
-    using color_out_t = spdlog::sinks::wincolor_stdout_sink_mt;
-#endif
 
     class log
     {
@@ -305,20 +305,6 @@ namespace cytx
         }
 
     private:
-        static std::shared_ptr<color_out_t> get_stdout_sink()
-        {
-            static std::shared_ptr<color_out_t> out_sink_;
-            if (out_sink_ == nullptr)
-            {
-#ifdef LINUX
-                out_sink_ = std::make_shared<color_out_t>(std::make_shared<spdlog::sinks::stdout_sink_mt>());
-#else
-                out_sink_ = std::make_shared<color_out_t>();
-#endif
-            }
-            return out_sink_;
-        }
-
         log(const log&) = delete;
         log(log&&) = delete;
 
@@ -327,6 +313,13 @@ namespace cytx
 
 }
 
+#ifdef LOG_INFO
+#undef LOG_INFO
+#endif
+
+#ifdef LOG_ERROR
+#undef LOG_ERROR
+#endif
 
 template<typename... Args>
 static inline void LOG_TRACE(const char* fmt, const Args&... args)

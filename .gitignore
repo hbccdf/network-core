@@ -1,4 +1,5 @@
 /build
+/buildlinux
 /bin64
 /libs64
 /tool/gen/gen-cpp
