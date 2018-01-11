@@ -1,5 +1,4 @@
 include(../../cmake/common.cmake)
-include_directories(${ROOT})
 
 add_executable(server_example server_example.cpp)
 set_target_properties(server_example PROPERTIES FOLDER "example")

@@ -29,25 +29,25 @@ if(NOT INCLUDED_COMMON)
 
     include(boost)
     if(MSVC)
-    add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_WIN32_WINNT=0x601 -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DFMT_HEADER_ONLY -DNOMINMAX)
- 
+        add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_WIN32_WINNT=0x601 -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DFMT_HEADER_ONLY -DNOMINMAX)
+     
+            
+        include(thrift)
+        set(THRIFT_LIB_NAME libthrift)
         
-    include(thrift)
-    set(THRIFT_LIB_NAME libthrift)
-    
-    # generator .brc file, to analize code graph
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FR")
-    
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /IMPLIB:")
-    
-    #/Wall /WX
-    
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  /ZI /Gm")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi /Gy /Oi /GL")
-    
-    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /IMPLIB:")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF /LTCG:incremental")
+        # generator .brc file, to analize code graph
+        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FR")
+        
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /IMPLIB:")
+        
+        #/Wall /WX
+        
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  /ZI /Gm")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi /Gy /Oi /GL")
+        
+        #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /IMPLIB:")
+        set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF /LTCG:incremental")
     else()
         add_definitions(-DGNU_SOURCE -DLINUX -DFMT_HEADER_ONLY -DNOMINMAX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -fpermissive -g")
@@ -58,7 +58,8 @@ if(NOT INCLUDED_COMMON)
             boost_filesystem
             boost_system
             boost_serialization
-            boost_program_options)
+            boost_program_options
+            boost_date_time)
     endif()
 
 
@@ -69,6 +70,7 @@ if(NOT INCLUDED_COMMON)
     include_directories(
         ${INCLUDE_DIRS}
         ${BOOST_DIR}
+        ${ROOT}
         ${ROOT}/third_party
         ${ROOT}/third_party/fmt
         ${ROOT}/third_party/rapidjson/include
@@ -76,14 +78,6 @@ if(NOT INCLUDED_COMMON)
         ${ROOT}/third_party/dir_monitor/src
         ${ROOT}/third_party/Boost.Application/include
         )
-
-    if(MSVC)
-        set(MYSQL_LIB_NAME libmysql)
-        include_directories(${ROOT}/third_party/mysql/include)
-    else()
-        include(FindMySQL)
-        set(MYSQL_LIB_NAME mysqlclient)
-    endif()
 
     link_directories(
         ${LIB_OUTPUT_DIR}

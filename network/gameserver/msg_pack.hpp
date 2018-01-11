@@ -173,7 +173,7 @@ namespace cytx
             detail::msg_ptr msg = std::make_shared<detail::msg_t>();
             detail::gos_t gos;
 
-            char a[] = { (detail::pack_msg_impl(gos, args, is_big_endian), 0) ... };
+            int a[] = { (detail::pack_msg_impl(gos, args, is_big_endian), 0) ... };
 
             msg->reset(gos);
             return msg;
@@ -184,7 +184,7 @@ namespace cytx
         {
             bool is_big_endian = detail::header_t::big_endian();
 
-            char a[] = { (detail::pack_msg_impl(gos, args, is_big_endian), 0) ... };
+            int a[] = { (detail::pack_msg_impl(gos, args, is_big_endian), 0) ... };
         }
 
         inline detail::msg_ptr pack_msg()
@@ -205,7 +205,7 @@ namespace cytx
             bool is_big_endian = detail::header_t::big_endian();
             detail::gos_t gos = msgp->get_stream();
 
-            char a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
+            int a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
         }
 
         template<typename T>
@@ -219,7 +219,7 @@ namespace cytx
         {
             bool is_big_endian = detail::header_t::big_endian();
 
-            char a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
+            int a[] = { (detail::unpack_msg_impl(gos, args, is_big_endian), 0) ... };
         }
 
         template<typename T>

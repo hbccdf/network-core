@@ -108,7 +108,7 @@ namespace cytx {
                 if (reply_protocol_id != 0)
                     return reply_protocol_id;
                 else
-                    return cytx::rpc::reply_protocol(head.protocol_id);
+                    return cytx::reply_protocol(head.protocol_id);
             }
 
             bool have_reply_process() const

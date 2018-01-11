@@ -51,19 +51,21 @@ namespace cytx
                     dismiss_ = true;
                     if (client_->is_client() && client_->status() == status_t::disconnected)
                     {
-                        auto on_ok_func = [c = client_, ctx = ctx_]() mutable {
-                            if (c->irouter())
+                        auto on_ok_func = [c = client_, ctx = ctx_]() mutable
+                        {
+                            if (c->get_irouter())
                             {
-                                c->irouter()->connection_incoming(net_result(), c);
+                                c->get_irouter()->connection_incoming(net_result(), c);
                             }
                             c->call_context(ctx);
                         };
 
-                        auto on_error_func = [c = client_, ctx = ctx_](auto& ec) {
+                        auto on_error_func = [c = client_, ctx = ctx_](auto& ec)
+                        {
                             if (ctx->on_ok || ctx->on_error || ctx->barrier_ptr)
                                 ctx->error(ec);
-                            else if (c->irouter())
-                                c->irouter()->connection_incoming(ec, c);
+                            else if (c->get_irouter())
+                                c->get_irouter()->connection_incoming(ec, c);
                         };
 
                         client_->connect().on_ok(on_ok_func).on_error(on_error_func).delay(duration_);
@@ -74,7 +76,8 @@ namespace cytx
                     }
                     else
                     {
-                        auto on_timer_func = [c = std::move(client_), ctx = std::move(ctx_), t = timer_ptr_](const boost::system::error_code& ec) mutable {
+                        auto on_timer_func = [c = std::move(client_), ctx = std::move(ctx_), t = timer_ptr_](const boost::system::error_code& ec) mutable
+                        {
                             t.reset();
                             if (!ec)
                             {
@@ -533,7 +536,8 @@ namespace cytx
                 }
                 else
                 {
-                    auto on_timer_func = [c = std::move(client_), on_ok_f = std::move(on_ok_), on_err_f = std::move(on_error_), t = timer_ptr_](const boost::system::error_code& ec) mutable {
+                    auto on_timer_func = [c = std::move(client_), on_ok_f = std::move(on_ok_), on_err_f = std::move(on_error_), t = timer_ptr_](const boost::system::error_code& ec) mutable
+                    {
                         t.reset();
                         if (!ec)
                         {
@@ -551,7 +555,8 @@ namespace cytx
                     dismiss_ = true;
                     if (timeout_duration_.count() > 0)
                     {
-                        auto on_timer_func = [b = barrier_ptr_, r = result_](auto& ec) {
+                        auto on_timer_func = [b = barrier_ptr_, r = result_](auto& ec)
+                        {
                             if (b->is_over())
                                 return;
                             if (ec)

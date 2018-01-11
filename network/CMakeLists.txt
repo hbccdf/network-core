@@ -1,4 +1,4 @@
-
+include(../cmake/common.cmake)
 
 file(GLOB SRC "*.h" "*.hpp")
 

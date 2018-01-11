@@ -1,7 +1,7 @@
 #pragma once
 #include <fmt/format.h>
-#include "../base/GameObjectStream.h"
-#include "../base/utils.hpp"
+#include "network/base/GameObjectStream.h"
+#include "network/base/utils.hpp"
 #include "serializer.hpp"
 #include "deserializer.hpp"
 #include <thrift/transport/TTransportException.h>

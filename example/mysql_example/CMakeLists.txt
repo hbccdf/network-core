@@ -1,5 +1,12 @@
 include(../../cmake/common.cmake)
-include_directories(${ROOT})
+
+if(MSVC)
+    set(MYSQL_LIB_NAME libmysql)
+    include_directories(${ROOT}/third_party/mysql/include)
+else()
+    include(FindMySQL)
+    set(MYSQL_LIB_NAME mysqlclient)
+endif()
 
 add_executable(mysql_example mysql_example.cpp)
 set_target_properties(mysql_example PROPERTIES FOLDER "example")

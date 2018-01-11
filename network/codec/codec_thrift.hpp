@@ -1,5 +1,6 @@
 #pragma once
-#include "../serialize/thrift_adapter.hpp"
+#include "network/base/excetion.hpp"
+#include "network/serialize/thrift_adapter.hpp"
 #include "codec_common.hpp"
 
 namespace cytx {
@@ -23,7 +24,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::net_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(cytx::error_code::codec_fail, e.what());
                 }
             }
 
@@ -35,11 +36,11 @@ namespace cytx {
                     GameObjectStream gos(const_cast<char*>(data), (int)length, 0);
                     DeSerializer<thrift_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple), gos);
 
-                    return dr.GetTuple<T>();
+                    return dr.template GetTuple<T>();
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::net_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(cytx::error_code::codec_fail, e.what());
                 }
             }
 
@@ -56,7 +57,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::net_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(cytx::error_code::codec_fail, e.what());
                 }
             }
 
@@ -67,11 +68,11 @@ namespace cytx {
                 {
                     DeSerializer<thrift_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple), gos);
 
-                    return dr.GetTuple<T>();
+                    return dr.template GetTuple<T>();
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::net_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(cytx::error_code::codec_fail, e.what());
                 }
             }
 
@@ -96,7 +97,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::net_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(cytx::error_code::codec_fail, e.what());
                 }
             }
 
@@ -117,7 +118,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::net_exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(cytx::error_code::codec_fail, e.what());
                 }
             }
         };

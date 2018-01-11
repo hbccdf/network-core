@@ -7,3 +7,4 @@ if (!name)                                                      \
     LOG_ERROR("battle manager is not exist");                   \
     return;                                                     \
 }
+

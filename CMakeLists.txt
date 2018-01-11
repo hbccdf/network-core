@@ -12,7 +12,6 @@ endif(CCACHE_FOUND)
 
 project(netrowk-core)
 
-#set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
 set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 

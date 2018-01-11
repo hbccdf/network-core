@@ -21,6 +21,9 @@ namespace std
     };
     template <typename ... Args>
     using void_t = typename voider<Args...>::type;
+
+    template<typename T>
+    constexpr static bool is_void_v = std::is_void<T>::value;
 }
 #endif
 

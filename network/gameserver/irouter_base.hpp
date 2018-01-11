@@ -1,5 +1,5 @@
 #pragma once
-#include "../base/excetion.hpp"
+#include "network/base/excetion.hpp"
 namespace cytx
 {
     namespace gameserver
@@ -25,7 +25,7 @@ namespace cytx
         class irouter : public irouter_base<CONN_T>
         {
         public:
-            using base_t = irouter_base;
+            using base_t = irouter_base<CONN_T>;
             using conn_t = typename base_t::conn_t;
             using connection_ptr = typename base_t::connection_ptr;
             using msg_t = typename base_t::msg_t;

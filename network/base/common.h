@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include "../meta/meta.hpp"
+#include "network/meta/meta.hpp"
 
 namespace cytx {
     // 4 byte

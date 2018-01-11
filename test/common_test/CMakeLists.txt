@@ -1,5 +1,5 @@
 include(../../cmake/common.cmake)
-include_directories(${ROOT}
+include_directories(
     ${ROOT}/third_party/googletest-release-1.8.0/googlemock/include
 	${ROOT}/third_party/googletest-release-1.8.0/googletest/include
     ${ROOT}/third_party/CppFreeMock)

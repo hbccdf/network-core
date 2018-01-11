@@ -1,4 +1,5 @@
 #include "arena_battle.h"
+#include <network/base/log.hpp>
 
 namespace CytxGame
 {

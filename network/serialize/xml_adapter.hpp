@@ -170,8 +170,8 @@ namespace cytx
 
             void write_key_name(const std::string& str) { write_key(str); }
 
-            template<typename T>
-            void write_key(T&& t)
+            template<typename T1>
+            void write_key(T1&& t)
             {
                 if (cur_node_.type == node_type::null)
                 {
@@ -198,8 +198,8 @@ namespace cytx
                 }
             }
 
-            template<typename T>
-            void write(T&& t)
+            template<typename T1>
+            void write(T1&& t)
             {
                 if (cur_node_.type == node_type::array)
                 {
@@ -341,8 +341,8 @@ namespace cytx
                 return val.to_iterator(it);
             }
 
-            template<typename T>
-            void read(T& t, value_t& val)
+            template<typename T1>
+            void read(T1& t, value_t& val)
             {
                 auto& str = val.data();
                 auto pos = val.data().find("$(");
@@ -360,12 +360,12 @@ namespace cytx
                             new_str = str;
                             new_str.replace(pos, end_pos - pos + 1, str_prop.c_str());
                         }
-                        t = util::cast<T>(new_str);
+                        t = util::cast<T1>(new_str);
                     }
                 }
                 else
                 {
-                    t = val.get_value<T>();
+                    t = val.get_value<T1>();
                 }
             }
 

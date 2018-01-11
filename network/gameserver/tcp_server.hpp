@@ -10,19 +10,19 @@ namespace cytx
 #define NET_LOG(level, str, ...)                \
 if(log_)                                        \
 {                                               \
-    log_->## level ## (str, __VA_ARGS__);       \
+    log_->level(str, ## __VA_ARGS__);           \
 }
 
 #define NET_DEBUG(str, ...)                     \
 if(log_)                                        \
 {                                               \
-    log_->debug(str, __VA_ARGS__);              \
+    log_->debug(str, ## __VA_ARGS__);           \
 }
 
 #define NET_TRACE(str, ...)                     \
 if(log_)                                        \
 {                                               \
-    log_->trace(str, __VA_ARGS__);              \
+    log_->trace(str, ## __VA_ARGS__);           \
 }
 
         enum class server_thread_mode : uint8_t
@@ -54,7 +54,7 @@ if(log_)                                        \
             }
         }
 
-        template<typename MSG = server_msg>
+        template<typename MSG = server_msg<msg_header>>
         class tcp_server
         {
         public:

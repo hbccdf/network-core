@@ -1,5 +1,4 @@
 include(../../cmake/common.cmake)
-include_directories(${ROOT})
 
 add_executable(async_client_example async_client_example.cpp)
 set_target_properties(async_client_example PROPERTIES FOLDER "example")

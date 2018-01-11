@@ -1,11 +1,11 @@
 #pragma once
-#include "../base/utils.hpp"
-#include "../base/cast.hpp"
+#include "network/base/utils.hpp"
+#include "network/base/cast.hpp"
 #include "tcp_server.hpp"
 #include "server_config.hpp"
 #include "msg_pack.hpp"
 #include "protocol.hpp"
-#include "../service/service_manager.hpp"
+#include "network/service/service_manager.hpp"
 #include "config_service.hpp"
 
 namespace cytx
@@ -16,19 +16,19 @@ namespace cytx
 #define SERVER_LOG(level, str, ...)             \
 if(log_)                                        \
 {                                               \
-    log_->## level ## (str, __VA_ARGS__);       \
+    log_->level(str, ## __VA_ARGS__);           \
 }
 
 #define SERVER_DEBUG(str, ...)                  \
 if(log_)                                        \
 {                                               \
-    log_->debug(str, __VA_ARGS__);              \
+    log_->debug(str, ## __VA_ARGS__);           \
 }
 
 #define SERVER_TRACE(str, ...)                  \
 if(log_)                                        \
 {                                               \
-    log_->trace(str, __VA_ARGS__);              \
+    log_->trace(str, ## __VA_ARGS__);           \
 }
         namespace detail
         {
@@ -358,7 +358,7 @@ if(log_)                                        \
                     return new_msgp->total_length();
                 }
             public:
-                template<typename RETURN_T, typename MSG_ID, typename T>
+                /*template<typename RETURN_T, typename MSG_ID, typename T>
                 void async_await_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t, std::function<void(RETURN_T)>&& func, const msg_ptr& request_msgp = nullptr)
                 {
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
@@ -378,7 +378,7 @@ if(log_)                                        \
                         RETURN_T ret = unpack_msg<RETURN_T>(msgp);
                         f(ret);
                     });
-                }
+                }*/
             protected:
                 void on_connect(connection_ptr& conn_ptr, const net_result& err) override
                 {
@@ -464,7 +464,7 @@ if(log_)                                        \
                     send_raw_msg(conn_ptr, msgp);
                     return msgp->total_length();
                 }
-                template<typename RETURN_T, typename MSG_ID, typename T>
+                /*template<typename RETURN_T, typename MSG_ID, typename T>
                 RETURN_T async_await_msg1(server_unique_id unique_id, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
                 {
                     RETURN_T ret{};
@@ -484,7 +484,7 @@ if(log_)                                        \
                     msg_ptr msgp = conn_ptr->await_write(send_msgp);
                     ret = unpack_msg<RETURN_T>(msgp);
                     return ret;
-                }
+                }*/
 
                 void send_raw_msg(connection_ptr& conn_ptr, msg_ptr& msgp)
                 {

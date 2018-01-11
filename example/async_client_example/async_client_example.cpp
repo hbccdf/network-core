@@ -132,10 +132,13 @@ void on_call(int r)
     test_call();
 }
 
+
+void test_delay();
 void test_call()
 {
     asy_client.call(client::add, 1, 2).on_ok(on_call)
-        .on_error([](auto& ec) {
+        .on_error([](auto& ec)
+    {
         test_delay();
     }).delay(1);
 }
@@ -203,11 +206,13 @@ void test_connect()
 
 void test_delay()
 {
-    asy_client.connect().on_ok([] {
+    asy_client.connect().on_ok([]
+    {
         on_connect(cytx::net_result());
         test_call();
     })
-     .on_error([](auto& ec) {
+     .on_error([](auto& ec)
+    {
         on_connect(ec);
         test_delay();
     }).delay(std::chrono::seconds(3));

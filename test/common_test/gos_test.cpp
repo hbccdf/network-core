@@ -22,17 +22,17 @@ public:
     virtual void TearDown() {}
 
     template<typename T>
-    void assert_val_equal(T&& v, T&& dv)
+    auto assert_val_equal(T&& v, T&& dv)-> std::enable_if_t<!std::is_floating_point<T>::value>
     {
         assert_eq(v, dv);
     }
-    template<>
-    void assert_val_equal<float>(float&& v, float&& dv)
+    template<typename T>
+    auto assert_val_equal(T&& v, T&& dv) -> std::enable_if_t<std::is_same<T, float>::value>
     {
         assert_float_eq(v, dv);
     }
-    template<>
-    void assert_val_equal<double>(double&& v, double&& dv)
+    template<typename T>
+    auto assert_val_equal(T&& v, T&& dv) -> std::enable_if_t<std::is_same<T, double>::value>
     {
         assert_double_eq(v, dv);
     }

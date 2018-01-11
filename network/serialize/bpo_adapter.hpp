@@ -44,10 +44,12 @@ namespace cytx
 
         void parse(const char* cmd_line)
         {
-            vm_.clear();
+#ifdef LINUX
+            std::vector<std::string> args = bpo::split_unix(cmd_line);
+#else
             std::vector<std::string> args = bpo::split_winmain(cmd_line);
-            bpo::store(bpo::command_line_parser(args).options(ops_).run(), vm_);
-            bpo::notify(vm_);
+#endif
+            parse(args);
         }
 
         void parse(const std::vector<std::string>& args)
@@ -59,36 +61,29 @@ namespace cytx
 
         void parse(size_t argc, const char* const argv[], const bpo::options_description& op)
         {
-            vm_.clear();
             for (auto& o : op.options())
             {
                 ops_.add(o);
             }
-            bpo::store(bpo::parse_command_line((int)argc, argv, ops_), vm_);
-            bpo::notify(vm_);
+            parse(argc, argv);
         }
 
         void parse(const char* cmd_line, const bpo::options_description& op)
         {
-            vm_.clear();
             for (auto& o : op.options())
             {
                 ops_.add(o);
             }
-            std::vector<std::string> args = bpo::split_winmain(cmd_line);
-            bpo::store(bpo::command_line_parser(args).options(ops_).run(), vm_);
-            bpo::notify(vm_);
+            parse(cmd_line);
         }
 
         void parse(const std::vector<std::string>& args, const bpo::options_description& op)
         {
-            vm_.clear();
             for (auto& o : op.options())
             {
                 ops_.add(o);
             }
-            bpo::store(bpo::command_line_parser(args).options(ops_).run(), vm_);
-            bpo::notify(vm_);
+            parse(args);
         }
 
         template<typename T>
@@ -115,9 +110,10 @@ namespace cytx
         template<typename T>
         auto DeSerialize(T& t) -> std::enable_if_t<is_user_class<T>::value>
         {
-            for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)
+            auto meta_val = get_meta(t);
+            for_each(meta_val, [this](auto& v, size_t I, bool is_last)
             {
-                ReadTuplePair(v);
+                this->ReadTuplePair(v);
             });
         }
 

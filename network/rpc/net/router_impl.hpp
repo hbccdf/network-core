@@ -146,9 +146,9 @@ namespace cytx
                 auto itr = this->invokers_.find(header.proto());
                 if (this->invokers_.end() == itr)
                 {
-                    if (conn->irouter())
+                    if (conn->get_irouter())
                     {
-                        conn->irouter()->message_received(conn, header, const_cast<char*>(data), size);
+                        conn->get_irouter()->message_received(conn, header, const_cast<char*>(data), size);
                     }
                     else if (header.need_reply())
                     {

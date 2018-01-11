@@ -4,10 +4,19 @@
 #include <boost/filesystem.hpp>
 #include "network/meta/meta.hpp"
 
+
+namespace spdlog
+{
+    namespace level
+    {
+        using log_level_t = level_enum;
+        REG_ENUM(log_level_t, trace, debug, info, warn, err, critical, off);
+    }
+}
+
 namespace cytx
 {
     using log_level_t = spdlog::level::level_enum;
-    REG_ENUM(log_level_t, trace, debug, info, warn, err, critical, off);
 
     namespace fs = boost::filesystem;
 
@@ -61,7 +70,11 @@ namespace cytx
     public:
         log_sink_manager()
         {
+#ifdef LINUX
+            console_sink_ = std::make_shared<color_out_t>(std::make_shared<spdlog::sinks::stdout_sink_mt>());
+#else
             console_sink_ = std::make_shared<color_out_t>();
+#endif
         }
     public:
         static console_sink_ptr_t get_console_sink()

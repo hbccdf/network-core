@@ -9,19 +9,19 @@ namespace cytx
 #define TIMER_LOG(level, str, ...)              \
 if(log_)                                        \
 {                                               \
-    log_->## level ## (str, __VA_ARGS__);       \
+    log_->level(str,  ## __VA_ARGS__);          \
 }
 
 #define TIMER_DEBUG(str, ...)                   \
 if(log_)                                        \
 {                                               \
-    log_->debug(str, __VA_ARGS__);              \
+    log_->debug(str, ## __VA_ARGS__);           \
 }
 
 #define TIMER_TRACE(str, ...)                   \
 if(log_)                                        \
 {                                               \
-    log_->trace(str, __VA_ARGS__);              \
+    log_->trace(str, ## __VA_ARGS__);           \
 }
 
     class timer_manager;

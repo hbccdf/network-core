@@ -13,13 +13,6 @@
 
 #include "network/traits/traits.hpp"
 
-#include <fmt/format.h>
-#include <boost/optional.hpp>
-#include <vector>
-#include <map>
-#include <memory>
-#include <cstdint>
-
 namespace cytx
 {
     inline void to_enum_extend(...) {}
@@ -231,6 +224,11 @@ namespace cytx
             constexpr static int value = tuple_total_size<typename get_meta_impl<T>::type::meta_type>::value;
         };
 
+        template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
+        {
+            constexpr static int value = tuple_total_size<typename get_meta_impl<T>::type::meta_type>::value;
+        };
+
         template<typename F, typename T>
         struct is_result_bool
         {
@@ -288,25 +286,27 @@ namespace cytx
     template<size_t I, typename T>
     constexpr auto get(T&& t)
     {
-        return detail::get_meta_elem_impl<T>::get<I>(std::forward<T>(t));
+        return detail::get_meta_elem_impl<T>::template get<I>(std::forward<T>(t));
     }
 
     template<size_t I, typename T, typename MetaTuple>
     constexpr auto get(T&& t, MetaTuple&& tp)
     {
-        return detail::get_meta_elem_impl<T>::get<I>(std::forward<T>(t), std::forward<MetaTuple>(tp));
+        return detail::get_meta_elem_impl<T>::template get<I>(std::forward<T>(t), std::forward<MetaTuple>(tp));
     }
 
     template<size_t I, typename F, typename T>
-    auto apply_value(F&& f, T&& t, bool is_last) -> std::enable_if_t<detail::is_result_bool<F, T>::value, bool>
+    auto apply_value(F&& f, T&& t, bool is_last) -> std::enable_if_t<!std::is_void<decltype(f(t, I, is_last))>::value, bool>
     {
-        return std::forward<F>(f)(std::forward<T>(t), I, is_last);
+        //return std::forward<F>(f)(std::forward<T>(t), I, is_last);
+        return f(t, I, is_last);
     };
 
     template<size_t I, typename F, typename T>
-    auto apply_value(F&& f, T&& t, bool is_last) -> std::enable_if_t<!detail::is_result_bool<F, T>::value, bool>
+    auto apply_value(F&& f, T&& t, bool is_last) -> std::enable_if_t<std::is_void<decltype(f(t, I, is_last))>::value, bool>
     {
-        std::forward<F>(f)(std::forward<T>(t), I, is_last);
+        //std::forward<F>(f)(std::forward<T>(t), I, is_last);
+        f(t, I, is_last);
         return true;
     };
 
@@ -453,7 +453,7 @@ namespace cytx
         };
 
         template< typename ENUM_T, typename T>
-        std::vector<std::pair<const char*, ENUM_T>> get_vec(T& t)
+        std::vector<std::pair<const char*, ENUM_T>> get_vec(const T& t)
         {
             std::vector<std::pair<const char*, ENUM_T>> vec;
             for_each(t, [&vec](const auto& p, size_t I, bool is_last)
@@ -461,13 +461,6 @@ namespace cytx
                 vec.push_back(p);
             });
             return std::move(vec);
-        }
-
-        template<typename T>
-        int reg_enum()
-        {
-            enum_factory::instance().reg<T>();
-            return 0;
         }
 
         class enum_factory
@@ -490,19 +483,21 @@ namespace cytx
             template<typename T>
             void reg()
             {
-                const char* enum_name = get_enum_extend_type_t<T>::name();
+                using enum_type = get_enum_extend_type_t<T>;
+                const char* enum_name = enum_type::name();
                 auto it = enums_.find(std::string(enum_name));
                 if (it != enums_.end())
                     return;
 
-                auto enum_vec = get_vec<T>(get_meta<T>());
+                auto meta_value = get_meta<T>();
+                auto enum_vec = get_vec<T>(meta_value);
                 vec_t vec;
                 for (auto& p : enum_vec)
                 {
                     vec.push_back({ p.first, (uint32_t)p.second });
                 }
 
-                reg(enum_name, get_enum_extend_type_t<T>::alias_name(), std::move(vec));
+                reg(enum_name, enum_type::alias_name(), std::move(vec));
             }
 
             void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
@@ -591,6 +586,13 @@ namespace cytx
 
             map_t enums_;
         };
+
+        template<typename T>
+        int reg_enum()
+        {
+            enum_factory::instance().reg<T>();
+            return 0;
+        }
     }
 
 #ifdef ENUM_META_RALAX_CHECK

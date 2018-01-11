@@ -753,7 +753,7 @@ namespace cytx {
                 return{};
             }
 
-            irouter_ptr irouter() const
+            irouter_ptr get_irouter() const
             {
                 return irptr_;
             }

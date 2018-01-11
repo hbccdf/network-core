@@ -200,7 +200,7 @@ namespace cytx {
     struct has_##token \
     {   \
     private:    \
-        template <typename P, typename = decltype(std::declval<P>().##token())> \
+        template <typename P, typename = decltype(std::declval<P>().token())> \
         static std::true_type test(int); \
         template <typename P> \
         static std::false_type test(...); \
@@ -316,19 +316,19 @@ template<typename T> struct is_##token : is_specialization_of<detail::decay_t<T>
         enum {value = tuple_total_size_impl<T>::value};
         };
 
-    template<> struct tuple_total_size<bool> { enum { value = 1 }; };
-    template<> struct tuple_total_size<char> { enum { value = 1 }; };
-    template<> struct tuple_total_size<unsigned char> { enum { value = 1 }; };
-    template<> struct tuple_total_size<short> { enum { value = 2 }; };
-    template<> struct tuple_total_size<unsigned short> { enum { value = 2 }; };
-    template<> struct tuple_total_size<int> { enum { value = 4 }; };
-    template<> struct tuple_total_size<unsigned int> { enum { value = 4 }; };
-    template<> struct tuple_total_size<int64_t> { enum { value = 8 }; };
-    template<> struct tuple_total_size<uint64_t> { enum { value = 8 }; };
-    template<> struct tuple_total_size<float> { enum { value = 4 }; };
-    template<> struct tuple_total_size<double> { enum { value = 8 }; };
-    template<typename T, size_t N> struct tuple_total_size<std::array<T, N>> { enum { value = tuple_total_size<T[N]>::value }; };
-    template<typename T, size_t N> struct tuple_total_size<T[N]> { enum { value = tuple_total_size<T>::value < 0 ? -1 : tuple_total_size<T>::value * (int)N }; };
+        template<> struct tuple_total_size<bool> { enum { value = 1 }; };
+        template<> struct tuple_total_size<char> { enum { value = 1 }; };
+        template<> struct tuple_total_size<unsigned char> { enum { value = 1 }; };
+        template<> struct tuple_total_size<short> { enum { value = 2 }; };
+        template<> struct tuple_total_size<unsigned short> { enum { value = 2 }; };
+        template<> struct tuple_total_size<int> { enum { value = 4 }; };
+        template<> struct tuple_total_size<unsigned int> { enum { value = 4 }; };
+        template<> struct tuple_total_size<int64_t> { enum { value = 8 }; };
+        template<> struct tuple_total_size<uint64_t> { enum { value = 8 }; };
+        template<> struct tuple_total_size<float> { enum { value = 4 }; };
+        template<> struct tuple_total_size<double> { enum { value = 8 }; };
+        template<typename T, size_t N> struct tuple_total_size<std::array<T, N>> { enum { value = tuple_total_size<T[N]>::value }; };
+        template<typename T, size_t N> struct tuple_total_size<T[N]> { enum { value = tuple_total_size<T>::value < 0 ? -1 : tuple_total_size<T>::value * (int)N }; };
 
         template<>
         struct tuple_total_size<std::tuple<>>
@@ -347,11 +347,6 @@ template<typename T> struct is_##token : is_specialization_of<detail::decay_t<T>
         template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<std::is_enum<std::decay_t<T>>::value>>>
         {
         enum { value = tuple_total_size<std::underlying_type_t<std::decay_t<T>>>::value };
-        };
-
-        template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
-        {
-            constexpr static int value = tuple_total_size<typename meta_t<T>::meta_type>::value;
         };
 
         template<typename K, typename V>

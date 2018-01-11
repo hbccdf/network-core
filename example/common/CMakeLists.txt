@@ -1,5 +1,6 @@
+include(../../cmake/common.cmake)
 
-include_directories(${ROOT}/network ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB SRC "*.h" "*.hpp" "*.cpp")
 add_files(SRC false "proto")

@@ -31,7 +31,7 @@ namespace cytx {
                 msg_ios_.stop();
             }
         public:
-            router_t& router()
+            router_t& get_router()
             {
                 return router_;
             }
