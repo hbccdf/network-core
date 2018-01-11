@@ -1,7 +1,8 @@
 #pragma once
-#include "../serialize/serializer.hpp"
-#include "../serialize/deserializer.hpp"
-#include "../serialize/gos_adapter.hpp"
+#include "network/serialize/serializer.hpp"
+#include "network/serialize/deserializer.hpp"
+#include "network/serialize/gos_adapter.hpp"
+#include "network/base/excetion.hpp"
 #include "codec_common.hpp"
 
 namespace cytx {
