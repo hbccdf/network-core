@@ -79,21 +79,6 @@ namespace cytx
         }
 
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<T, date_time>::value, std::string>
-        {
-            return t.to_string();
-        }
-
-        template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<is_nullable<T>::value, std::string>
-        {
-            if (t)
-                return cast_string(t.get());
-            else
-                return "";
-        }
-
-        template<typename T>
         auto cast_string(const T& t) -> std::enable_if_t<is_basic_type<T>::value, std::string>
         {
             return fmt::format("{}", t);
@@ -108,6 +93,21 @@ namespace cytx
         std::string cast_string(char(&str)[N])
         {
             return str;
+        }
+
+        template<typename T>
+        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<T, date_time>::value, std::string>
+        {
+            return t.to_string();
+        }
+
+        template<typename T>
+        auto cast_string(const T& t) -> std::enable_if_t<is_nullable<T>::value, std::string>
+        {
+            if (t)
+                return cast_string(t.get());
+            else
+                return "";
         }
     }
 }
