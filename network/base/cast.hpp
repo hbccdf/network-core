@@ -1,5 +1,5 @@
 #pragma once
-#include "../meta/meta.hpp"
+#include "network/meta/meta.hpp"
 #include <fmt/format.h>
 #include <boost/lexical_cast.hpp>
 #include "date_time.hpp"

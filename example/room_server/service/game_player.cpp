@@ -2,6 +2,7 @@
 #include "game_room.h"
 #include <network/base/log.hpp>
 #include <network/base/utils.hpp>
+#include <network/base/cast.hpp>
 
 namespace CytxGame
 {

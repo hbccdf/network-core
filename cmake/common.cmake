@@ -60,6 +60,9 @@ if(NOT INCLUDED_COMMON)
             boost_serialization
             boost_program_options
             boost_date_time)
+            
+        set(THRIFT_LIB_NAME thrift)
+        include_directories(${ROOT}/thrift_party/thrift-0.10.0_linux)
     endif()
 
 
