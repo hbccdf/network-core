@@ -140,7 +140,8 @@ namespace cytx
 
                 int val_id = rd_.id(it);
                 second_type s{};
-                ReadTuple(get_meta(s), rd_.get_val(it));
+                auto meta_value = get_meta(s);
+                ReadTuple(meta_value, rd_.get_val(it));
                 t[val_id] = s;
             }
         }
@@ -223,7 +224,7 @@ namespace cytx
                     int index = it->second;
                     int field_index = index + val_index;
                     auto& str = val[field_index];
-                    ReadBase(p.second, str);
+                    this->ReadBase(p.second, str);
                 });
 
                 ++val_count;
@@ -300,7 +301,7 @@ namespace cytx
                     int index = it->second;
                     int field_index = index + val_index;
                     auto& str = val[field_index];
-                    ReadBase(p.second, str);
+                    this->ReadBase(p.second, str);
                 });
 
                 t.emplace_back(tt);
@@ -345,7 +346,7 @@ namespace cytx
         void ReadBase(char(&p)[N], const std::string& val)
         {
             val.copy(p, N);
-            p[str.length() >= N ? N - 1 : str.length()] = 0;
+            p[val.length() >= N ? N - 1 : val.length()] = 0;
         }
 
         template<typename T>

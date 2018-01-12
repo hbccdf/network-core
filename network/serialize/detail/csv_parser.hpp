@@ -33,7 +33,11 @@ namespace cytx
             public:
                 csv_exception(csv_error err_code, string err_msg) : err_code_(err_code), err_msg_(err_msg) {}
 
-                virtual char const* what() const override { return err_msg_.c_str(); }
+#ifdef _WIN32
+                char const* what() const override { return err_msg_.c_str(); }
+#else
+                char const* what() const noexcept override { return err_msg_.c_str(); }
+#endif
 
                 string message() const { return err_msg_; }
 

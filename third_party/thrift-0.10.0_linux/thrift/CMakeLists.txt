@@ -1,5 +1,9 @@
 include(../../../cmake/common.cmake)
 
+if(NOT MSVC)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}../)
 
 file(GLOB SRC "*.h" "*.hpp" "*.cpp")

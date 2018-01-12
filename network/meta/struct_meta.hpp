@@ -27,8 +27,8 @@ return st_meta_##name{};    \
 
 
 #define MAKEB_ST_META_TYPE(name, ...)           using meta_type = decltype(std::tuple_cat(typename cytx::meta_t<base_t>::meta_type{}, std::make_tuple(__VA_ARGS__)));
-#define MAKEB_ST_TUPLE(name, ...)               static auto Meta(name& val) { return std::tuple_cat(get_meta((base_t&)val), std::make_tuple(__VA_ARGS__)); }
-#define MAKEB_ST_CONST_TUPLE(name, ...)         static auto Meta(const name& val) { return std::tuple_cat(get_meta((const base_t&)val), std::make_tuple(__VA_ARGS__)); }
+#define MAKEB_ST_TUPLE(name, ...)               static auto Meta(name& val) { return std::tuple_cat(cytx::get_meta((base_t&)val), std::make_tuple(__VA_ARGS__)); }
+#define MAKEB_ST_CONST_TUPLE(name, ...)         static auto Meta(const name& val) { return std::tuple_cat(cytx::get_meta((const base_t&)val), std::make_tuple(__VA_ARGS__)); }
 
 #define EMBEDB_ST_TUPLE(name, base_name, N, ...) \
 inline auto to_st_extend(const name*) { \
