@@ -70,7 +70,7 @@ if(log_)                                        \
 
             tcp_server(const std::string& ip, uint16_t port, const server_options& options, irouter_ptr router_ptr = nullptr)
                 : ios_pool_(get_thread_count(options.thread_mode))
-                , acceptor_(ios_pool_.get_main_service(), cytx::util::get_tcp_endpoint(ip, port), true)
+                , acceptor_(ios_pool_.get_main_service(), boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4(), port }, true)
                 , router_ptr_(router_ptr)
                 , options_(options)
                 , cur_conn_id_(0)

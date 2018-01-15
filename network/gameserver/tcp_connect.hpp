@@ -257,6 +257,11 @@ namespace cytx
                     socket_.close(ec);
                 }
 
+                if (host_ == "0.0.0.0")
+                {
+                    host_ = "127.0.0.1";
+                }
+
                 CONN_DEBUG("connection {} connect tcp://{}:{}", conn_id_, host_, port_);
                 socket_.async_connect(cytx::util::get_tcp_endpoint(host_, port_), cytx::bind(&this_t::handle_connect, this->shared_from_this()));
             }
