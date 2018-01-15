@@ -573,7 +573,7 @@ namespace cytx
                 {
                     for (auto& v : *it->second)
                     {
-                        result = v->to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
+                        result = v->template to_enum<T>(str, has_enum_name, std::forward<std::vector<const char*>>(splits));
                         if (result)
                             return result;
                     }

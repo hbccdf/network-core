@@ -15,7 +15,7 @@ namespace cytx
             return _id;
         }
     private:
-        static auto get_id()
+        static type_id_t get_id()
         {
             static type_id_t _id = 0;
             return ++_id;

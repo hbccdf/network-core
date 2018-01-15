@@ -309,6 +309,7 @@ namespace cytx
             *(p + len) = c;
 
             rd_pos_ += len * sizeof(wchar_t);
+            return true;
         }
         bool getBKUint64(uint64_t& val)
         {
