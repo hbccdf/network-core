@@ -19,6 +19,7 @@ namespace cytx
             enum class csv_error
             {
                 ok,
+                fail,
                 no_header,
                 no_key,
                 index_overflow,
@@ -359,13 +360,16 @@ namespace cytx
                 {
                     ifstream file_stream;
                     file_stream.open(file_name, std::ios::in | std::ios::binary);
+                    if(!file_stream.is_open())
+                        throw csv_exception(csv_error::fail, fmt::format("open file {} failed", file_name));
+
                     file_stream.seekg(0, std::ios::end);
                     size_t length = (size_t)file_stream.tellg();
                     file_stream.seekg(0, std::ios::beg);
                     if (length == 0)
                         return;
                     if (length > 50 * 1024 * 1024)
-                        throw csv_exception(csv_error::over_max_size, "this file over the max size 50M, size {}");
+                        throw csv_exception(csv_error::over_max_size, fmt::format("this file over the max size 50M, size {} M", length / 1024 / 1024));
 
                     vector<char> buffer(length);
                     file_stream.read(buffer.data(), buffer.size());
