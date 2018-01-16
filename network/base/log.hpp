@@ -4,7 +4,6 @@
 #include <boost/filesystem.hpp>
 #include "network/meta/meta.hpp"
 
-
 namespace spdlog
 {
     namespace level
@@ -186,13 +185,8 @@ namespace cytx
             }
             return adapter;
         }
-    public:
-        static log& get()
-        {
-            static log _log;
-            return _log;
-        }
 
+    public:
         static log_adapter_base* get_log_adpater()
         {
             return log_adapter_impl();
@@ -205,7 +199,18 @@ namespace cytx
 
         static sink_ptr get_log_adapter_sink()
         {
-            return sink_ptr(get_log_adpater(), [](auto ptr) {});
+            auto adapter = get_log_adpater();
+            if (!adapter)
+                return nullptr;
+
+            return sink_ptr(adapter, [](auto ptr) {});
+        }
+
+    public:
+        static log& get()
+        {
+            static log _log;
+            return _log;
         }
 
         static log_ptr_t get_log(const std::string& log_name)
@@ -231,15 +236,14 @@ namespace cytx
             return l.get_log();
         }
 
-        log(bool auto_init = true)
+        static log_ptr_t init_log(log_adapter_base* adapter, const std::string& logger_name = "logger")
         {
-            if (auto_init)
-            {
-                log_ = spdlog::stdout_logger_mt("___auto_init_log");
-                log_->set_level(log_level_t::off);
-            }
+            log l(false);
+            l.init(adapter, logger_name);
+            return l.get_log();
         }
 
+    public:
         void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
         {
             auto rotating = log_sink_manager::get_file_sink(file_name);
@@ -248,20 +252,15 @@ namespace cytx
             std::vector<spdlog::sink_ptr> sinks;
             sinks.push_back(rotating);
 
-            if (adapter_sink)
+            if (console_log)
             {
-                sinks.push_back(adapter_sink);
-            }
-            else if (console_log)
-            {
-                sinks.push_back(log_sink_manager::get_console_sink());
+                if (adapter_sink)
+                    sinks.push_back(adapter_sink);
+                else
+                    sinks.push_back(log_sink_manager::get_console_sink());
             }
 
-            log_ = spdlog::create(logger_name, sinks.begin(), sinks.end());
-
-            log_->set_level(lvl);
-            log_->flush_on(log_level_t::err);
-            log_->set_formatter(std::make_shared<my_formater>());
+            inter_init(logger_name, lvl, sinks);
         }
 
         void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
@@ -278,11 +277,7 @@ namespace cytx
                 sinks.push_back(log_sink_manager::get_console_sink());
             }
 
-            log_ = spdlog::create(logger_name, sinks.begin(), sinks.end());
-
-            log_->set_level(lvl);
-            log_->flush_on(log_level_t::err);
-            log_->set_formatter(std::make_shared<my_formater>());
+            inter_init(logger_name, lvl, sinks);
         }
 
         void init(log_adapter_base* adapter, const std::string& logger_name = "logger")
@@ -291,12 +286,9 @@ namespace cytx
                 return;
 
             auto adapter_sink = sink_ptr(adapter, [](auto ptr) {});
-
-            log_ = spdlog::create(logger_name, adapter_sink);
-
-            log_->set_level(log_level_t::trace);
-            log_->flush_on(log_level_t::err);
-            log_->set_formatter(std::make_shared<my_formater>());
+            std::vector<spdlog::sink_ptr> sinks;
+            sinks.push_back(adapter_sink);
+            inter_init(logger_name, log_level_t::trace, sinks);
         }
 
         log_ptr_t get_log()
@@ -318,9 +310,28 @@ namespace cytx
         }
 
     private:
+        log(bool auto_init = true)
+        {
+            if (auto_init)
+            {
+                log_ = spdlog::stdout_logger_mt("___auto_init_log");
+                log_->set_level(log_level_t::off);
+            }
+        }
+
+        void inter_init(const std::string& logger_name, log_level_t lvl, std::vector<spdlog::sink_ptr>& sinks)
+        {
+            log_ = spdlog::create(logger_name, sinks.begin(), sinks.end());
+
+            log_->set_level(lvl);
+            log_->flush_on(log_level_t::err);
+            log_->set_formatter(std::make_shared<my_formater>());
+        }
+
         log(const log&) = delete;
         log(log&&) = delete;
 
+    private:
         log_ptr_t log_;
     };
 
