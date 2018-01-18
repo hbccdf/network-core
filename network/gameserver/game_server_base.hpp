@@ -407,11 +407,11 @@ if(log_)                                        \
                         {
                             gate_conn_ptr_ = conn_ptr;
                             gate_conn_ptr_->set_conn_info(connection_info{ unique_id });
-                            LOG_DEBUG("gate way connected");
+                            LOG_INFO("gate way connected");
                         }
                         else
                         {
-                            LOG_DEBUG("connect register, server is {}", to_unique_str(unique_id));
+                            LOG_INFO("connect register, server is {}", to_unique_str(unique_id));
                         }
                     }
                     else if(!handle_msg(conn_ptr, msgp))

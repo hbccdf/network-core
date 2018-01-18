@@ -61,7 +61,7 @@ namespace cytx
                     servers_[data.unique_id].emplace_back(server_info);
 
                     conn_ptr->set_conn_info(connection_info{ data.unique_id });
-                    LOG_DEBUG("server {} register", to_unique_str(data.unique_id));
+                    LOG_INFO("server {} register", to_unique_str(data.unique_id));
 
                     send_server_msg(conn_ptr, SC_RegisterServer, SCRegisterServer{ (uint16_t)data.unique_id });
 
