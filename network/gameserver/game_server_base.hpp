@@ -521,6 +521,8 @@ if(log_)                                        \
             protected:
                 void flush_logs()
                 {
+                    cytx::log::get().flush();
+
                     for (auto& log_ptr : logs_)
                     {
                         log_ptr->flush();
