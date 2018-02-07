@@ -52,8 +52,7 @@ inline void thread_pool::init(size_t threads)
     stop = false;
     for (size_t i = 0; i < threads; ++i)
     {
-        workers.emplace_back(
-            [this]
+        workers.emplace_back([this]
         {
             for (;;)
             {

@@ -177,6 +177,11 @@ namespace cytx {
     template <template <typename...> class Template, typename... Args>
     struct is_specialization_of<Template<Args...>, Template> : std::true_type {};
 
+    template<typename T>
+    using nullable = boost::optional<T>;
+
+    template<typename T> struct is_nullable : is_specialization_of<std::decay_t<T>, boost::optional> {};
+
 
     template <typename T> struct is_variant : is_specialization_of<detail::decay_t<T>, variant> {};
     template <typename T> struct is_optional : is_specialization_of<detail::decay_t<T>, boost::optional> {};

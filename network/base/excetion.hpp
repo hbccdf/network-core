@@ -19,7 +19,7 @@ namespace cytx {
             if (it != messages_.end())
                 return it->second;
             else
-                    return fmt::format("code: {}, msg: unknown error", ev);
+                return fmt::format("code: {}, msg: unknown error", ev);
         }
 
     private:

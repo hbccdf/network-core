@@ -12,7 +12,7 @@ namespace cytx
 
     struct config
     {
-        string ip;
+        std::string ip;
         uint16_t port;
         type_t test_type;
         META(ip, port, test_type);

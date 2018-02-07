@@ -11,7 +11,6 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/smart_ptr/enable_shared_from_this.hpp>
-
 namespace cytx
 {
     using namespace apache::thrift;
@@ -22,7 +21,7 @@ namespace cytx
     struct thrift_deserialize_adapter {};
 
     template<>
-    class Serializer<thrift_serialize_adapter> : boost::noncopyable
+    class Serializer<thrift_serialize_adapter>
     {
         using adapter_t = GameObjectStream;
     public:
@@ -142,7 +141,7 @@ namespace cytx
 
     private:
         template <typename T, size_t Is, typename ReturnT>
-        inline auto make(std::true_type, ReturnT&& t)
+        auto make(std::true_type, ReturnT&& t)
         {
             using value_type = std::conditional_t<(Is + 1) == std::tuple_size<T>::value, std::false_type, std::true_type>;
             using elem_t = std::tuple_element_t<Is, T>;
@@ -150,7 +149,7 @@ namespace cytx
         }
 
         template <typename T, size_t Is, typename ReturnT>
-        inline auto make(std::false_type, ReturnT&& t)
+        auto make(std::false_type, ReturnT&& t)
         {
             return t;
         }

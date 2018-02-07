@@ -6,7 +6,7 @@
 namespace cytx {
 
     template<typename ADAPTER_T, typename OtherTuple = std::tuple<>>
-    class DeSerializer : boost::noncopyable
+    class DeSerializer
     {
         typedef ADAPTER_T adapter_t;
         typedef typename adapter_t::value_t val_t;
@@ -87,7 +87,7 @@ namespace cytx {
 
     private:
         template <typename T, size_t Is, typename ReturnT>
-        inline auto make(std::true_type, ReturnT&& t, size_t& index, val_t& val)
+        auto make(std::true_type, ReturnT&& t, size_t& index, val_t& val)
         {
             using value_type = std::conditional_t<(Is + 1) == std::tuple_size<T>::value, std::false_type, std::true_type>;
             using elem_t = std::tuple_element_t<Is, T>;
@@ -95,7 +95,7 @@ namespace cytx {
         }
 
         template <typename T, size_t Is, typename ReturnT>
-        inline auto make(std::false_type, ReturnT&& t, size_t& index, val_t& val)
+        auto make(std::false_type, ReturnT&& t, size_t& index, val_t& val)
         {
             return t;
         }
@@ -284,7 +284,7 @@ namespace cytx {
         }
 
         template<typename Array>
-        inline void ReadArray(Array & t, val_t& val)
+        void ReadArray(Array & t, val_t& val)
         {
             typedef decltype((t)[0]) element_t;
             using ele_t = std::remove_reference_t<element_t>;
@@ -301,7 +301,7 @@ namespace cytx {
         }
 
         template<typename Array>
-        inline void ReadFixedLengthArray(Array & v, size_t array_size, val_t& val)
+        void ReadFixedLengthArray(Array & v, size_t array_size, val_t& val)
         {
             process_array<decltype((v)[0])>(val);
             auto it = rd_.array_begin(val);

@@ -317,7 +317,7 @@ namespace cytx
         }
 #endif
 
-    public:
+    private:
         boost::mutex mutex_memory_pool;
         std::map<const std::size_t, boost::pool <>* > map_memory_pool;		// min : 1	max : 32768
 

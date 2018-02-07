@@ -18,7 +18,7 @@ using namespace std;
 
 TEST(enum, b)
 {
-    auto str = to_string(t::b);
+    auto str = to_string(t::b, true);
     assert_strcaseeq(str.value().c_str(), "t::b");
     assert_true(!to_string((t)1));
 }

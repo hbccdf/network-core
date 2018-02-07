@@ -1,42 +1,40 @@
 ﻿#pragma once
 
 #include <functional>
-namespace cytx {
-using namespace std;
-
-class scope_guard
+namespace cytx
 {
-public :
-  explicit scope_guard(std::function<void(void)> on_exit_scope_func)
-    : on_exit_scope_func_(on_exit_scope_func)
-    , dismissed_(false)
-  {
-
-  }
-
-  ~scope_guard()
-  {
-    if(!dismissed_)
+    class scope_guard
     {
-      on_exit_scope_func_();
-    }
-  }
+    public:
+        explicit scope_guard(std::function<void(void)> on_exit_scope_func)
+            : on_exit_scope_func_(on_exit_scope_func)
+            , dismissed_(false)
+        {
 
-  //用于手动设置回滚
-  void dismiss()
-  {
-    dismissed_ = true;
-  }
+        }
 
-private:
-  std::function<void(void)> on_exit_scope_func_;
-  bool dismissed_;
+        ~scope_guard()
+        {
+            if (!dismissed_)
+            {
+                on_exit_scope_func_();
+            }
+        }
 
-private: //noncopyable
-  scope_guard(scope_guard const&) = delete;
-  scope_guard& operator=(scope_guard const&) = delete;
-};
+        //用于手动设置回滚
+        void dismiss()
+        {
+            dismissed_ = true;
+        }
 
+    private:
+        std::function<void(void)> on_exit_scope_func_;
+        bool dismissed_;
+
+    private: //noncopyable
+        scope_guard(scope_guard const&) = delete;
+        scope_guard& operator=(scope_guard const&) = delete;
+    };
 }
 
 #define SCOPEGUARD_LINENAME_CAT(name, line) name##line

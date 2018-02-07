@@ -29,9 +29,9 @@ namespace cytx
             }
             gos_buffer(GameObjectStream& gos)
             {
-                data_ = gos.data_;
+                data_ = gos.data();
                 size_ = gos.length();
-                gos.alloc_type_ = 0;
+                gos.set_alloc_type(0);
             }
             ~gos_buffer()
             {

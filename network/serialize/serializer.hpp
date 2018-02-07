@@ -5,7 +5,7 @@
 namespace cytx {
 
     template<typename ADAPTER_T>
-    class Serializer : boost::noncopyable
+    class Serializer
     {
         typedef ADAPTER_T adapter_t;
     public:
@@ -122,7 +122,7 @@ namespace cytx {
         }
 
         template<typename Array>
-        inline void WriteArray(Array const& v, size_t array_size, bool is_last)
+        void WriteArray(Array const& v, size_t array_size, bool is_last)
         {
             adapter_begin_array(array_size);
             WriteOnlyArray(v, array_size);
@@ -130,7 +130,7 @@ namespace cytx {
         }
 
         template<typename Array>
-        inline void WriteFixdArray(Array const& v, size_t array_size, bool is_last)
+        void WriteFixdArray(Array const& v, size_t array_size, bool is_last)
         {
             adapter_begin_fixed_array(array_size);
             WriteOnlyArray(v, array_size);
@@ -138,7 +138,7 @@ namespace cytx {
         }
 
         template<typename Array>
-        inline void WriteOnlyArray(Array const& v, size_t array_size)
+        void WriteOnlyArray(Array const& v, size_t array_size)
         {
             size_t count = 0;
             for (auto const& i : v)
@@ -333,12 +333,12 @@ namespace cytx {
         template<typename enum_t, typename ADAPTER = adapter_t>
         auto write_enum(enum_t e)->std::enable_if_t<ADAPTER::ralax_check_enum == 0, boost::optional<std::string>>
         {
-            return to_string(e, nullptr);
+            return to_string(e, false);
         }
         template<typename enum_t, typename ADAPTER = adapter_t>
         auto write_enum(enum_t e)->std::enable_if_t<ADAPTER::ralax_check_enum == 1, boost::optional<std::string>>
         {
-            return ralax_to_string(e, nullptr);
+            return ralax_to_string(e, false);
         }
 
     private:

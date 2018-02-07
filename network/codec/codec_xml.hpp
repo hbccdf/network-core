@@ -11,7 +11,7 @@ namespace cytx {
             xml_codec(bool) {}
 
             template<typename T>
-            T unpack(char const* data, size_t length)
+            T unpack(const char* data, size_t length)
             {
                 try
                 {
@@ -29,7 +29,7 @@ namespace cytx {
             }
 
             template<typename T, typename Tuple>
-            T unpack(char const* data, size_t length, Tuple&& tuple)
+            T unpack(const char* data, size_t length, Tuple&& tuple)
             {
                 try
                 {

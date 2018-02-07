@@ -23,10 +23,11 @@
               ( ((l) << 40) & 0x00FF000000000000LL ) |       \
               ( ((l) << 56) & 0xFF00000000000000LL ) )
 
-namespace cytx {
+namespace cytx
+{
     namespace util
     {
-        inline std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string_list)
+        static std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string_list)
         {
             std::vector<std::string> address_port_list;
             boost::algorithm::split(address_port_list, address_port_string_list, boost::is_any_of(" ,|"));
@@ -48,7 +49,7 @@ namespace cytx {
 
         static boost::asio::ip::tcp::endpoint get_tcp_endpoint(std::string const& address, uint16_t port)
         {
-            return{ boost::asio::ip::address::from_string(address), port };
+            return { boost::asio::ip::address::from_string(address), port };
         }
 
         static std::string domain2ip(const std::string& ip, uint16_t port)

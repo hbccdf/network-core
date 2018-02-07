@@ -78,7 +78,7 @@ namespace cytx
                 port_ = boost::lexical_cast<uint32_t>(args["port"]);
                 user_ = args["user"];
                 pwd_ = args["pwd"];
-                
+
                 auto it = args.find("db");
                 if (it != args.end())
                 {

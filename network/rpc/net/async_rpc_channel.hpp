@@ -94,7 +94,7 @@ namespace cytx {
             template <typename result_type, typename ... Args>
             auto free_call(std::string name, Args&& ... args)
             {
-                return conn_->template free_call_impl<codec_policy, result_type>(std::hash<string>{}(name), false, std::forward<Args>(args)...);
+                return conn_->template free_call_impl<codec_policy, result_type>(std::hash<std::string>{}(name), false, std::forward<Args>(args)...);
             }
 
             template <typename result_type, typename ... Args>

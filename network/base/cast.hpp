@@ -6,26 +6,21 @@
 
 namespace cytx
 {
-    template<typename T>
-    using nullable = boost::optional<T>;
-
-    template<typename T> struct is_nullable : is_specialization_of<std::decay_t<T>, boost::optional> {};
-
     namespace util
     {
         template<typename T>
-        auto to_str(T t, const char* split_str = "::") -> std::enable_if_t<std::is_enum<T>::value, std::string>
+        auto to_str(T t, bool has_enum_name = true) -> std::enable_if_t<std::is_enum<T>::value, std::string>
         {
-            boost::optional<std::string> v = cytx::to_string(t, split_str);
+            boost::optional<std::string> v = cytx::to_string(t, has_enum_name);
             if (v)
                 return v.get();
             else
                 return fmt::format("{}", (uint32_t)t);
         }
 
-        inline std::string to_str(uint32_t t, const char* enum_name, const char* split_str = "::")
+        inline std::string to_str(uint32_t t, const char* enum_name, bool has_enum_name = true)
         {
-            boost::optional<std::string> v = cytx::to_string(t, enum_name, split_str);
+            boost::optional<std::string> v = cytx::to_string(t, enum_name, has_enum_name);
             if (v)
                 return v.get();
             else

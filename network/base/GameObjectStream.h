@@ -8,40 +8,16 @@ namespace cytx
     class GameObjectStream
     {
     public:
-        static const int default_data_size = 1024;
-    private:
-        GameObjectStream(const GameObjectStream& stm) = delete;
-        GameObjectStream& operator =(const GameObjectStream& stm) = delete;
-        template<class T>
-        T* pushValue(T t)
+        GameObjectStream()
+            : GameObjectStream(_default_data_size)
         {
-            checkSpace(sizeof(T));
-            char* pr = data_ + wr_pos_;
-            memcpy(pr, &t, sizeof(T));
-            wr_pos_ += sizeof(T);
-            return (T*)pr;
         }
-
-        template<class T>
-        bool getValue(T& t)
-        {
-            if (int(rd_pos_ + sizeof(T)) > wr_pos_) return false;
-            memcpy(&t, data_ + rd_pos_, sizeof(T));
-            rd_pos_ += sizeof(T);
-            return true;
-        }
-        template<class T>
-        bool getBKValue(T& t)
-        {
-            if (wr_pos_ - (int)sizeof(T) < rd_pos_) return false;
-            memcpy(&t, data_ + (wr_pos_ - sizeof(T)), sizeof(T));
-            wr_pos_ -= sizeof(T);
-            return true;
-        }
-
-    public:
-        GameObjectStream() :wr_pos_(0), rd_pos_(0), data_size_(default_data_size), alloc_type_(1) { data_ = NEW_ARRAY_MP(char, data_size_); }
-        GameObjectStream(int data_size) :wr_pos_(0), rd_pos_(0), data_size_(data_size), alloc_type_(1), data_(nullptr)
+        GameObjectStream(int data_size)
+            : wr_pos_(0)
+            , rd_pos_(0)
+            , data_size_(data_size)
+            , alloc_type_(1)
+            , data_(nullptr)
         {
             if (data_size_ > 0)
             {
@@ -49,7 +25,11 @@ namespace cytx
             }
         }
         ///alloc_type 0:只读,不管理;1自动管理
-        GameObjectStream(char* data, int len, int alloc_type = 0) :wr_pos_(len), rd_pos_(0), data_size_(len), alloc_type_(alloc_type)
+        GameObjectStream(char* data, int len, int alloc_type = 0)
+            : wr_pos_(len)
+            , rd_pos_(0)
+            , data_size_(len)
+            , alloc_type_(alloc_type)
         {
             if (alloc_type_ == 0)
             {
@@ -75,12 +55,17 @@ namespace cytx
             other.alloc_type_ = 0;
         }
 
-        ~GameObjectStream() { if (alloc_type_ == 0) return; DELETE_ARRAY_MP(char, data_, data_size_); }
+        ~GameObjectStream()
+        {
+            if (alloc_type_ == 0)
+                return;
+            DELETE_ARRAY_MP(char, data_, data_size_);
+        }
         void reset()
         {
             rd_pos_ = wr_pos_ = 0;
         }
-        int crunch(void)
+        int crunch()
         {
             if (rd_pos_ != 0)
             {
@@ -124,11 +109,11 @@ namespace cytx
         int space() const { return data_size_ - wr_pos_; }
         int rd_pos() const { return rd_pos_; }
         int wr_pos() const { return wr_pos_; }
-        char* rd_ptr() { return rd_pos_ <= wr_pos_ ? (data_ + rd_pos_) : NULL; }
-        char* rd_ptr(int offset) { offset += rd_pos_; if (offset<0 || offset>wr_pos_)return NULL; rd_pos_ = offset; return data_ + rd_pos_; }
+        char* rd_ptr() const { return rd_pos_ <= wr_pos_ ? (data_ + rd_pos_) : nullptr; }
+        char* rd_ptr(int offset) { offset += rd_pos_; if (offset<0 || offset>wr_pos_) return nullptr; rd_pos_ = offset; return data_ + rd_pos_; }
         void rd_ptr(char* ptr) { int new_pos = int(ptr - data_); rd_pos_ = new_pos; }
-        char* wr_ptr() { return wr_pos_ < data_size_ ? (data_ + wr_pos_) : NULL; }
-        char* wr_ptr(int offset) { offset += wr_pos_; if (offset<0 || offset>data_size_)return NULL; wr_pos_ = offset; return data_ + wr_pos_; }
+        char* wr_ptr() const { return wr_pos_ < data_size_ ? (data_ + wr_pos_) : nullptr; }
+        char* wr_ptr(int offset) { offset += wr_pos_; if (offset<0 || offset>data_size_) return nullptr; wr_pos_ = offset; return data_ + wr_pos_; }
         void pushBool(bool val)
         {
             unsigned char uVal = val ? 1 : 0;
@@ -321,10 +306,62 @@ namespace cytx
         }
 
     public:
+        void set_alloc_type(int alloc_type)
+        {
+            alloc_type_ = alloc_type;
+        }
+
+        char* data() const { return rd_ptr(); }
+
+        char* raw_data() const { return data_; }
+
+        int raw_length() const { return data_size_; }
+
+    public:
+        static int defualt_size()
+        {
+            return _default_data_size;
+        }
+    private:
+        GameObjectStream(const GameObjectStream& stm) = delete;
+        GameObjectStream& operator =(const GameObjectStream& stm) = delete;
+        template<class T>
+        T* pushValue(T t)
+        {
+            checkSpace(sizeof(T));
+            char* pr = data_ + wr_pos_;
+            memcpy(pr, &t, sizeof(T));
+            wr_pos_ += sizeof(T);
+            return (T*)pr;
+        }
+
+        template<class T>
+        bool getValue(T& t)
+        {
+            if (int(rd_pos_ + sizeof(T)) > wr_pos_)
+                return false;
+            memcpy(&t, data_ + rd_pos_, sizeof(T));
+            rd_pos_ += sizeof(T);
+            return true;
+        }
+        template<class T>
+        bool getBKValue(T& t)
+        {
+            if (wr_pos_ - (int)sizeof(T) < rd_pos_)
+                return false;
+            memcpy(&t, data_ + (wr_pos_ - sizeof(T)), sizeof(T));
+            wr_pos_ -= sizeof(T);
+            return true;
+        }
+
+    private:
         char*       data_;
         int         alloc_type_;//0:只读,不管理;1自动管理
         int         wr_pos_;
         int         rd_pos_;
         int         data_size_;
+
+    private:
+        static const int _default_data_size = 1024;
     };
 }

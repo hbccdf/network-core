@@ -9,6 +9,8 @@ namespace cytx {
     namespace codec {
         struct gos_codec
         {
+            using buffer_type = gos_buffer;
+
             gos_codec(bool big_endian) : is_big_endian_(big_endian) {}
 
             template<typename T>
@@ -77,8 +79,6 @@ namespace cytx {
                 }
             }
 
-            using buffer_type = gos_buffer;
-
             template <typename ... Args>
             buffer_type pack_args(Args&& ... args) const
             {
@@ -99,7 +99,7 @@ namespace cytx {
                     }
                     if (total_size < 0)
                     {
-                        total_size = GameObjectStream::default_data_size;
+                        total_size = GameObjectStream::defualt_size();
                     }
                     GameObjectStream gos(total_size);
                     Serializer<gos_serialize_adapter> sr(gos, is_big_endian_);

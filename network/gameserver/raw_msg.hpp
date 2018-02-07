@@ -215,8 +215,8 @@ namespace cytx {
             void reset(stream_t& gos)
             {
                 header_.length = (uint32_t)gos.length();
-                body_.reset(gos.data_, gos.length());
-                gos.alloc_type_ = 0;
+                body_.reset(gos.data(), gos.length());
+                gos.set_alloc_type(0);
             }
 
             char* raw_data() const
