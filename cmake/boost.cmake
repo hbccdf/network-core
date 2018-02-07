@@ -1,3 +1,7 @@
+get_filename_component(THIS_ROOT ${CMAKE_CURRENT_LIST_FILE} PATH)
+if("${CORE_DIR}" STREQUAL "")
+    set(CORE_DIR ${THIS_ROOT}/..)
+endif()
 
 if(NOT BOOST_DIR)
     if(NOT "$ENV{BOOST_ROOT}" STREQUAL "")
@@ -16,9 +20,9 @@ if(NOT BOOST_DIR)
         set(BOOST_DIR ${Boost_INCLUDE_DIRS})
         set(BOOST_LIB_DIR ${Boost_LIBRARY_DIRS})
     else()
-        get_filename_component(THIS_ROOT ${CMAKE_CURRENT_LIST_FILE} PATH)
-        set(BOOST_DIR ${THIS_ROOT}/../third_party/boost_1_61_0)
-        set(BOOST_LIB_DIR ${THIS_ROOT}/../libs64/boost_1_61_0/windows/x64)
+        
+        set(BOOST_DIR ${CORE_DIR}/third_party/boost_1_61_0)
+        set(BOOST_LIB_DIR ${CORE_DIR}/libs64/boost_1_61_0/windows/x64)
     endif()
     
     include_directories(${BOOST_DIR})

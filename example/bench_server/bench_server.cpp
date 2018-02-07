@@ -1,4 +1,5 @@
-#include <network/server.hpp>
+#include <network/rpc/server.hpp>
+#include <network/serialize/xml_adapter.hpp>
 
 namespace cytx
 {
@@ -76,8 +77,8 @@ int main(int argc, char *argv[])
     using namespace std::chrono_literals;
     using namespace cytx;
     using namespace cytx::rpc;
-    using server_t = cytx::rpc::server<cytx::rpc::json_codec>;
-    //MemoryPoolManager::get_mutable_instance().init();
+    using server_t = cytx::rpc::server<cytx::codec::gos_codec>;
+    MemoryPoolManager::get_mutable_instance().init();
     config c;
     DeSerializer<xml_deserialize_adapter> de;
     de.enum_with_str(true);

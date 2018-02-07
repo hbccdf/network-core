@@ -2,9 +2,10 @@
 #include "../traits/traits.hpp"
 #include "../serialize/serializer.hpp"
 #include "../serialize/deserializer.hpp"
+#include "../serialize/xml_adapter.hpp"
 
 namespace cytx {
-    namespace rpc {
+    namespace codec {
         struct xml_codec
         {
             xml_codec(bool) {}
@@ -17,13 +18,13 @@ namespace cytx {
                     DeSerializer<xml_deserialize_adapter> dr;
                     dr.parse(data, length);
 
-                    T t;
+                    T t{};
                     dr.DeSerialize(t);
                     return t;
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -32,14 +33,14 @@ namespace cytx {
             {
                 try
                 {
-                    DeSerializer<json_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple));
+                    DeSerializer<xml_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple));
                     dr.parse(data, length);
 
-                    return dr.GetTuple<T>();
+                    return dr.template GetTuple<T>();
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
 
@@ -63,7 +64,7 @@ namespace cytx {
                 }
                 catch (std::exception& e)
                 {
-                    throw cytx::rpc::exception(error_code::codec_fail, e.what());
+                    throw cytx::net_exception(error_code::codec_fail, e.what());
                 }
             }
         };

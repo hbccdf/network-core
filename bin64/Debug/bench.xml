@@ -1,0 +1,4 @@
+<config>
+    <server ip="127.0.0.1" port="20000" test_type="operation" />
+    <client ip="127.0.0.1" port="20000" test_type="operation" sync_type="sync" /> 
+</config>

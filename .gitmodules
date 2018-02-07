@@ -1,24 +1,12 @@
-[submodule "third_party/fmt"]
-	path = third_party/fmt
-	url = https://github.com/fmtlib/fmt
-[submodule "third_party/rapidjson"]
-	path = third_party/rapidjson
-	url = https://github.com/miloyip/rapidjson
-[submodule "third_party/CppFreeMock"]
-	path = third_party/CppFreeMock
-	url = https://github.com/gzc9047/CppFreeMock
-[submodule "third_party/spdlog"]
-	path = third_party/spdlog
-	url = https://github.com/gabime/spdlog
 [submodule "third_party/boost_1_61_0"]
 	path = third_party/boost_1_61_0
-	url = http://gitlab.cytxcn.com/gameserver/boost_1_61_0
+	url = git@gitlab.cytxcn.com:gameserver/boost_1_61_0.git
 [submodule "third_party/thrift-0.10.0"]
 	path = third_party/thrift-0.10.0
-	url = http://gitlab.cytxcn.com/gameserver/thrift-0.10.0
+	url = git@gitlab.cytxcn.com:gameserver/thrift-0.10.0.git
 [submodule "libs64/boost_1_61_0"]
 	path = libs64/boost_1_61_0
-	url = http://gitlab.cytxcn.com/gameserver/boost_1_61_0_libs
+	url = git@gitlab.cytxcn.com:gameserver/boost_1_61_0_libs.git
 [submodule "libs64/thrift-0.10.0"]
 	path = libs64/thrift-0.10.0
-	url = http://gitlab.cytxcn.com/gameserver/thrift-0.10.0_lib
+	url = git@gitlab.cytxcn.com:gameserver/thrift-0.10.0_lib.git

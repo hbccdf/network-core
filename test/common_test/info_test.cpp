@@ -1,9 +1,8 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include "auto_mocker.h"
+#include "common.h"
 
-#include "network/serialize/serializer.hpp"
-#include "network/serialize/deserializer.hpp"
+#define ENUM_META_RALAX_CHECK
+#include <network/serialize.hpp>
+#include <network/serialize/xml_adapter.hpp>
 using namespace cytx;
 using namespace std;
 
@@ -19,48 +18,6 @@ public:
     }
 
     virtual void TearDown() {}
-
-    template<typename T>
-    void assert_val_equal(T&& v, T&& dv)
-    {
-        assert_eq(v, dv);
-    }
-    template<>
-    void assert_val_equal<float>(float&& v, float&& dv)
-    {
-        assert_float_eq(v, dv);
-    }
-    template<>
-    void assert_val_equal<double>(double&& v, double&& dv)
-    {
-        assert_double_eq(v, dv);
-    }
-
-    /*template<typename T>
-    auto assert_val_equal(T&& v, T&& dv) -> std::enable_if_t<is_container<T>::value>
-    {
-        auto itv = v.begin();
-        auto it_dv = dv.begin();
-        for (; it != v.end(); ++it, ++it_dv)
-        {
-            assert_val_equal(*it, *it_dv);
-        }
-    }*/
-
-    template<typename T, size_t N>
-    void assert_val_equal(T(&v)[N], T(&dv)[N])
-    {
-        for (size_t i = 0; i < N; ++i)
-        {
-            assert_val_equal(v[i], dv[i]);
-        }
-    }
-
-    template<size_t N>
-    void assert_val_equal(char(&v)[N], char(&dv)[N])
-    {
-        assert_streq(v, dv);
-    }
 
     template<typename T>
     void assert_equal(T&& v)
@@ -214,7 +171,7 @@ TEST_F(info_type, tuple)
 
 TEST_F(info_type, tuple_and_tuple)
 {
-    std::tuple<int, int, std::tuple<string, double, bool>> v{ 5, -1234, {"hello", 3.158, true} };
+    std::tuple<int, int, std::tuple<string, double, bool>> v{ 5, -1234, std::tuple<string, double, bool>{"hello", 3.158, true} };
     assert_equal(v);
 }
 
@@ -480,19 +437,19 @@ TEST_F(info_type, pair_with_pair)
 
 TEST_F(info_type, tuple_with_tuple)
 {
-    std::tuple<int, std::tuple<string, int>> v{ 5,{ "world", -1234 } };
+    std::tuple<int, std::tuple<string, int>> v{ 5,std::tuple<string, int>{ "world", -1234 } };
     assert_equal(v);
 }
 
 TEST_F(info_type, tuple_with_tuple1)
 {
-    std::tuple<int, std::tuple<string, int>, std::tuple<int, string, bool, float>> v{ 5,{ "world", -1234 }, {4, "hello", true, 3.1415926f} };
+    std::tuple<int, std::tuple<string, int>, std::tuple<int, string, bool, float>> v{ 5,std::tuple<string, int>{ "world", -1234 }, std::tuple<int, string, bool, float>{4, "hello", true, 3.1415926f} };
     assert_equal(v);
 }
 
 TEST_F(info_type, pair_with_tuple)
 {
-    std::pair<int, std::tuple<std::tuple<string, int>, std::tuple<int, string, bool, float>, std::pair<int, int>>> v{ 5,{ { "world", -1234 },{ 4, "hello", true, 3.1415926f } , {3, 4} } };
+    std::pair<int, std::tuple<std::tuple<string, int>, std::tuple<int, string, bool, float>, std::pair<int, int>>> v{ 5,std::tuple<std::tuple<string, int>, std::tuple<int, string, bool, float>, std::pair<int, int>>{ std::tuple<string, int>{ "world", -1234 },std::tuple<int, string, bool, float>{ 4, "hello", true, 3.1415926f } , {3, 4} } };
     assert_equal(v);
 }
 
@@ -504,7 +461,7 @@ TEST_F(info_type, tuple_with_pair)
 
 TEST_F(info_type, tuple_with_pair_with_tuple)
 {
-    std::tuple<int, std::pair<string, std::tuple<int, string, int>>> v{ 5,{ "world", {3, "hello", -1234 } } };
+    std::tuple<int, std::pair<string, std::tuple<int, string, int>>> v{ 5,{ "world", std::tuple<int, string, int>{3, "hello", -1234 } } };
     assert_equal(v);
 }
 
@@ -527,7 +484,7 @@ TEST_F(info_type, struct_with_tuple)
         std::tuple<int, string, int> p;
         META(p);
     };
-    st v{ { 3, "test", -19 } };
+    st v{ std::tuple<int, string, int>{ 3, "test", -19 } };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
 }
@@ -539,7 +496,7 @@ TEST_F(info_type, struct_with_pair_with_tuple)
         std::pair<string, std::tuple<int, string, int>> p;
         META(p);
     };
-    st v{ {"just_test",{ 3, "test", -19 } } };
+    st v{ {"just_test",std::tuple<int, string, int>{ 3, "test", -19 } } };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
 }
@@ -551,7 +508,7 @@ TEST_F(info_type, struct_with_tuple_with_pair)
         std::tuple<string, int, std::tuple<string, int>> p;
         META(p);
     };
-    st v{ { "just_test",3, { "test", -19 } } };
+    st v{ std::tuple<string, int, std::tuple<string, int>>{ "just_test",3, std::tuple<string, int>{ "test", -19 } } };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
 }
@@ -564,7 +521,7 @@ TEST_F(info_type, struct_with_tuple_and_pair)
         std::pair<float, string> p;
         META(t, p);
     };
-    st v{ { "just_test",3,{ "test", -19 } }, {-3.14f, "helow"} };
+    st v{ std::tuple<string, int, std::tuple<string, int>>{ "just_test",3,std::tuple<string, int>{ "test", -19 } }, {-3.14f, "helow"} };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
     assert_val_equal(v.t, dv.t);
@@ -579,7 +536,7 @@ TEST_F(info_type, struct_with_reverse_order)
         int i;
         META(i, p, t);
     };
-    st v{ { "just test",3,{ "test", -19 } },{ -3.14f, "helow" }, 9 };
+    st v{ std::tuple<string, int, std::tuple<string, int>>{ "just test",3,std::tuple<string, int>{ "test", -19 } },{ -3.14f, "helow" }, 9 };
     auto dv = get_de(v);
     assert_val_equal(v.p, dv.p);
     assert_val_equal(v.t, dv.t);

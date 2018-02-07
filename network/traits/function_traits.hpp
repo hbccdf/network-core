@@ -11,6 +11,22 @@ struct function_traits_impl<ReturnType(ClassType::*)(Args...) __VA_ARGS__> : fun
     constexpr static bool is_class_member_func = true; \
 };\
 
+#ifdef LINUX
+namespace std
+{
+    template<typename ... Args>
+    struct voider
+    {
+        using type = void;
+    };
+    template <typename ... Args>
+    using void_t = typename voider<Args...>::type;
+
+    template<typename T>
+    constexpr static bool is_void_v = std::is_void<T>::value;
+}
+#endif
+
 namespace cytx
 {
     /*
@@ -25,8 +41,7 @@ namespace cytx
     struct function_traits_impl;
 
     template<typename T>
-    struct function_traits : function_traits_impl<
-        std::remove_cv_t<std::remove_reference_t<T>>>
+    struct function_traits : function_traits_impl<std::remove_cv_t<std::remove_reference_t<T>>>
     {};
 
     template<typename Ret, typename... Args>
@@ -46,25 +61,26 @@ namespace cytx
             using type = typename std::tuple_element<I, std::tuple<Args...>>::type;
         };
 
-        typedef std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...> tuple_type;
+        using tuple_type = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...> ;
         using raw_tuple_type = std::tuple<Args...>;
 
         constexpr static bool is_class_member_func = false;
+        constexpr static bool has_result = !std::is_void_v<result_type>;
     };
 
     // function pointer
     template<typename Ret, typename... Args>
-    struct function_traits_impl<Ret(*)(Args...)> : function_traits<Ret(Args...)> {};
+    struct function_traits_impl<Ret(*)(Args...)> : function_traits_impl<Ret(Args...)> {};
 
     // std::function
     template <typename Ret, typename... Args>
     struct function_traits_impl<std::function<Ret(Args...)>> : function_traits_impl<Ret(Args...)> {};
 
     // pointer of non-static member function
-    FUNCTION_TRAITS()
-    FUNCTION_TRAITS(const)
-    FUNCTION_TRAITS(volatile)
-    FUNCTION_TRAITS(const volatile)
+    FUNCTION_TRAITS();
+    FUNCTION_TRAITS(const);
+    FUNCTION_TRAITS(volatile);
+    FUNCTION_TRAITS(const volatile);
 
     // functor
     template<typename Callable>
@@ -121,17 +137,25 @@ namespace cytx
     template<typename Index_t, typename FuncArgs, int max_index>
     struct cat_impl;
 
+#ifdef LINUX
+    template<size_t ... Is, typename FuncArgs, int max_index>
+    struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
+    {
+        using type = std::tuple<std::_Placeholder<Is + max_index + 1> ...>;
+    };
+#else
     template<size_t ... Is, typename FuncArgs, int max_index>
     struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
     {
         using type = std::tuple<std::_Ph<Is + max_index + 1> ...>;
     };
+#endif
 
     template<bool IsMemberFunc, typename TupleArgs, typename FuncArgs>
     struct cat_helper
     {
         constexpr static size_t args_size = std::tuple_size<FuncArgs>::value + (IsMemberFunc ? 1 : 0) - std::tuple_size<TupleArgs>::value;
-        using func_args_index_t = typename std::make_index_sequence<args_size>::type;
+        using func_args_index_t = std::make_index_sequence<args_size>;
         constexpr static int max_index = max_arg_index<TupleArgs>::value;
         using type = typename cat_impl<func_args_index_t, FuncArgs, max_index>::type;
     };
@@ -177,6 +201,8 @@ namespace cytx
     auto bind(F&& f, Args&& ... args)
     {
         using args_tuple_t = typename cat<F, std::tuple<Args...>>::type;
-        return bind_help<args_tuple_t>::bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
+        using help_t = bind_help<args_tuple_t>;
+        using func_t = typename function_traits<F>::stl_function_type;
+        return static_cast<func_t>(help_t::template bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
 }

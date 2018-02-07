@@ -1,7 +1,7 @@
-#include <server.hpp>
-#include <codec/codec.hpp>
-#include <base/utils.hpp>
-#include <base/log.hpp>
+#include <network/rpc/server.hpp>
+#include <network/codec/codec.hpp>
+#include <network/base/utils.hpp>
+#include <network/base/log.hpp>
 #include <iostream>
 
 uint16_t port = 9000;
@@ -45,8 +45,9 @@ void print(std::index_sequence<Is...>)
 
 int main()
 {
+    cytx::MemoryPoolManager::get_mutable_instance().init();
     cytx::log::get().init("rest_rpc_server.lg");
-    using server_t = cytx::rpc::server<cytx::rpc::json_codec>;
+    using server_t = cytx::rpc::server<cytx::codec::json_codec>;
     using connection_ptr = server_t::connection_ptr;
     server_t server{ port };
     client::foo foo{};
@@ -66,7 +67,7 @@ int main()
 
     server.register_handler("time_consuming", client::some_task_takes_a_lot_of_time, [](auto conn) { std::cout << "acomplished!" << std::endl; });
 
-    server.register_codec_handler<cytx::rpc::xml_codec>("xml_add", client::add);
+    server.register_codec_handler<cytx::codec::xml_codec>("xml_add", client::add);
 
     server.register_handler("ping", []() ->std::string { std::cout << "ping" << std::endl;  return "pong"; });
 
@@ -82,9 +83,9 @@ int main()
                 auto result = task.get();
                 std::cout << "client sub result = " << result << std::endl;
             }
-            catch (cytx::rpc::exception& e)
+            catch (cytx::net_exception& e)
             {
-                std::cout << "client sub failed, " << e.get_error_message() << std::endl;
+                std::cout << "client sub failed, " << e.message() << std::endl;
             }
         }
         using namespace std::chrono_literals;

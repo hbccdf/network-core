@@ -1,1 +1,2 @@
 add_subdirectory(common_test)
+add_subdirectory(orm_test)

@@ -24,22 +24,8 @@
               ( ((l) << 56) & 0xFF00000000000000LL ) )
 
 namespace cytx {
-    namespace rpc
+    namespace util
     {
-        inline bool retry(const std::function<bool()>& func, size_t max_attempts, size_t retry_interval = 0)
-        {
-            for (size_t i = 0; i < max_attempts; i++)
-            {
-                if (func())
-                    return true;
-
-                if (retry_interval > 0)
-                    std::this_thread::sleep_for(std::chrono::milliseconds(retry_interval));
-            }
-
-            return false;
-        }
-
         inline std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string_list)
         {
             std::vector<std::string> address_port_list;
@@ -72,13 +58,20 @@ namespace cytx {
             boost::asio::ip::tcp::resolver::query qry(ip, boost::lexical_cast<std::string>(port));
             boost::asio::ip::tcp::resolver::iterator it = slv.resolve(qry);
             boost::asio::ip::tcp::resolver::iterator end;
+            std::string host_ip;
             for (; it != end; it++)
             {
-                if ((*it).endpoint().address().is_v4())
+                if ((*it).endpoint().address().is_v6())
                 {
                     return (*it).endpoint().address().to_string();
                 }
+                else if ((*it).endpoint().address().is_v4() && host_ip.empty())
+                {
+                    host_ip = (*it).endpoint().address().to_string();
+                }
             }
+            if (!host_ip.empty())
+                return host_ip;
             return ip;
         }
 
