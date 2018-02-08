@@ -8,7 +8,7 @@ namespace cytx
 {
     namespace gameserver
     {
-        /*namespace detail
+        namespace detail
         {
             using ios_t = boost::asio::io_service;
             using local_ios_t = boost::thread_specific_ptr<ios_t>;
@@ -28,7 +28,7 @@ namespace cytx
         inline void set_current_ios(detail::ios_t& ios)
         {
             detail::local_ios_instance().reset(&ios);
-        }*/
+        }
 
         class ios_pool
         {
@@ -65,7 +65,7 @@ namespace cytx
                     td.detach();
                 }
 
-                //set_current_ios(*main_ios_ptr_);
+                set_current_ios(*main_ios_ptr_);
                 main_ios_ptr_->run();
             }
 
@@ -124,7 +124,7 @@ namespace cytx
 
             static void run_io_service(io_service_t& ios)
             {
-                //set_current_ios(ios);
+                set_current_ios(ios);
                 ios.run();
             }
 

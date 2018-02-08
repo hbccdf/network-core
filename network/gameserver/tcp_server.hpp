@@ -2,11 +2,6 @@
 #include "tcp_connect.hpp"
 #include "ios_pool.hpp"
 
-namespace cytx
-{
-    namespace gameserver
-    {
-
 #define NET_LOG(level, str, ...)                \
 if(log_)                                        \
 {                                               \
@@ -25,6 +20,10 @@ if(log_)                                        \
     log_->trace(str, ## __VA_ARGS__);           \
 }
 
+namespace cytx
+{
+    namespace gameserver
+    {
         enum class server_thread_mode : uint8_t
         {
             no_io_thread,

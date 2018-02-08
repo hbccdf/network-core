@@ -219,7 +219,9 @@ namespace cytx
             using ec_t = boost::system::error_code;
             using batch_msg_t = batch_msg<msg_t>;
             using batch_msg_ptr = std::shared_ptr<batch_msg_t>;
-            //using handler_t = detail::handler_t<msg_ptr>;
+            using handler_t = detail::handler_t<msg_ptr>;
+            using context_t = detail::context_t;
+            using completion_t = detail::completion_t<msg_ptr>;
 
         public:
             tcp_connection(io_service_t& ios, irouter_ptr router, int32_t conn_id, const connection_options& options)
@@ -298,31 +300,17 @@ namespace cytx
                 ios_.post(std::bind(&this_t::do_write, this->shared_from_this(), msgp));
             }
 
-            /*msg_ptr await_write(msg_ptr msgp)
+            msg_ptr await_write(msg_ptr msgp, context_t ctx)
             {
                 if (!is_running_)
                     return nullptr;
 
-                io_service_t& ios = get_current_ios();
-                return detail::async_await<msg_ptr>(ios, [this, msgp] (handler_t handler)
-                {
-                    ios_.post(std::bind(&this_t::do_await_write, shared_from_this(), msgp, handler));
-                });
+                completion_t completion(std::forward<context_t>(ctx));
+
+                ios_.post(std::bind(&this_t::do_await_write, this->shared_from_this(), msgp, completion.handler));
+
+                return completion.result.get();
             }
-
-            template<typename FUNC>
-            void await_write(msg_ptr msgp, FUNC&& func)
-            {
-                if (!is_running_)
-                    return;
-
-                io_service_t& ios = get_current_ios();
-                detail::async_await<msg_ptr>(ios, [this, msgp](handler_t handler)
-                {
-                    ios_.post(std::bind(&this_t::do_await_write, shared_from_this(), msgp, handler));
-                },
-                std::forward<FUNC>(func));
-            }*/
 
             io_service_t& get_io_service() { return ios_; }
 
@@ -400,7 +388,7 @@ namespace cytx
 
                 async_write_msg();
             }
-            /*void do_await_write(msg_ptr msgp, handler_t handler)
+            void do_await_write(msg_ptr msgp, handler_t handler)
             {
                 if (!is_running_)
                     return;
@@ -413,7 +401,7 @@ namespace cytx
                 calls_.emplace(call_id, handler);
 
                 do_write(msgp);
-            }*/
+            }
 
             void handle_connect(const ec_t& err)
             {
@@ -587,7 +575,7 @@ namespace cytx
                 for (auto& msgp : msg_list)
                 {
                     received_msg_ = true;
-                    /*uint32_t call_id = msgp->header().call_id;
+                    uint32_t call_id = msgp->header().call_id;
                     if (call_id > 0)
                     {
                         auto it = calls_.find(call_id);
@@ -600,7 +588,7 @@ namespace cytx
                             asio_handler_invoke(std::bind(handler, msgp), &handler);
                             continue;
                         }
-                    }*/
+                    }
 
                     new_msg_list.push_back(msgp);
                 }
@@ -635,8 +623,8 @@ namespace cytx
             reader_t reader_;
 
             timer_manager timer_mgr_;
-            //uint32_t cur_call_id_ = 0;
-            //std::map<uint32_t, handler_t> calls_;
+            uint32_t cur_call_id_ = 0;
+            std::map<uint32_t, handler_t> calls_;
 
             connection_info conn_info_;
         };

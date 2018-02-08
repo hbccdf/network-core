@@ -234,7 +234,7 @@ namespace cytx
                     proto_ptr_t proto = Proto::Decode(msgptr);
                     if (proto)
                     {
-                        proto->process(msgptr, conn_ptr, *this);
+                        proto->do_process(msgptr, conn_ptr, *this);
                         return;
                     }
 

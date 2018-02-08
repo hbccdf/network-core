@@ -194,9 +194,17 @@ namespace cytx
         }
 
         template<typename T>
-        auto unpack_msg(detail::msg_ptr msgp)
+        auto unpack_msg(detail::msg_ptr msgp) -> std::enable_if_t<!detail::is_custom_msg<T>::value, T>
         {
             return detail::unpack_msg_impl<T>(msgp->data(), msgp->length(), detail::header_t::big_endian());
+        }
+
+        template<typename T>
+        auto unpack_msg(detail::msg_ptr msgp) -> std::enable_if_t<detail::is_custom_msg<T>::value, T>
+        {
+            T t{};
+            t.unpack(msgp);
+            return t;
         }
 
         template<typename ... ARGS>

@@ -8,11 +8,6 @@
 #include "network/service/service_manager.hpp"
 #include "config_service.hpp"
 
-namespace cytx
-{
-    namespace gameserver
-    {
-
 #define SERVER_LOG(level, str, ...)             \
 if(log_)                                        \
 {                                               \
@@ -30,11 +25,16 @@ if(log_)                                        \
 {                                               \
     log_->trace(str, ## __VA_ARGS__);           \
 }
+
+namespace cytx
+{
+    namespace gameserver
+    {
         namespace detail
         {
             inline std::string to_unique_str(server_unique_id unique_id)
             {
-                return cytx::util::to_str(unique_id, nullptr);
+                return cytx::util::to_str(unique_id, false);
             }
 
             using namespace cytx;
@@ -53,6 +53,7 @@ if(log_)                                        \
             using timer_manager_ptr = std::unique_ptr<timer_manager_t>;
             using timer_t = timer_proxy;
             using timer_func_t = std::function<bool()>;
+            using context_t = typename connection_t::context_t;
 
             using before_invoke_func_t = std::function<void(const header_t&)>;
             using before_send_func_t = std::function<void(const header_t&)>;
@@ -307,6 +308,24 @@ if(log_)                                        \
                     return msgp->total_length();
                 }
 
+                template<typename RETURN_T, typename T>
+                RETURN_T await_server_msg(server_unique_id unique_id, const T& t, context_t ctx)
+                {
+                    RETURN_T ret{};
+
+                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
+                    if (!conn_ptr)
+                    {
+                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
+                        return ret;
+                    }
+
+                    msg_ptr send_msgp = server_pack_msg(unique_id, t);
+                    msg_ptr msgp = conn_ptr->await_write(send_msgp, ctx);
+                    ret = unpack_msg<RETURN_T>(msgp);
+                    return ret;
+                }
+
             public:
                 //给服务端发送消息
                 uint32_t send_server_msg(server_unique_id unique_id, msg_ptr& msgp, const msg_ptr& request_msgp = nullptr)
@@ -357,28 +376,6 @@ if(log_)                                        \
                     send_raw_msg(conn_ptr, new_msgp);
                     return new_msgp->total_length();
                 }
-            public:
-                /*template<typename RETURN_T, typename MSG_ID, typename T>
-                void async_await_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t, std::function<void(RETURN_T)>&& func, const msg_ptr& request_msgp = nullptr)
-                {
-                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
-                    if (!conn_ptr)
-                    {
-                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
-                        return;
-                    }
-
-                    msg_ptr send_msgp = server_pack_msg(msg_id, unique_id, t);
-                    if (request_msgp)
-                    {
-                        send_msgp->header().call_id = request_msgp->header().call_id;
-                    }
-                    conn_ptr->await_write(send_msgp, [this, f = std::forward<std::function<void(RETURN_T)>>(func)](msg_ptr& msgp)
-                    {
-                        RETURN_T ret = unpack_msg<RETURN_T>(msgp);
-                        f(ret);
-                    });
-                }*/
             protected:
                 void on_connect(connection_ptr& conn_ptr, const net_result& err) override
                 {
@@ -464,27 +461,6 @@ if(log_)                                        \
                     send_raw_msg(conn_ptr, msgp);
                     return msgp->total_length();
                 }
-                /*template<typename RETURN_T, typename MSG_ID, typename T>
-                RETURN_T async_await_msg1(server_unique_id unique_id, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
-                {
-                    RETURN_T ret{};
-
-                    connection_ptr conn_ptr = get_connection_ptr(unique_id);
-                    if (!conn_ptr)
-                    {
-                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
-                        return ret;
-                    }
-
-                    msg_ptr send_msgp = server_pack_msg(msg_id, unique_id, t);
-                    if (request_msgp)
-                    {
-                        send_msgp->header().call_id = request_msgp->header().call_id;
-                    }
-                    msg_ptr msgp = conn_ptr->await_write(send_msgp);
-                    ret = unpack_msg<RETURN_T>(msgp);
-                    return ret;
-                }*/
 
                 void send_raw_msg(connection_ptr& conn_ptr, msg_ptr& msgp)
                 {
