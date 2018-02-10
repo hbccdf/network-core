@@ -42,7 +42,7 @@ namespace cytx {
 
         void add_msg(error_code ec, std::string msg)
         {
-            messages_.emplace((int)ec, fmt::format("name: {}, msg: {}", to_string(ec, nullptr).value(), msg));
+            messages_.emplace((int)ec, fmt::format("name: {}, msg: {}", to_string(ec, false).value(), msg));
         }
 
     private:
