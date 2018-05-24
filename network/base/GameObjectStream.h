@@ -156,7 +156,7 @@ namespace cytx
             memcpy(data_ + wr_pos_, ptr, object_size);
             wr_pos_ += object_size;
         }
-        void pushBinary(const char* ptr, short len)
+        void pushBinary(const char* ptr, int len)
         {
             checkSpace(len);
             memcpy(data_ + wr_pos_, ptr, len);
