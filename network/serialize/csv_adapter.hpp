@@ -1,11 +1,29 @@
 #pragma once
 #include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 #include "detail/csv_parser.hpp"
 #include "../base/cast.hpp"
 
 namespace cytx
 {
+    class csv_runtime_exception : public std::exception
+    {
+    public:
+        csv_runtime_exception(std::string err_msg) : err_msg_(err_msg) {}
+
+#ifdef _WIN32
+        char const* what() const override { return err_msg_.c_str(); }
+#else
+        char const* what() const noexcept override { return err_msg_.c_str(); }
+#endif
+
+        std::string message() const { return err_msg_; }
+
+    private:
+        std::string err_msg_;
+    };
+
     class csv_deserialize_adapter
     {
     public:
@@ -23,6 +41,8 @@ namespace cytx
         }
         void parse_file(const std::string& file_name)
         {
+            namespace fs = boost::filesystem;
+            file_name_ = fs::path(file_name).filename().string();
             csv_.parse_file(file_name);
         }
 
@@ -71,8 +91,19 @@ namespace cytx
         {
             return csv_;
         }
+
+        std::string filename() const
+        {
+            return file_name_;
+        }
+
+        size_t header_lines() const
+        {
+            return csv_.header_lines();
+        }
     private:
         csv csv_;
+        std::string file_name_;
     };
 
     template<typename OtherTuple>
@@ -112,24 +143,46 @@ namespace cytx
         template<typename ... ARGS>
         void parse_file(ARGS&&... args)
         {
-            rd_.parse_file(std::forward<ARGS>(args)...);
+            try
+            {
+                rd_.parse_file(std::forward<ARGS>(args)...);
+            }
+            catch (std::exception& e)
+            {
+                throw csv_runtime_exception(fmt::format("parse file {} error: {}", rd_.filename(), e.what()));
+            }
         }
 
         void parse(const std::string& str)
         {
-            rd_.parse(str);
+            try
+            {
+                rd_.parse(str);
+            }
+            catch (std::exception& e)
+            {
+                throw csv_runtime_exception(fmt::format("parse string({}) error: {}", str.length(), e.what()));
+            }
         }
 
         template<typename T>
         void DeSerialize(T& t)
         {
-            ReadMap(std::get<0>(get_meta(t)).second);
+            try
+            {
+                ReadMap(std::get<0>(get_meta(t)).second);
+            }
+            catch(std::exception& e)
+            {
+                throw csv_runtime_exception(fmt::format("DeSerialize error, file:{}, line:{}, id:{}, key:{}, error: {}", rd_.filename(), current_line_, current_id_, current_key_name_, e.what()));
+            }
         }
 
     private:
         template<typename T>
         auto ReadMap(T& t)
         {
+            current_line_ = rd_.header_lines();
             auto it = rd_.begin();
             auto it_end = rd_.end();
             for (; it != it_end; ++it)
@@ -138,7 +191,10 @@ namespace cytx
                 using pair_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
                 using second_type = typename pair_t::second_type;
 
+                ++current_line_;
                 int val_id = rd_.id(it);
+                current_id_ = val_id;
+
                 second_type s{};
                 auto meta_value = get_meta(s);
                 ReadTuple(meta_value, rd_.get_val(it));
@@ -161,6 +217,8 @@ namespace cytx
             auto& pair = std::get<I>(t);
             auto& key_name = pair.first;
             auto& pair_val = pair.second;
+
+            current_key_name_ = key_name;
             ReadObject(pair_val, val, key_name);
             ReadTuple<I + 1>(t, val);
         }
@@ -432,5 +490,9 @@ namespace cytx
         adapter_t rd_;
         OtherTuple tuple;
         bool enum_with_str_ = false;
+
+        size_t current_line_ = 0;
+        int32_t current_id_ = 0;
+        std::string current_key_name_;
     };
 }

@@ -394,6 +394,19 @@ namespace cytx
                 const std::vector<std::string>& header() const { return header_; }
                 const std::vector<std::string>& desc() const { return desc_; }
                 const std::vector<std::string>& types() const { return types_; }
+
+                size_t header_lines() const
+                {
+                    size_t lines = 0;
+                    if (first_line_is_header_)
+                        ++lines;
+                    if (has_type_)
+                        ++lines;
+                    if (has_desc_)
+                        ++lines;
+
+                    return lines;
+                }
             private:
                 void set_header()
                 {
