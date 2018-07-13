@@ -94,14 +94,41 @@ namespace cytx
             return ptr;
         }
 
-        void free_memorypool(void* ptr, const std::size_t alloc_size)//修改，不关心size，在应用层传过来的size不一定可靠
+        void free_memorypool(void* ptr, const std::size_t alloc_size)//ptr 不一定是 alloc_size 对应大小的内存池 分配的
         {
             boost::mutex::scoped_lock tempx_mutex_memory_pool(mutex_memory_pool);
 
             std::map<const std::size_t, boost::pool <>* >::iterator it_memory_pool = map_memory_pool.begin();
+			if (alloc_size < 32768)// 1<<15 根据上面初始化的大小来的
+			{
+				while (it_memory_pool != map_memory_pool.end() && it_memory_pool->first < alloc_size)//先按size做一次命中，如果命中不到，再进行遍历
+				{
+					it_memory_pool++;
+				}
+				if (it_memory_pool != map_memory_pool.end() && it_memory_pool->second->is_from(ptr))
+				{
+#ifdef _DEBUG
+					std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.find(it_memory_pool->first);
+					bool del = false;
+					if (debug_it_memory_pool->second.count(ptr))
+					{
+						debug_it_memory_pool->second.erase(ptr);
+						del = true;
+					}
+					if (!del)
+					{
+						assert(0);
+					}
+#endif
+					return it_memory_pool->second->free(ptr);
+				}
+			}
+			//------------------------------------------------------------
+			// 从头查找
+			it_memory_pool = map_memory_pool.begin();
             for (; it_memory_pool != map_memory_pool.end(); ++it_memory_pool)
             {
-                if (it_memory_pool->second->is_from(ptr))//遍历，为了能正确归还
+                if (it_memory_pool->second->is_from(ptr))
                 {
 #ifdef _DEBUG
                     std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.find(it_memory_pool->first);
