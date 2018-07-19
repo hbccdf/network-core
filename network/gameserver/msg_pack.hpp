@@ -75,7 +75,7 @@ namespace cytx
 
             inline void pack_msg_impl(gos_t& gos, const msg_ptr& msgp, bool is_big_endian)
             {
-                gos.pushBinary(msgp->data(), (short)msgp->length());
+                gos.pushBinary(msgp->data(), msgp->length());
             }
 
             template<typename T>
