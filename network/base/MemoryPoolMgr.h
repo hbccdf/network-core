@@ -8,6 +8,10 @@
 #define DELETE_ARRAY_MP(type, ptr, length)			MemoryPoolManager::get_mutable_instance().delete_memorypool<type>(ptr, sizeof(type) * length, length)
 
 
+#ifdef _DEBUG
+#define _MEMORY_POOL_CONTROL
+#endif
+
 #include <boost/serialization/singleton.hpp>
 #include <boost/pool/pool.hpp>
 #include <boost/thread/mutex.hpp>
@@ -37,12 +41,12 @@ namespace cytx
                 boost::pool<>* memory_pool = new boost::pool<>(memory_pool_size);
                 map_memory_pool.insert(std::pair<const std::size_t, boost::pool <>* >(memory_pool_size, memory_pool));
 
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
                 std::set<void*> debug_vector;
                 debug_map_memory_pool.insert(std::pair<const std::size_t, std::set<void*> >(memory_pool_size, debug_vector));
 #endif
             }
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
 			std::set<void*> debug_vector;
 			debug_map_memory_pool.insert(std::pair<const std::size_t, std::set<void*> >(0, debug_vector));//key 0 对应的是从系统分配的
 #endif
@@ -70,7 +74,7 @@ namespace cytx
                 }
             }
 
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
             std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.find(it_memory_pool->first);
             debug_it_memory_pool->second.insert(ptr);
 #endif
@@ -86,7 +90,7 @@ namespace cytx
                 (malloc_faild)();
             }
 
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
 			std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.find(0);
 			debug_it_memory_pool->second.insert(ptr);
 #endif
@@ -107,7 +111,7 @@ namespace cytx
 				}
 				if (it_memory_pool != map_memory_pool.end() && it_memory_pool->second->is_from(ptr))
 				{
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
 					std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.find(it_memory_pool->first);
 					bool del = false;
 					if (debug_it_memory_pool->second.count(ptr))
@@ -130,7 +134,7 @@ namespace cytx
             {
                 if (it_memory_pool->second->is_from(ptr))
                 {
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
                     std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.find(it_memory_pool->first);
 
                     bool del = false;
@@ -154,7 +158,7 @@ namespace cytx
 
         void free_memorypool_overflow(void* ptr)
         {
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
             std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.find(0);
 			bool del = false;
 			if (debug_it_memory_pool->second.count(ptr))
@@ -325,25 +329,31 @@ namespace cytx
             ptr = NULL;
         }
 
-#ifdef _DEBUG
+
         void debug_map_memory_pool_function()
         {
-            std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.begin();
-            for (; debug_it_memory_pool != debug_map_memory_pool.end(); ++debug_it_memory_pool)
-            {
-                std::set<void*>::iterator debug_it_vector = debug_it_memory_pool->second.begin();
-                for (; debug_it_vector != debug_it_memory_pool->second.end(); ++debug_it_vector)
-                {
-                }
-            }
-        }
+#ifdef _MEMORY_POOL_CONTROL
+//             std::map<const std::size_t, std::set<void*> >::iterator debug_it_memory_pool = debug_map_memory_pool.begin();
+//             for (; debug_it_memory_pool != debug_map_memory_pool.end(); ++debug_it_memory_pool)
+//             {
+//                 std::set<void*>::iterator debug_it_vector = debug_it_memory_pool->second.begin();
+//                 for (; debug_it_vector != debug_it_memory_pool->second.end(); ++debug_it_vector)
+//                 {
+//                 }
+//             }
+			for (auto it : debug_map_memory_pool)
+			{
+				OutputDebugString(fmt::format("pool:{},size:{}",it.first,it.second.size()).c_str());
+			}
 #endif
+        }
+
 
     private:
         boost::mutex mutex_memory_pool;
         std::map<const std::size_t, boost::pool <>* > map_memory_pool;		// min : 1	max : 32768
 
-#ifdef _DEBUG
+#ifdef _MEMORY_POOL_CONTROL
         std::map<const std::size_t, std::set<void*> > debug_map_memory_pool;
 #endif
 
