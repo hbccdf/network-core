@@ -263,7 +263,7 @@ namespace cytx
                         return get_running_conn(center_conn_ptr_);
                     else if (unique_id == server_unique_id::db_server)
                         return get_running_conn(db_conn_ptr_);
-                    else if (unique_id != server_unique_id::gateway_server)
+                    else if (unique_id != server_unique_id::gateway_server)//×¢ÒâÕâÀï
                         return get_running_conn(center_conn_ptr_);
                     return base_t::get_connection_ptr(unique_id);
                 }

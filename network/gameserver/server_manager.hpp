@@ -156,7 +156,7 @@ namespace cytx
                     {
                         on_broadcast_server_msg(conn_ptr, msgp);
                     }
-                    else if (protocol_id != SimpleRegisterServer)
+                    else if (protocol_id != SimpleRegisterServer)//◊¢“‚’‚¿Ô
                     {
                         on_forward_msg(conn_ptr, msgp);
                     }
