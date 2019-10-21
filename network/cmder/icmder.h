@@ -1,0 +1,148 @@
+﻿#pragma once
+#include <string>
+#include <unordered_map>
+#include <algorithm>
+#include <memory>
+#include <iostream>
+#include <fmt/format.h>
+#include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
+#include "network/meta/meta.hpp"
+
+namespace cytx
+{
+    namespace bpo = boost::program_options;
+
+    namespace detail
+    {
+        using namespace boost::program_options;
+        using namespace std;
+
+        inline vector<string> get_args(string input)
+        {
+            return split_winmain(input);
+        }
+
+        inline bool all_default(const variables_map& vm)
+        {
+            return std::all_of(std::begin(vm), std::end(vm), [](const auto& it) -> bool {
+                return it.second.defaulted();
+            });
+        }
+
+        inline std::unique_ptr<options_description> options(string cmd_name)
+        {
+            auto str = cmd_name;
+            str += " options";
+            auto op = std::make_unique<options_description>(str);
+            op->add_options()
+                ("help,h", "show help info");
+            return op;
+        }
+
+        inline variables_map get_vm(string input, options_description& op, positional_options_description& pd, bool show_help = true)
+        {
+            variables_map vm;
+            auto pr = command_line_parser(get_args(input))
+                .options(op)
+                .positional(pd)
+                .run();
+            store(pr, vm);
+            notify(vm);
+
+            if (show_help && (vm.empty() || (vm.count("help") && vm.size() == 1) || all_default(vm)))
+            {
+                cout << op << endl;
+                throw true;
+            }
+            return vm;
+        }
+
+        inline variables_map get_vm(int argc, const char* argv[], options_description& op, positional_options_description& pd, bool show_help = true)
+        {
+            variables_map vm;
+            auto pr = command_line_parser(argc, argv)
+                .options(op)
+                .positional(pd)
+                .run();
+            store(pr, vm);
+
+            if (show_help && (vm.empty() || (vm.count("help") && vm.size() == 1) || all_default(vm)))
+            {
+                cout << op << endl;
+                throw true;
+            }
+            return vm;
+        }
+    }
+
+    class icmder
+    {
+    public:
+        void init(std::string name, std::string desc)
+        {
+            name_ = name;
+            desc_ = desc;
+            op_ = detail::options(name);
+            add_options();
+        }
+
+        virtual void add_options() {}
+
+        virtual bool handle_input(std::string input)
+        {
+            auto input_args = detail::get_args(input);
+            std::vector<const char*> args;
+            for (auto& s : input_args)
+            {
+                args.push_back(s.c_str());
+            }
+            return handle_input((int)args.size(), args.data());
+        }
+
+        virtual bool handle_input(int argc, const char* argv[])
+        {
+            dump_help();
+            return true;
+        }
+
+        void dump_help()
+        {
+            std::cout << (*op_) << std::endl;
+        }
+
+    public:
+        std::string desc() { return desc_; }
+        std::string name() { return name_; }
+    protected:
+        std::string name_;
+        std::string desc_;
+        std::unique_ptr<bpo::options_description> op_;
+        bpo::positional_options_description pd_;
+    };
+
+    class icmder_helper : public icmder
+    {
+    public:
+        virtual bool handle_vm(const bpo::variables_map& vm)
+        {
+            dump_help();
+            return true;
+        }
+
+        virtual bool handle_input(std::string input) override
+        {
+            auto vm = detail::get_vm(input, *op_.get(), pd_, true);
+            return handle_vm(vm);
+        }
+
+        virtual bool handle_input(int argc, const char* argv[]) override
+        {
+            auto vm = detail::get_vm(argc, argv, *op_.get(), pd_, true);
+            return handle_vm(vm);
+        }
+
+    };
+
+    using icmder_ptr = std::shared_ptr<icmder>;
+}
