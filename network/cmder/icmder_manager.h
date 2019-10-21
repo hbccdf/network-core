@@ -3,7 +3,7 @@
 
 namespace cytx
 {
-    class icmder_mamanger
+    class icmder_manager
     {
     public:
         void register_cmder(std::string cmd_name, icmder_ptr cmder)
@@ -63,5 +63,5 @@ namespace cytx
         std::unordered_map<std::string, icmder_ptr> cmders_;
     };
 
-    using icmder_mamanger_ptr = std::shared_ptr<icmder_mamanger>;
+    using icmder_manager_ptr = std::shared_ptr<icmder_manager>;
 }

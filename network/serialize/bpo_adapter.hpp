@@ -1,9 +1,8 @@
-#pragma once
+﻿#pragma once
 #include <boost/program_options.hpp>
 #include "../traits/traits.hpp"
 #include "../meta/meta.hpp"
 #include "../base/cast.hpp"
-#include "deserializer.hpp"
 
 namespace cytx
 {
@@ -18,6 +17,7 @@ namespace cytx
     public:
         DeSerializer()
         {
+            pod_ptr_ = &pod_;
         }
 
         ~DeSerializer()
@@ -27,62 +27,60 @@ namespace cytx
         bool enum_with_str() { return enum_with_str_; }
         void enum_with_str(bool val) { enum_with_str_ = val; }
 
-        void init(const bpo::options_description& op)
+        void init(const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
         {
             for (auto& o : op.options())
             {
                 ops_.add(o);
+            }
+
+            if (pod_ptr)
+            {
+                pod_ptr_ = pod_ptr;
             }
         }
 
         void parse(size_t argc, const char* const argv[])
         {
-            vm_.clear();
-            bpo::store(bpo::parse_command_line((int)argc, argv, ops_), vm_);
+            clear();
+            bpo::store(bpo::command_line_parser((int)argc, argv).options(ops_).positional(*pod_ptr_).run(), vm_);
             bpo::notify(vm_);
         }
 
         void parse(const char* cmd_line)
         {
+            clear();
 #ifdef LINUX
             std::vector<std::string> args = bpo::split_unix(cmd_line);
 #else
             std::vector<std::string> args = bpo::split_winmain(cmd_line);
 #endif
-            parse(args);
+            bpo::store(bpo::command_line_parser(args).options(ops_).positional(*pod_ptr_).run(), vm_);
+            bpo::notify(vm_);
         }
 
         void parse(const std::vector<std::string>& args)
         {
-            vm_.clear();
-            bpo::store(bpo::command_line_parser(args).options(ops_).run(), vm_);
+            clear();
+            bpo::store(bpo::command_line_parser(args).options(ops_).positional(*pod_ptr_).run(), vm_);
             bpo::notify(vm_);
         }
 
-        void parse(size_t argc, const char* const argv[], const bpo::options_description& op)
+        void parse(size_t argc, const char* const argv[], const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
         {
-            for (auto& o : op.options())
-            {
-                ops_.add(o);
-            }
+            init(op, pod_ptr);
             parse(argc, argv);
         }
 
-        void parse(const char* cmd_line, const bpo::options_description& op)
+        void parse(const char* cmd_line, const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
         {
-            for (auto& o : op.options())
-            {
-                ops_.add(o);
-            }
+            init(op, pod_ptr);
             parse(cmd_line);
         }
 
-        void parse(const std::vector<std::string>& args, const bpo::options_description& op)
+        void parse(const std::vector<std::string>& args, const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
         {
-            for (auto& o : op.options())
-            {
-                ops_.add(o);
-            }
+            init(op, pod_ptr);
             parse(args);
         }
 
@@ -117,12 +115,18 @@ namespace cytx
             });
         }
 
-        bool empty()
+        bool empty() const
         {
             return vm_.empty();
         }
 
         const bpo::variables_map& vm() const { return vm_; }
+
+    private:
+        void clear()
+        {
+            vm_.clear();
+        }
 
     private:
         template<typename T>
@@ -189,6 +193,8 @@ namespace cytx
     private:
         bpo::variables_map vm_;
         bpo::options_description ops_;
+        bpo::positional_options_description pod_;
+        bpo::positional_options_description* pod_ptr_;
         bool enum_with_str_ = false;
     };
 }

@@ -181,15 +181,15 @@ namespace cytx
             }
             int hour() const
             {
-                return time_.time_of_day().hours();
+                return (int)time_.time_of_day().hours();
             }
             int minute() const
             {
-                return time_.time_of_day().minutes();
+                return (int)time_.time_of_day().minutes();
             }
             int second() const
             {
-                return time_.time_of_day().seconds();
+                return (int)time_.time_of_day().seconds();
             }
             int ms() const
             {
@@ -206,7 +206,7 @@ namespace cytx
             }
             int total_seconds() const
             {
-                return duration_now().total_seconds();
+                return (int)duration_now().total_seconds();
             }
             int64_t total_milliseconds() const
             {

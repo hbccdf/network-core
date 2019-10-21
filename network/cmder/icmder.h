@@ -84,10 +84,10 @@ namespace cytx
             name_ = name;
             desc_ = desc;
             op_ = detail::options(name);
-            add_options();
+            set_options();
         }
 
-        virtual void add_options() {}
+        virtual void set_options() {}
 
         virtual bool handle_input(std::string input)
         {
