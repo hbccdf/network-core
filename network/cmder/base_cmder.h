@@ -85,46 +85,11 @@ namespace cytx
         bpo_pos_options_t* pod_;
     };
 
-    class icmder_parser
-    {
-    public:
-        icmder_parser(bpo_parser_t& de)
-            : de_(de)
-            , cmder_(nullptr)
-        {}
-
-        void set_cmder(base_cmder* cmder)
-        {
-            cmder_ = cmder;
-        }
-
-        virtual void parse() = 0;
-
-    protected:
-        bpo_parser_t& de_;
-        base_cmder* cmder_;
-    };
-
-    template<typename T>
-    class icmder_meta_parser : public icmder_parser
-    {
-        using cmder_t = T;
-    public:
-        icmder_meta_parser(bpo_parser_t& de)
-            : icmder_parser(de)
-        {}
-
-        virtual void parse() override
-        {
-            cmder_t* cmder_ptr = (cmder_t*)cmder_;
-            de_.DeSerialize(*cmder_ptr);
-        }
-
-    };
-
     class base_cmder : public icmder
     {
     public:
+        using parser_func_t = std::function<void(bpo_parser_t&)>;
+
         base_cmder()
             : icmder()
         {
@@ -138,9 +103,9 @@ namespace cytx
             manager_ = manager;
         }
 
-        virtual void set_parser(icmder_parser* parser)
+        virtual void set_parser(parser_func_t func)
         {
-            parser_ = parser;
+            parser_func_ = func;
         }
 
         virtual add_options_helper add_options()
@@ -153,7 +118,8 @@ namespace cytx
             init_value();
 
             de_.parse(argc, argv);
-            parser_->parse();
+            parser_func_(de_);
+
             return execute();
         }
 
@@ -166,27 +132,8 @@ namespace cytx
     protected:
         icmder_manager_ptr manager_;
         bpo_parser_t de_;
-        icmder_parser* parser_;
+        parser_func_t parser_func_;
     };
-
-    template<typename T>
-    class base_meta_cmder : public base_cmder
-    {
-        using cmder_t = T;
-        using parser_t = icmder_meta_parser<cmder_t>;
-    public:
-        base_meta_cmder()
-            : base_cmder()
-            , parser_(de_)
-        {
-            parser_.set_cmder(this);
-            set_parser(&parser_);
-        }
-
-    protected:
-        parser_t parser_;
-    };
-
 
     class cmder_factory
     {
@@ -203,6 +150,9 @@ namespace cytx
             auto cmder = std::make_shared<T>();
             icmder_manager::ins().register_cmder(name, cmder);
 
+            cmder->set_parser([cmder](auto& de) {
+                de.DeSerialize(*cmder);
+            });
             cmder->set_cmder_manager(&icmder_manager::ins());
             cmder->init(name, desc);
             return cmder->add_options();
