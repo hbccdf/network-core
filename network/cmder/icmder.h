@@ -13,6 +13,10 @@ namespace cytx
 {
     namespace bpo = boost::program_options;
 
+    using bpo_option_t = bpo::option_description;
+    using bpo_options_t = bpo::options_description;
+    using bpo_pos_options_t = bpo::positional_options_description;
+
     namespace detail
     {
         using namespace boost::program_options;
@@ -89,7 +93,7 @@ namespace cytx
 
         virtual void set_options() {}
 
-        virtual bool handle_input(std::string input)
+        virtual int handle_input(std::string input)
         {
             auto input_args = detail::get_args(input);
             std::vector<const char*> args;
@@ -100,10 +104,10 @@ namespace cytx
             return handle_input((int)args.size(), args.data());
         }
 
-        virtual bool handle_input(int argc, const char* argv[])
+        virtual int handle_input(int argc, const char* argv[])
         {
             dump_help();
-            return true;
+            return 0;
         }
 
         void dump_help()
@@ -117,26 +121,26 @@ namespace cytx
     protected:
         std::string name_;
         std::string desc_;
-        std::unique_ptr<bpo::options_description> op_;
-        bpo::positional_options_description pd_;
+        std::unique_ptr<bpo_options_t> op_;
+        bpo_pos_options_t pd_;
     };
 
     class icmder_helper : public icmder
     {
     public:
-        virtual bool handle_vm(const bpo::variables_map& vm)
+        virtual int handle_vm(const bpo::variables_map& vm)
         {
             dump_help();
-            return true;
+            return 0;
         }
 
-        virtual bool handle_input(std::string input) override
+        virtual int handle_input(std::string input) override
         {
             auto vm = detail::get_vm(input, *op_.get(), pd_, true);
             return handle_vm(vm);
         }
 
-        virtual bool handle_input(int argc, const char* argv[]) override
+        virtual int handle_input(int argc, const char* argv[]) override
         {
             auto vm = detail::get_vm(argc, argv, *op_.get(), pd_, true);
             return handle_vm(vm);

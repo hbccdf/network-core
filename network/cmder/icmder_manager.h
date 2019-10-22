@@ -6,6 +6,12 @@ namespace cytx
     class icmder_manager
     {
     public:
+        static icmder_manager& ins()
+        {
+            static icmder_manager manager;
+            return manager;
+        }
+    public:
         void register_cmder(std::string cmd_name, icmder_ptr cmder)
         {
             cmders_[cmd_name] = cmder;
@@ -16,7 +22,7 @@ namespace cytx
             register_cmder(cmder->name(), cmder);
         }
 
-        bool handle_input(std::string input)
+        int handle_input(std::string input)
         {
             std::vector<std::string> strs;
             boost::split(strs, input, boost::is_any_of(" "), boost::token_compress_on);
@@ -30,7 +36,7 @@ namespace cytx
             return handle_input((int)argv.size(), argv.data());
         }
 
-        bool handle_input(int argc, char* argv[])
+        int handle_input(int argc, char* argv[])
         {
             std::vector<const char*> arg_vec;
             for (int i = 0; i < argc; ++i)
@@ -40,15 +46,15 @@ namespace cytx
             return handle_input((int)arg_vec.size(), arg_vec.data());
         }
 
-        bool handle_input(int argc, const char* argv[])
+        int handle_input(int argc, const char* argv[])
         {
             if (argc <= 0 || cmders_.find(argv[0]) == cmders_.end())
             {
                 std::cout << "invalid command, please retry input" << std::endl;
                 return true;
             }
-            auto is_continue = cmders_[argv[0]]->handle_input(argc, argv);
-            return is_continue;
+            auto result = cmders_[argv[0]]->handle_input(argc, argv);
+            return result;
         }
 
         void dump_help()
@@ -56,12 +62,12 @@ namespace cytx
             std::string fmt_str = "{:10}{}";
             for (auto& c : cmders_)
             {
-                std::cout << fmt::format(fmt_str, c.first, c.second->desc()) << endl;
+                std::cout << fmt::format(fmt_str, c.first, c.second->desc()) << std::endl;
             }
         }
     protected:
         std::unordered_map<std::string, icmder_ptr> cmders_;
     };
 
-    using icmder_manager_ptr = std::shared_ptr<icmder_manager>;
+    using icmder_manager_ptr = icmder_manager*;
 }
