@@ -3,6 +3,7 @@ include(../cmake/common.cmake)
 file(GLOB SRC "*.h" "*.hpp")
 
 add_files(SRC false "base")
+add_files(SRC false "cmder")
 add_files(SRC false "codec")
 add_files(SRC false "gameserver")
 add_files(SRC false "meta")

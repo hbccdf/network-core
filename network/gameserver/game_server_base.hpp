@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "network/base/utils.hpp"
 #include "network/base/cast.hpp"
 #include "tcp_server.hpp"
@@ -69,13 +69,13 @@ namespace cytx
                 }
                 void init(const std::string& config_file_name = "server_config.xml")
                 {
-                    //³õÊ¼»¯ÄÚ´æ³Ø
+                    //åˆå§‹åŒ–å†…å­˜æ± 
                     MemoryPoolManager::get_mutable_instance().init();
-                    //¶ÁÈ¡ÅäÖÃÎÄ¼ş
+                    //è¯»å–é…ç½®æ–‡ä»¶
                     config_mgr_.init(config_file_name);
                     config_mgr_.parse_real_ip(cytx::util::domain2ip);
 
-                    //³õÊ¼»¯ÈÕÖ¾
+                    //åˆå§‹åŒ–æ—¥å¿—
                     const server_info& info = config_mgr_[unique_id_];
                     cytx::log::get().init(fmt::format("logs/{}", info.name), info.log_level);
 
@@ -88,7 +88,7 @@ namespace cytx
                     log_ = cytx::log::get_log("server");
 
                     SERVER_DEBUG("init server");
-                    //³õÊ¼»¯serverºÍtimer
+                    //åˆå§‹åŒ–serverå’Œtimer
                     server_options options;
                     options.thread_mode = (cytx::gameserver::server_thread_mode)info.thread_mode;
                     options.disconnect_interval = info.disconnect_heartbeat;
@@ -99,7 +99,7 @@ namespace cytx
                     flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time * 1000, cytx::bind(&this_t::flush_logs, this));
 
                     SERVER_DEBUG("begin register service");
-                    //×¢²áËùÓĞµÄservice
+                    //æ³¨å†Œæ‰€æœ‰çš„service
                     service_mgr_.reg_inter_service(new config_service(config_mgr_), "config");
                     if (info.services)
                     {
@@ -112,7 +112,7 @@ namespace cytx
                         service_mgr_.register_all_service();
                     }
 
-                    service_mgr_.service_set_server(this);
+                    service_mgr_.service_set_info(this);
                 }
 
                 void start()
@@ -203,7 +203,7 @@ namespace cytx
                     }
                 }
             public:
-                //¸ø·şÎñ¶Ë·¢ËÍÏûÏ¢
+                //ç»™æœåŠ¡ç«¯å‘é€æ¶ˆæ¯
                 template<typename MSG_ID, typename T>
                 uint32_t send_server_msg(server_unique_id unique_id, MSG_ID msg_id, const T& t, const msg_ptr& request_msgp = nullptr)
                 {
@@ -327,7 +327,7 @@ namespace cytx
                 }
 
             public:
-                //¸ø·şÎñ¶Ë·¢ËÍÏûÏ¢
+                //ç»™æœåŠ¡ç«¯å‘é€æ¶ˆæ¯
                 uint32_t send_server_msg(server_unique_id unique_id, msg_ptr& msgp, const msg_ptr& request_msgp = nullptr)
                 {
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
@@ -522,5 +522,7 @@ namespace cytx
                 log_ptr_t log_;
             };
         }
+
+        using game_server_base = detail::game_server_base;
     }
 }

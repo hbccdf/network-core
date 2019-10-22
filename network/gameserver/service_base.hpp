@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "game_server.hpp"
 
 namespace cytx
@@ -8,12 +8,11 @@ namespace cytx
         class service_base
         {
         protected:
-            using game_server_base_t = cytx::game_server_base_t;
             using game_server_t = game_server;
         public:
-            void set_server(game_server_base_t* server_ptr)
+            void set_info(void* info_ptr)
             {
-                server_ = static_cast<game_server_t*>(server_ptr);
+                server_ = static_cast<game_server_t*>(info_ptr);
             }
         protected:
             game_server_t* server_ = nullptr;

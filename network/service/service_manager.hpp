@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "service_meta.hpp"
 
 namespace cytx
@@ -6,11 +6,11 @@ namespace cytx
     class service_manager
     {
     public:
-        void service_set_server(game_server_base_t* server_ptr)
+        void service_set_info(void* info_ptr)
         {
             for (auto& p : service_map_)
             {
-                p.second->set_server(server_ptr);
+                p.second->set_info(info_ptr);
             }
         }
         void init_service()
