@@ -22,6 +22,17 @@ namespace cytx
             register_cmder(cmder->name(), cmder);
         }
 
+        icmder_ptr get_cmder(std::string cmd_name)
+        {
+            auto it = cmders_.find(cmd_name);
+            if (it != cmders_.end())
+            {
+                return it->second;
+            }
+
+            return nullptr;
+        }
+
         int handle_input(std::string input)
         {
             std::vector<std::string> strs;

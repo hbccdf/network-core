@@ -68,6 +68,17 @@ namespace cytx
             return "";
         }
 
+        std::string get_string_or(const std::string& name, const std::string& or_value)
+        {
+            auto it = str_map_.find(name);
+            if (it != str_map_.end())
+            {
+                return it->second;
+            }
+
+            return or_value;
+        }
+
         template<typename T>
         auto reg_basic(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<detail::decay_t<T>>::value>
         {
@@ -87,7 +98,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_basic_or(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<T>::value, T>
+        auto get_basic_or(const std::string& name, const T& or_value) -> std::enable_if_t<std::is_arithmetic<T>::value, T>
         {
             auto it = basic_map_.find(name);
             if (it != basic_map_.end())
@@ -95,7 +106,7 @@ namespace cytx
                 return boost::get<T>(it->second);
             }
 
-            return value;
+            return or_value;
         }
 
     private:
