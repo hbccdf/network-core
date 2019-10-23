@@ -10,6 +10,21 @@ namespace cytx
         using world_basic_type_variant_t = cytx::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double>;
     }
 
+    template <typename T>
+    struct has_set_world_func
+    {
+    private:
+        template <typename P, typename = decltype(std::declval<P>().set_world((world_map*)nullptr))>
+        static std::true_type test(int);
+        template <typename P>
+        static std::false_type test(...);
+        using result_type = decltype(test<T>(0));
+    public:
+        static constexpr bool value = result_type::value;
+    };
+    template<typename T>
+    constexpr bool has_set_world_func_v = has_set_world_func<T>::value;
+
     class world_map
     {
     public:
@@ -25,11 +40,19 @@ namespace cytx
         }
 
         template<typename T>
+        auto reg(const std::string& name, T* obj) -> std::enable_if_t<has_set_world_func_v<T>>
+        {
+            reg(name, (void*)obj);
+            set_world_impl(obj);
+        }
+
+        template<typename T>
         void reg(T* obj)
         {
             using obj_type = std::decay_t<T>;
             std::string type_name = typeid(T).name();
             reg(type_name, obj);
+            set_world_impl(obj);
         }
 
         template<typename T>
@@ -107,6 +130,17 @@ namespace cytx
             }
 
             return or_value;
+        }
+
+    private:
+        template<typename T>
+        auto set_world_impl(T* obj_ptr) -> std::enable_if_t<has_set_world_func_v<T>>
+        {
+            obj_ptr->set_world(this);
+        }
+        template<typename T>
+        auto set_world_impl(T* obj_ptr) -> std::enable_if_t<!has_set_world_func_v<T>>
+        {
         }
 
     private:

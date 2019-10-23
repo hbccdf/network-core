@@ -83,7 +83,7 @@ namespace cytx
     class icmder
     {
     public:
-        void init(std::string name, std::string desc)
+        void init_options(std::string name, std::string desc)
         {
             name_ = name;
             desc_ = desc;

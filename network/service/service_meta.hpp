@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "iservice.hpp"
-#include "../traits/traits.hpp"
+#include "network/traits/traits.hpp"
+#include "network/base/world.hpp"
 
 namespace cytx
 {
@@ -8,21 +9,6 @@ namespace cytx
     HAS_FUNC(start);
     HAS_FUNC(stop);
     HAS_FUNC(reset);
-
-    template <typename T>
-    struct has_set_world_func
-    {
-    private:
-        template <typename P, typename = decltype(std::declval<P>().set_world((world_map*)nullptr))>
-        static std::true_type test(int);
-        template <typename P>
-        static std::false_type test(...);
-        using result_type = decltype(test<T>(0));
-    public:
-        static constexpr bool value = result_type::value;
-    };
-    template<typename T>
-    constexpr bool has_set_world_func_v = has_set_world_func<T>::value;
 
     template<typename T>
     class service_helper : public iservice

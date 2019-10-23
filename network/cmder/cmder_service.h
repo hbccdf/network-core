@@ -10,7 +10,7 @@ namespace cytx
     public:
         void init()
         {
-            manager_ = world_ptr_->get<icmder_manager>("icmder_manager");
+            manager_ = world_ptr_->get<icmder_manager>("icmder_mgr");
         }
 
     public:
@@ -31,7 +31,7 @@ namespace cytx
 
         void show_cmder_help(const std::string& cmd_name)
         {
-            icmder_ptr cmder_ptr = manager_->get_cmder(cmd_name);
+            auto cmder_ptr = manager_->get_cmder(cmd_name);
             if (cmder_ptr)
             {
                 cmder_ptr->dump_help();

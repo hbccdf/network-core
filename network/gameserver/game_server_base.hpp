@@ -70,6 +70,7 @@ namespace cytx
                 void init(const std::string& config_file_name = "server_config.xml")
                 {
                     world_.reg("game_server", this);
+                    world_.reg("svc_manager", &service_mgr_);
 
                     //初始化内存池
                     MemoryPoolManager::get_mutable_instance().init();
@@ -114,8 +115,6 @@ namespace cytx
                         SERVER_DEBUG("register all service");
                         service_mgr_.register_all_service();
                     }
-
-                    service_mgr_.service_set_world(&world_);
                 }
 
                 void start()

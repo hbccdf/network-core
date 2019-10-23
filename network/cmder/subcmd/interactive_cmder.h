@@ -1,0 +1,64 @@
+﻿#pragma once
+#include "network/cmder/base_cmder.h"
+#include "network/cmder/cmder_service.h"
+
+namespace cytx
+{
+    namespace subcmd
+    {
+        class interactive_cmder : public base_cmder
+        {
+        public:
+            void init() override
+            {
+                service_manager* service_mgr = world_ptr_->get<service_manager>("service_mgr");
+
+                cmder_service_ = service_mgr->get_service<cmder_service>();
+            }
+
+            void reset_value() override
+            {
+                prompt = "fc>";
+                exit = "exit";
+            }
+
+            int execute() override
+            {
+                std::string input;
+                while (true)
+                {
+                    read_input(input);
+                    boost::trim(input);
+                    if (input.empty())
+                        continue;
+
+                    if (input == exit)
+                        break;
+
+                    cmder_service_->handle_input(input);
+                }
+
+                return 0;
+            }
+
+        private:
+            void read_input(std::string& input)
+            {
+                std::cout << prompt;
+                std::getline(std::cin, input);
+            }
+
+        public:
+            std::string prompt;
+            std::string exit;
+
+        private:
+            cmder_service* cmder_service_;
+        };
+
+        REG_META(interactive_cmder, prompt, exit);
+        REGISTER_CMDER(interactive_cmder, "interactive", "interactive mode")
+            ("prompt", value<std::string>(), "prompt text, default is fc>")
+            ("exit", value<std::string>(), "exit when input equal the value").end();
+    }
+}

@@ -7,7 +7,7 @@ namespace cytx
     class base_waitable_cmder : public base_cmder
     {
     public:
-        virtual void init_value() override
+        virtual void reset_value() override
         {
             isWait = false;
             waitTime = -1;

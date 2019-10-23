@@ -7,9 +7,9 @@ namespace cytx
     class base_repeat_cmder : public base_waitable_cmder
     {
     public:
-        virtual void init_value() override
+        virtual void reset_value() override
         {
-            base_waitable_cmder::init_value();
+            base_waitable_cmder::reset_value();
 
             delay = 0;
             interval = 0;

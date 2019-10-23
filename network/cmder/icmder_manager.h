@@ -1,8 +1,10 @@
 ﻿#pragma once
-#include "icmder.h"
+#include "base_cmder.h"
+#include "network/base/world.hpp"
 
 namespace cytx
 {
+    using base_cmder_ptr = std::shared_ptr<base_cmder>;
     class icmder_manager
     {
     public:
@@ -12,17 +14,35 @@ namespace cytx
             return manager;
         }
     public:
-        void register_cmder(std::string cmd_name, icmder_ptr cmder)
+        void set_world(world_map* world_ptr)
+        {
+            world_ptr_ = world_ptr;
+
+            for (auto& p : cmders_)
+            {
+                p.second->set_world(world_ptr_);
+            }
+        }
+
+        void init_all_cmder()
+        {
+            for (auto& p : cmders_)
+            {
+                p.second->init();
+            }
+        }
+
+        void register_cmder(std::string cmd_name, base_cmder_ptr cmder)
         {
             cmders_[cmd_name] = cmder;
         }
 
-        void register_cmder(icmder_ptr cmder)
+        void register_cmder(base_cmder_ptr cmder)
         {
             register_cmder(cmder->name(), cmder);
         }
 
-        icmder_ptr get_cmder(std::string cmd_name)
+        base_cmder_ptr get_cmder(std::string cmd_name)
         {
             auto it = cmders_.find(cmd_name);
             if (it != cmders_.end())
@@ -70,14 +90,15 @@ namespace cytx
 
         void dump_help()
         {
-            std::string fmt_str = "{:10}{}";
+            std::string fmt_str = "{:15}{}";
             for (auto& c : cmders_)
             {
                 std::cout << fmt::format(fmt_str, c.first, c.second->desc()) << std::endl;
             }
         }
     protected:
-        std::unordered_map<std::string, icmder_ptr> cmders_;
+        world_map* world_ptr_;
+        std::unordered_map<std::string, base_cmder_ptr> cmders_;
     };
 
     using icmder_manager_ptr = icmder_manager*;
