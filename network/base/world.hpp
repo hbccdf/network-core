@@ -1,9 +1,15 @@
 ﻿#pragma once
 #include <unordered_map>
 #include <string>
+#include "network/traits/traits.hpp"
 
 namespace cytx
 {
+    namespace detail
+    {
+        using world_basic_type_variant_t = cytx::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double>;
+    }
+
     class world_map
     {
     public:
@@ -45,7 +51,56 @@ namespace cytx
 
             return nullptr;
         }
+
+        void reg_string(const std::string& name, const std::string& value)
+        {
+            str_map_[name] = value;
+        }
+
+        std::string get_string(const std::string& name)
+        {
+            auto it = str_map_.find(name);
+            if (it != str_map_.end())
+            {
+                return it->second;
+            }
+
+            return "";
+        }
+
+        template<typename T>
+        auto reg_basic(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<detail::decay_t<T>>::value>
+        {
+            basic_map_[name] = value;
+        }
+
+        template<typename T>
+        auto get_basic(const std::string& name) -> std::enable_if_t<std::is_arithmetic<T>::value, T>
+        {
+            auto it = basic_map_.find(name);
+            if (it != basic_map_.end())
+            {
+                return boost::get<T>(it->second);
+            }
+
+            return T{};
+        }
+
+        template<typename T>
+        auto get_basic_or(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<T>::value, T>
+        {
+            auto it = basic_map_.find(name);
+            if (it != basic_map_.end())
+            {
+                return boost::get<T>(it->second);
+            }
+
+            return value;
+        }
+
     private:
         std::unordered_map<std::string, void*> obj_map_;
+        std::unordered_map<std::string, std::string> str_map_;
+        std::unordered_map<std::string, detail::world_basic_type_variant_t> basic_map_;
     };
 }
