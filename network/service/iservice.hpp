@@ -13,6 +13,7 @@ namespace cytx
         virtual void start() = 0;
         virtual void stop() = 0;
         virtual void reset() = 0;
+        virtual bool reload() = 0;
     public:
         virtual type_id_t get_type_id() const = 0;
     };

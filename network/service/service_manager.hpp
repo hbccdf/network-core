@@ -46,6 +46,12 @@ namespace cytx
                 p.second->reset();
             }
         }
+        bool reload_service()
+        {
+            return std::all_of(std::begin(service_map_), std::end(service_map_), [](auto& p) {
+                return p.second->reload();
+            });
+        }
 
     public:
         template<typename T>

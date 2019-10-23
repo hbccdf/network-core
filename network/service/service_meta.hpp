@@ -5,10 +5,29 @@
 
 namespace cytx
 {
+
+#define SERVICE_FUNC_IMPL(func) \
+public:                                                             \
+    void func() override                                            \
+    {                                                               \
+        func ## _impl<T>();                                         \
+    }                                                               \
+private:                                                            \
+    template<typename TT>                                           \
+    auto func ## _impl() -> std::enable_if_t<has_##func##_v<TT>>    \
+    {                                                               \
+        val_->func();                                               \
+    }                                                               \
+    template<typename TT>                                           \
+    auto func ## _impl()->std::enable_if_t<!has_##func##_v<TT>>     \
+    {                                                               \
+    }
+
     HAS_FUNC(init);
     HAS_FUNC(start);
     HAS_FUNC(stop);
     HAS_FUNC(reset);
+    HAS_FUNC(reload);
 
     template<typename T>
     class service_helper : public iservice
@@ -43,21 +62,14 @@ namespace cytx
         {
             init_impl<T>();
         }
-
-        void start() override
+        bool reload() override
         {
-            start_impl<T>();
+            return reload_impl<T>();
         }
 
-        void stop() override
-        {
-            stop_impl<T>();
-        }
-
-        void reset() override
-        {
-            reset_impl<T>();
-        }
+        SERVICE_FUNC_IMPL(start)
+        SERVICE_FUNC_IMPL(stop)
+        SERVICE_FUNC_IMPL(reset)
 
     public:
         type_id_t get_type_id() const override
@@ -77,33 +89,14 @@ namespace cytx
         }
 
         template<typename TT>
-        auto start_impl() -> std::enable_if_t<has_start_v<TT>>
+        auto reload_impl() -> std::enable_if_t<has_reload_v<TT>, bool>
         {
-            val_->start();
+            return val_->reload();
         }
         template<typename TT>
-        auto start_impl()->std::enable_if_t<!has_start_v<TT>>
+        auto reload_impl()->std::enable_if_t<!has_reload_v<TT>, bool>
         {
-        }
-
-        template<typename TT>
-        auto stop_impl() -> std::enable_if_t<has_stop_v<TT>>
-        {
-            val_->stop();
-        }
-        template<typename TT>
-        auto stop_impl()->std::enable_if_t<!has_stop_v<TT>>
-        {
-        }
-
-        template<typename TT>
-        auto reset_impl() -> std::enable_if_t<has_reset_v<TT>>
-        {
-            val_->reset();
-        }
-        template<typename TT>
-        auto reset_impl()->std::enable_if_t<!has_reset_v<TT>>
-        {
+            return true;
         }
 
         template<typename TT>
