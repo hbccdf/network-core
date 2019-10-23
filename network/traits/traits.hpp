@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <type_traits>
 #include <vector>
@@ -200,12 +200,12 @@ namespace cytx {
     template<typename T> \
     constexpr bool has_##token##_v = has_##token<T>::value;
 
-#define HAS_FUNC(token) \
+#define HAS_FUNC(token, ...) \
     template <typename T> \
     struct has_##token \
     {   \
     private:    \
-        template <typename P, typename = decltype(std::declval<P>().token())> \
+        template <typename P, typename = decltype(std::declval<P>().token(##__VA_ARGS__))> \
         static std::true_type test(int); \
         template <typename P> \
         static std::false_type test(...); \
