@@ -10,9 +10,9 @@ namespace cytx
         protected:
             using game_server_t = game_server;
         public:
-            void set_info(void* info_ptr)
+            void set_world(world_map* world_ptr)
             {
-                server_ = static_cast<game_server_t*>(info_ptr);
+                server_ = world_ptr->get<game_server>("game_server");
             }
         protected:
             game_server_t* server_ = nullptr;

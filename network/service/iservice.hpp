@@ -1,5 +1,6 @@
 ﻿#pragma once
-#include "../base/type_id.hpp"
+#include "network/base/type_id.hpp"
+#include "network/base/world.hpp"
 
 namespace cytx
 {
@@ -7,7 +8,7 @@ namespace cytx
     {
     public:
         virtual ~iservice() {}
-        virtual void set_info(void*) = 0;
+        virtual void set_world(world_map*) = 0;
         virtual void init() = 0;
         virtual void start() = 0;
         virtual void stop() = 0;

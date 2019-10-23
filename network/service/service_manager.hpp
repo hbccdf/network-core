@@ -6,11 +6,11 @@ namespace cytx
     class service_manager
     {
     public:
-        void service_set_info(void* info_ptr)
+        void service_set_world(world_map* world_ptr)
         {
             for (auto& p : service_map_)
             {
-                p.second->set_info(info_ptr);
+                p.second->set_world(world_ptr);
             }
         }
         void init_service()

@@ -10,10 +10,10 @@ namespace cytx
     HAS_FUNC(reset);
 
     template <typename T>
-    struct has_set_info_func
+    struct has_set_world_func
     {
     private:
-        template <typename P, typename = decltype(std::declval<P>().set_info(nullptr))>
+        template <typename P, typename = decltype(std::declval<P>().set_world((world_map*)nullptr))>
         static std::true_type test(int);
         template <typename P>
         static std::false_type test(...);
@@ -22,7 +22,7 @@ namespace cytx
         static constexpr bool value = result_type::value;
     };
     template<typename T>
-    constexpr bool has_set_info_func_v = has_set_info_func<T>::value;
+    constexpr bool has_set_world_func_v = has_set_world_func<T>::value;
 
     template<typename T>
     class service_helper : public iservice
@@ -49,9 +49,9 @@ namespace cytx
         }
 
     public:
-        void set_info(void* info_ptr) override
+        void set_world(world_map* world_ptr) override
         {
-            set_info_impl<T>(info_ptr);
+            set_world_impl<T>(world_ptr);
         }
         void init() override
         {
@@ -121,12 +121,12 @@ namespace cytx
         }
 
         template<typename TT>
-        auto set_info_impl(void* info_ptr) -> std::enable_if_t<has_set_info_func_v<TT>>
+        auto set_world_impl(world_map* world_ptr) -> std::enable_if_t<has_set_world_func_v<TT>>
         {
-            val_->set_info(info_ptr);
+            val_->set_world(world_ptr);
         }
         template<typename TT>
-        auto set_info_impl(void* info_ptr) -> std::enable_if_t<!has_set_info_func_v<TT>>
+        auto set_world_impl(world_map* world_ptr) -> std::enable_if_t<!has_set_world_func_v<TT>>
         {
         }
     private:

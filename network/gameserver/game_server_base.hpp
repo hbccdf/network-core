@@ -69,8 +69,11 @@ namespace cytx
                 }
                 void init(const std::string& config_file_name = "server_config.xml")
                 {
+                    world_.reg("game_server", this);
+
                     //初始化内存池
                     MemoryPoolManager::get_mutable_instance().init();
+
                     //读取配置文件
                     config_mgr_.init(config_file_name);
                     config_mgr_.parse_real_ip(cytx::util::domain2ip);
@@ -112,7 +115,7 @@ namespace cytx
                         service_mgr_.register_all_service();
                     }
 
-                    service_mgr_.service_set_info(this);
+                    service_mgr_.service_set_world(&world_);
                 }
 
                 void start()
@@ -515,6 +518,7 @@ namespace cytx
 
                 connection_ptr gate_conn_ptr_;
 
+                world_map world_;
                 service_manager service_mgr_;
 
                 std::vector<before_invoke_func_t> before_invoke_funcs_;
