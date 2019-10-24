@@ -20,6 +20,43 @@ namespace cytx
         }
 
     public:
+        bool init(std::string module_name)
+        {
+            return init_module(module_name);
+        }
+
+        bool start()
+        {
+            return std::all_of(std::begin(modules_), std::end(modules_), [](auto& p) {
+                return p.second->start();
+            });
+        }
+
+        bool reload()
+        {
+            return std::all_of(std::begin(modules_), std::end(modules_), [](auto& p) {
+                return p.second->reload();
+            });
+        }
+
+    public:
+        service_manager* get_service_mgr()
+        {
+            return modules_.begin()->second->get_service_mgr();
+        }
+
+    private:
+        bool init_module(std::string module_name)
+        {
+            auto it = reg_modules.find(module_name);
+            if (it != reg_modules.end())
+            {
+                base_module* module_ptr = it->second(&world_);
+                modules_[module_name] = module_ptr;
+                return true;
+            }
+            return false;
+        }
 
     public:
         template<typename T>
@@ -30,6 +67,7 @@ namespace cytx
     private:
         world_map world_;
         std::unordered_map<std::string, new_module_func_t> reg_modules;
+        std::unordered_map<std::string, base_module*> modules_;
     };
 }
 

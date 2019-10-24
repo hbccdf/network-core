@@ -6,6 +6,7 @@ namespace cytx
     {
     public:
         virtual bool init() = 0;
+        virtual bool start() = 0;
         virtual bool reload() = 0;
         virtual void stop() = 0;
     };

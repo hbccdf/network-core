@@ -17,6 +17,13 @@ namespace cytx
         {
             service_mgr_.register_all_service();
             service_mgr_.init_service();
+            return true;
+        }
+
+        bool start() override
+        {
+            service_mgr_.start_service();
+            return true;
         }
 
         bool reload() override
@@ -27,6 +34,11 @@ namespace cytx
         void stop() override
         {
             service_mgr_.stop_service();
+        }
+
+        service_manager* get_service_mgr()
+        {
+            return &service_mgr_;
         }
     private:
         world_map* world_ptr_;
