@@ -21,24 +21,24 @@ namespace cytx
             return world;
         }
     public:
-        void reg(const std::string& name, void* obj)
+        void set(const std::string& name, void* obj)
         {
             obj_map_[name] = obj;
         }
 
         template<typename T>
-        auto reg(const std::string& name, T* obj) -> std::enable_if_t<has_set_world_func_v<T>>
+        auto set(const std::string& name, T* obj) -> std::enable_if_t<has_set_world_func_v<T>>
         {
-            reg(name, (void*)obj);
+            set(name, (void*)obj);
             set_world_impl(obj);
         }
 
         template<typename T>
-        void reg(T* obj)
+        void set(T* obj)
         {
             using obj_type = std::decay_t<T>;
             std::string type_name = typeid(T).name();
-            reg(type_name, obj);
+            set(type_name, obj);
             set_world_impl(obj);
         }
 
@@ -62,7 +62,7 @@ namespace cytx
             return nullptr;
         }
 
-        void reg_string(const std::string& name, const std::string& value)
+        void set_string(const std::string& name, const std::string& value)
         {
             str_map_[name] = value;
         }
@@ -90,7 +90,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto reg_basic(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<detail::decay_t<T>>::value>
+        auto set_basic(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<detail::decay_t<T>>::value>
         {
             basic_map_[name] = value;
         }

@@ -10,7 +10,7 @@ namespace cytx
         base_module(world_map* world_ptr)
             : world_ptr_(world_ptr)
         {
-            world_ptr_->reg("service_mgr", &service_mgr_);
+            world_ptr_->set("service_mgr", &service_mgr_);
         }
 
         bool init() override
