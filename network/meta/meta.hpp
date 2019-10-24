@@ -21,6 +21,8 @@ namespace cytx
 
     inline void to_st_extend(...) {}
 
+    inline void to_method_extend(...) {}
+
     struct base_db_meta {};
 
     namespace detail
@@ -48,6 +50,14 @@ namespace cytx
         };
         template<typename T>
         using get_st_extend_type_t = typename get_st_extend_type<T>::type;
+
+        /*template<typename T>
+        struct get_method_extend_type
+        {
+            using type = decltype(to_method_extend((std::decay_t<T>*)nullptr));
+        };
+        template<typename T>
+        struct get_method_extend_type_t = typename get_method_extend_type<T>::type;*/
 
         template<typename T, class = std::void_t<>>
         struct enum_meta : public std::false_type {};
@@ -81,6 +91,16 @@ namespace cytx
         template<typename T>
         constexpr bool st_meta_v = st_meta<std::decay_t<T>>::value;
 
+        /*template<typename T, class = std::void_t<>>
+        struct method_meta : public std::false_type {};
+
+        template<typename T>
+        struct method_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_method_extend_type_t<T>>>>> : std::true_type
+        {};
+
+        template<typename T>
+        constexpr bool method_meta_v = method_meta<std::decay_t<T>>::value;*/
+
 
         template <typename T, class = std::void_t<>>
         struct is_reflection : std::false_type
@@ -106,6 +126,12 @@ namespace cytx
         struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta_v<T>>>> : std::true_type
         {
         };
+
+        /*template <typename T>
+        struct is_reflection<T, std::void_t<std::enable_if_t<method_meta_v<T>>>> : std::true_type
+        {
+        };*/
+
         template<typename T, class = std::void_t<>>
         struct get_meta_impl;
 
@@ -158,6 +184,17 @@ namespace cytx
             }
         };
 
+        /*template<typename T>
+        struct get_meta_impl<T, std::void_t<std::enable_if_t<method_meta_v<T>>>>
+        {
+            using type = get_method_extend_type_t<std::decay_t<T>>;
+
+            static auto meta()
+            {
+                return get_method_extend_type_t<T>::Meta();
+            }
+        };*/
+
         template<typename T, class = std::void_t<>>
         struct get_meta_elem_impl;
 
@@ -208,6 +245,22 @@ namespace cytx
                 return get<I>(std::forward<T>(t), get_meta_impl<T>::meta(std::forward<T>(t)));
             }
         };
+
+        /*template<typename T>
+        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<method_meta_v<T>>>>
+        {
+            template<size_t I, typename MetaTuple>
+            static auto get(MetaTuple&& tp)
+            {
+                return std::get<I>(tp);
+            }
+
+            template<size_t I>
+            static auto get()
+            {
+                return get<I>(get_meta_impl<T>::meta());
+            }
+        };*/
 
         template<typename T>
         struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<is_tuple<T>::value>>>
