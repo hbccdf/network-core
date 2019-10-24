@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <boost/filesystem.hpp>
@@ -64,6 +64,7 @@ namespace cytx
     using log_msg_t = spdlog::details::log_msg;
     using sink_ptr = spdlog::sink_ptr;
 
+    class log_adapter_base;
     class log_sink_manager
     {
     public:
@@ -78,12 +79,12 @@ namespace cytx
     public:
         static console_sink_ptr_t get_console_sink()
         {
-            return instance().console_sink_;
+            return ins().console_sink_;
         }
         static file_sink_ptr_t get_file_sink(std::string file_name)
         {
-            auto it = instance().file_sinks_.find(file_name);
-            if (it != instance().file_sinks_.end())
+            auto it = ins().file_sinks_.find(file_name);
+            if (it != ins().file_sinks_.end())
             {
                 return it->second;
             }
@@ -97,12 +98,21 @@ namespace cytx
                     fs::create_directories(cur_dir);
                 }
                 auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file_name, "txt", 1024 * 1024 * 50, 1000);
-                instance().file_sinks_[file_name] = rotating;
+                ins().file_sinks_[file_name] = rotating;
                 return rotating;
             }
         }
+        static std::vector<log_adapter_base*>& get_adapters()
+        {
+            return ins().adapters_;
+        }
+
+        static void add_adapter(log_adapter_base* adapter)
+        {
+            ins().adapters_.push_back(adapter);
+        }
     private:
-        static log_sink_manager& instance()
+        static log_sink_manager& ins()
         {
             static log_sink_manager l;
             return l;
@@ -110,6 +120,7 @@ namespace cytx
 
         std::map<std::string, file_sink_ptr_t> file_sinks_;
         console_sink_ptr_t console_sink_;
+        std::vector<log_adapter_base*> adapters_;
     };
 
     class log_adapter_base : public spdlog::sinks::base_sink<std::mutex>
@@ -175,37 +186,6 @@ namespace cytx
 
     class log
     {
-    private:
-        static log_adapter_base* log_adapter_impl(log_adapter_base* adapter_base = nullptr)
-        {
-            static log_adapter_base* adapter = nullptr;
-            if (adapter_base)
-            {
-                adapter = adapter_base;
-            }
-            return adapter;
-        }
-
-    public:
-        static log_adapter_base* get_log_adpater()
-        {
-            return log_adapter_impl();
-        }
-
-        static void set_log_adpater(log_adapter_base* adapter)
-        {
-            log_adapter_impl(adapter);
-        }
-
-        static sink_ptr get_log_adapter_sink()
-        {
-            auto adapter = get_log_adpater();
-            if (!adapter)
-                return nullptr;
-
-            return sink_ptr(adapter, [](auto ptr) {});
-        }
-
     public:
         static log& get()
         {
@@ -229,6 +209,11 @@ namespace cytx
             return ptr;
         }
 
+        static void add_adapter(log_adapter_base* adapter)
+        {
+            log_sink_manager::add_adapter(adapter);
+        }
+
         static log_ptr_t init_log(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
         {
             log l(false);
@@ -236,64 +221,32 @@ namespace cytx
             return l.get_log();
         }
 
-        static log_ptr_t init_log(log_adapter_base* adapter, const std::string& logger_name = "logger")
+        static log_ptr_t init_log(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
         {
             log l(false);
-            l.init(adapter, logger_name);
+            l.init(lvl, logger_name, console_log);
             return l.get_log();
         }
 
     public:
-        void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
-        {
-            auto rotating = log_sink_manager::get_file_sink(file_name);
-            auto adapter_sink = get_log_adapter_sink();
-
-            std::vector<spdlog::sink_ptr> sinks;
-            sinks.push_back(rotating);
-
-            if (console_log)
-            {
-                if (adapter_sink)
-                    sinks.push_back(adapter_sink);
-                else
-                    sinks.push_back(log_sink_manager::get_console_sink());
-            }
-
-            inter_init(logger_name, lvl, sinks);
-        }
-
-        void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger")
-        {
-            auto adapter_sink = get_log_adapter_sink();
-
-            std::vector<spdlog::sink_ptr> sinks;
-            if (adapter_sink)
-            {
-                sinks.push_back(adapter_sink);
-            }
-            else
-            {
-                sinks.push_back(log_sink_manager::get_console_sink());
-            }
-
-            inter_init(logger_name, lvl, sinks);
-        }
-
-        void init(log_adapter_base* adapter, const std::string& logger_name = "logger")
-        {
-            if (!adapter)
-                return;
-
-            auto adapter_sink = sink_ptr(adapter, [](auto ptr) {});
-            std::vector<spdlog::sink_ptr> sinks;
-            sinks.push_back(adapter_sink);
-            inter_init(logger_name, log_level_t::trace, sinks);
-        }
-
         log_ptr_t get_log()
         {
             return log_;
+        }
+
+        void init(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true, bool adapter_log = true)
+        {
+            auto rotating = log_sink_manager::get_file_sink(file_name);
+
+            std::vector<spdlog::sink_ptr> sinks;
+            sinks.push_back(rotating);
+            inter_init(logger_name, lvl, sinks, console_log, adapter_log);
+        }
+
+        void init(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true, bool adapter_log = true)
+        {
+            std::vector<spdlog::sink_ptr> sinks;
+            inter_init(logger_name, lvl, sinks, console_log, adapter_log);
         }
 
         void flush()
@@ -309,6 +262,11 @@ namespace cytx
             }
         }
 
+        bool is_init() const
+        {
+            return false;
+        }
+
     private:
         log(bool auto_init = true)
         {
@@ -316,7 +274,22 @@ namespace cytx
             {
                 log_ = spdlog::stdout_logger_mt("___auto_init_log");
                 log_->set_level(log_level_t::off);
+                is_init_ = true;
             }
+        }
+
+        void inter_init(const std::string& logger_name, log_level_t lvl, std::vector<spdlog::sink_ptr>& sinks, bool console_log, bool adapter_log)
+        {
+            if (console_log)
+            {
+                sinks.push_back(log_sink_manager::get_console_sink());
+            }
+            if (adapter_log)
+            {
+                add_adapter_sinks(sinks);
+            }
+
+            inter_init(logger_name, lvl, sinks);
         }
 
         void inter_init(const std::string& logger_name, log_level_t lvl, std::vector<spdlog::sink_ptr>& sinks)
@@ -326,6 +299,18 @@ namespace cytx
             log_->set_level(lvl);
             log_->flush_on(log_level_t::err);
             log_->set_formatter(std::make_shared<my_formater>());
+            is_init_ = true;
+        }
+
+        void add_adapter_sinks(std::vector<spdlog::sink_ptr>& sinks)
+        {
+            for (auto adapter : log_sink_manager::get_adapters())
+            {
+                if (adapter)
+                {
+                    sinks.emplace(sink_ptr(adapter, [](auto ptr) {}));
+                }
+            }
         }
 
         log(const log&) = delete;
@@ -333,6 +318,7 @@ namespace cytx
 
     private:
         log_ptr_t log_;
+        bool is_init_ = false;
     };
 
 }
