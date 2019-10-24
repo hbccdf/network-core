@@ -214,17 +214,17 @@ namespace cytx
             log_sink_manager::add_adapter(adapter);
         }
 
-        static log_ptr_t init_log(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
+        static log_ptr_t init_log(const std::string& file_name, log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true, bool adapter_log = true)
         {
             log l(false);
-            l.init(file_name, lvl, logger_name, console_log);
+            l.init(file_name, lvl, logger_name, console_log, adapter_log);
             return l.get_log();
         }
 
-        static log_ptr_t init_log(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true)
+        static log_ptr_t init_log(log_level_t lvl = log_level_t::debug, const std::string& logger_name = "logger", bool console_log = true, bool adapter_log = true)
         {
             log l(false);
-            l.init(lvl, logger_name, console_log);
+            l.init(lvl, logger_name, console_log, adapter_log);
             return l.get_log();
         }
 
@@ -308,7 +308,7 @@ namespace cytx
             {
                 if (adapter)
                 {
-                    sinks.emplace(sink_ptr(adapter, [](auto ptr) {}));
+                    sinks.emplace_back(sink_ptr(adapter, [](auto ptr) {}));
                 }
             }
         }
