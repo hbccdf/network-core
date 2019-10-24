@@ -53,14 +53,14 @@ namespace cytx
             {
                 base_module* module_ptr = it->second(&world_);
                 modules_[module_name] = module_ptr;
-                return true;
+                return module_ptr->init();
             }
             return false;
         }
 
     public:
         template<typename T>
-        auto register_module(const std::string& name, new_module_func_t func) -> std::enable_if_t<std::is_base_of<base_module, T>>
+        auto register_module(const std::string& name, new_module_func_t func) -> std::enable_if_t<std::is_base_of<base_module, T>::value>
         {
             reg_modules[name] = func;
         }
@@ -71,12 +71,12 @@ namespace cytx
     };
 }
 
-#define REG_SERVICE(type)                                                                       \
+#define REG_MODULE(type)                                                                        \
 namespace __reg_module_ ## type ## __LINE__                                                     \
 {                                                                                               \
-    static int r = cytx::module_manager::ins().register_module<type>(#type,                     \
-                            [](world_map* world_ptr) -> base_cmder* {                           \
-                                    return new T(world_ptr);                                    \
-                            });                                                                 \
+    static int r = (cytx::module_manager::ins().register_module<type>(#type,                    \
+                            [](world_map* world_ptr) -> base_module* {                          \
+                                    return new type(world_ptr);                                 \
+                            }), 0);                                                             \
 }
 
