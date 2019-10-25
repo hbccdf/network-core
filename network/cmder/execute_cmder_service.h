@@ -31,8 +31,11 @@ namespace cytx
             std::string cmder_config_path = world_ptr_->get_string_or("cmder_config_path", "config/cmd.xml");
             cmder_reader::read_config(config_, cmder_config_path);
 
-            std::cout << "profile " << config_.profile << std::endl;
-            cmds_ptr_ = &(config_.cmds[config_.profile]);
+            std::string profile = world_ptr_->get_string_or("profile", config_.profile);
+
+
+            std::cout << "profile " << profile << std::endl;
+            cmds_ptr_ = &(config_.cmds[profile]);
 
             for (int i = 0; (int)i < cmds_ptr_->size(); ++i)
             {
@@ -165,4 +168,6 @@ namespace cytx
 
         std::unordered_map<std::string, cmd_node_info> cmd_map_;
     };
+
+    REG_SERVICE(execute_cmder_service);
 }

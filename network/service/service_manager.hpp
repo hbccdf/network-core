@@ -6,12 +6,12 @@ namespace cytx
     class service_manager
     {
     public:
-        void set_world(world_prt_t wor_ptr)
+        void set_world(world_ptr_t wor_ptr)
         {
             service_set_world(wor_ptr);
         }
 
-        void service_set_world(world_prt_t world_ptr)
+        void service_set_world(world_ptr_t world_ptr)
         {
             for (auto& p : service_map_)
             {

@@ -137,5 +137,5 @@ namespace cytx
     };
 
     using world_t = world_map;
-    using world_prt_t = world_t*;
+    using world_ptr_t = world_t*;
 }

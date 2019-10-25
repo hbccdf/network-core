@@ -6,14 +6,14 @@ namespace cytx
     class base_service
     {
     public:
-        void set_world(world_prt_t world_ptr)
+        void set_world(world_ptr_t world_ptr)
         {
             world_ptr_ = world_ptr;
             service_mgr_ = world_ptr_->get<service_manager>("service_mgr");
         }
 
     protected:
-        world_prt_t world_ptr_ = nullptr;
+        world_ptr_t world_ptr_ = nullptr;
         service_manager* service_mgr_ = nullptr;
     };
 }

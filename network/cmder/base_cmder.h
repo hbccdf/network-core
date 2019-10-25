@@ -116,7 +116,7 @@ namespace cytx
             de_.enum_with_str(true);
         }
 
-        void set_world(world_prt_t world_ptr)
+        void set_world(world_ptr_t world_ptr)
         {
             world_ptr_ = world_ptr;
 
@@ -158,7 +158,7 @@ namespace cytx
         }
 
     protected:
-        world_prt_t world_ptr_;
+        world_ptr_t world_ptr_;
         icmder_manager* manager_;
         bpo_parser_t de_;
         parser_func_t parser_func_;

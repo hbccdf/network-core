@@ -14,7 +14,7 @@ namespace cytx
             return manager;
         }
     public:
-        void set_world(world_prt_t world_ptr)
+        void set_world(world_ptr_t world_ptr)
         {
             world_ptr_ = world_ptr;
 
@@ -97,7 +97,7 @@ namespace cytx
             }
         }
     protected:
-        world_prt_t world_ptr_;
+        world_ptr_t world_ptr_;
         std::unordered_map<std::string, base_cmder_ptr> cmders_;
     };
 

@@ -7,7 +7,7 @@ namespace cytx
     class base_module : public imodule
     {
     public:
-        base_module(world_prt_t world_ptr)
+        base_module(world_ptr_t world_ptr)
             : world_ptr_(world_ptr)
             , auto_register_all_service_(false)
         {
@@ -55,7 +55,7 @@ namespace cytx
             service_mgr_.register_service(service_name);
         }
     private:
-        world_prt_t world_ptr_;
+        world_ptr_t world_ptr_;
         service_manager service_mgr_;
         bool auto_register_all_service_;
     };

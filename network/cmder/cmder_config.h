@@ -6,13 +6,13 @@ namespace cytx
     struct cmd_node
     {
         std::string cmdStr;
-        bool retryWhenFailed;
-        int retryInterval;
-        int retryTimes;
+        bool retryWhenFailed = false;
+        int retryInterval = 1000;
+        int retryTimes = 1;
 
-        int delay;
-        int interval;
-        int times;
+        int delay = 0;
+        int interval = 0;
+        int times = 1;
 
         std::string name;
 

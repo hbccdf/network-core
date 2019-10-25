@@ -6,7 +6,7 @@ namespace cytx
 {
     class module_manager
     {
-        using new_module_func_t = std::function<base_module*(world_prt_t world_ptr)>;
+        using new_module_func_t = std::function<base_module*(world_ptr_t world_ptr)>;
     public:
         static module_manager& ins()
         {
