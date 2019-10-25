@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright(c) 2015 Gabi Melman.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 //
@@ -28,6 +28,9 @@ struct log_msg
 #ifndef SPDLOG_NO_THREAD_ID
         thread_id = os::thread_id();
 #endif
+
+        func_name = nullptr;
+        func_line = -1;
     }
 
     log_msg(const log_msg& other)  = delete;
@@ -41,6 +44,9 @@ struct log_msg
     size_t thread_id;
     fmt::MemoryWriter raw;
     fmt::MemoryWriter formatted;
+
+    const char* func_name;
+    int func_line;
 };
 }
 }

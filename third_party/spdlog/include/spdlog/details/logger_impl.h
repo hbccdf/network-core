@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright(c) 2015 Gabi Melman.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 //
@@ -196,6 +196,156 @@ inline void spdlog::logger::critical(const T& msg)
 {
     log(level::critical, msg);
 }
+
+
+////////////////////////////////////
+template <typename... Args>
+inline void spdlog::logger::log(int line, char* func, level::level_enum lvl, const char* fmt, const Args&... args)
+{
+    if (!should_log(lvl)) return;
+
+    try
+    {
+        details::log_msg log_msg(&_name, lvl);
+        log_msg.func_name = func;
+        log_msg.func_line = line;
+        log_msg.raw.write(fmt, args...);
+        _sink_it(log_msg);
+    }
+    catch (const std::exception &ex)
+    {
+        _err_handler(ex.what());
+    }
+    catch (...)
+    {
+        _err_handler("Unknown exception");
+    }
+}
+
+template <typename... Args>
+inline void spdlog::logger::log(int line, char* func, level::level_enum lvl, const char* msg)
+{
+    if (!should_log(lvl)) return;
+    try
+    {
+        details::log_msg log_msg(&_name, lvl);
+        log_msg.func_name = func;
+        log_msg.func_line = line;
+        log_msg.raw << msg;
+        _sink_it(log_msg);
+    }
+    catch (const std::exception &ex)
+    {
+        _err_handler(ex.what());
+    }
+    catch (...)
+    {
+        _err_handler("Unknown exception");
+    }
+
+}
+
+template<typename T>
+inline void spdlog::logger::log(int line, char* func, level::level_enum lvl, const T& msg)
+{
+    if (!should_log(lvl)) return;
+    try
+    {
+        details::log_msg log_msg(&_name, lvl);
+        log_msg.func_name = func;
+        log_msg.func_line = line;
+        log_msg.raw << msg;
+        _sink_it(log_msg);
+    }
+    catch (const std::exception &ex)
+    {
+        _err_handler(ex.what());
+    }
+    catch (...)
+    {
+        _err_handler("Unknown exception");
+    }
+}
+
+
+template <typename... Args>
+inline void spdlog::logger::trace(int line, char* func, const char* fmt, const Args&... args)
+{
+    log(func, line, level::trace, fmt, args...);
+}
+
+template <typename... Args>
+inline void spdlog::logger::debug(int line, char* func, const char* fmt, const Args&... args)
+{
+    log(line, func, level::debug, fmt, args...);
+}
+
+template <typename... Args>
+inline void spdlog::logger::info(int line, char* func, const char* fmt, const Args&... args)
+{
+    log(line, func, level::info, fmt, args...);
+}
+
+
+template <typename... Args>
+inline void spdlog::logger::warn(int line, char* func, const char* fmt, const Args&... args)
+{
+    log(line, func, level::warn, fmt, args...);
+}
+
+template <typename... Args>
+inline void spdlog::logger::error(int line, char* func, const char* fmt, const Args&... args)
+{
+    log(line, func, level::err, fmt, args...);
+}
+
+template <typename... Args>
+inline void spdlog::logger::critical(int line, char* func, const char* fmt, const Args&... args)
+{
+    log(line, func, level::critical, fmt, args...);
+}
+
+
+template<typename T>
+inline void spdlog::logger::trace(int line, char* func, const T& msg)
+{
+    log(line, func, level::trace, msg);
+}
+
+template<typename T>
+inline void spdlog::logger::debug(int line, char* func, const T& msg)
+{
+    log(line, func, level::debug, msg);
+}
+
+
+template<typename T>
+inline void spdlog::logger::info(int line, char* func, const T& msg)
+{
+    log(line, func, level::info, msg);
+}
+
+
+template<typename T>
+inline void spdlog::logger::warn(int line, char* func, const T& msg)
+{
+    log(line, func, level::warn, msg);
+}
+
+template<typename T>
+inline void spdlog::logger::error(int line, char* func, const T& msg)
+{
+    log(line, func, level::err, msg);
+}
+
+template<typename T>
+inline void spdlog::logger::critical(int line, char* func, const T& msg)
+{
+    log(line, func, level::critical, msg);
+}
+
+
+////////////////////////////////////
 
 
 

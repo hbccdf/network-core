@@ -41,6 +41,12 @@ namespace cytx
             /*msg.formatted << '[' << *msg.logger_name << "] ";
 
             msg.formatted << '[' << level::to_str(msg.level) << "] ";*/
+
+            if (msg.func_name != nullptr && msg.func_line >= 0)
+            {
+                msg.formatted.write("[{}:{}] ", msg.func_name, msg.func_line);
+            }
+
             msg.formatted << fmt::StringRef(msg.raw.data(), msg.raw.size());
             //write eol
             msg.formatted.write(details::os::eol, details::os::eol_size);
@@ -366,3 +372,12 @@ static inline void LOG_CRITICAL(const char* fmt, const Args&... args)
 {
     cytx::log::get().get_log()->critical(fmt, args...);
 }
+
+
+#define LOGGER_TRACE(fmt, ...) cytx::log::get().get_log()->trace(__LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOGGER_DEBUG(fmt, ...) cytx::log::get().get_log()->debug(__LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOGGER_INFO(fmt, ...) cytx::log::get().get_log()->info(__LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOGGER_WARN(fmt, ...) cytx::log::get().get_log()->warn(__LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOGGER_ERROR(fmt, ...) cytx::log::get().get_log()->error(__LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOGGER_CRITICAL(fmt, ...) cytx::log::get().get_log()->critical(__LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOGGER_LOG(lvl, fmt, ...) cytx::log::get().get_log()->log(___LINE__, __FUNCTION__, fmt, __VA_ARGS__)

@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright(c) 2015 Gabi Melman.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 //
@@ -51,6 +51,23 @@ public:
     template <typename T> void warn(const T&);
     template <typename T> void error(const T&);
     template <typename T> void critical(const T&);
+
+    template <typename... Args> void log(int line, char* func, level::level_enum lvl, const char* fmt, const Args&... args);
+    template <typename... Args> void log(int line, char* func, level::level_enum lvl, const char* msg);
+    template <typename... Args> void trace(int line, char* func, const char* fmt, const Args&... args);
+    template <typename... Args> void debug(int line, char* func, const char* fmt, const Args&... args);
+    template <typename... Args> void info(int line, char* func, const char* fmt, const Args&... args);
+    template <typename... Args> void warn(int line, char* func, const char* fmt, const Args&... args);
+    template <typename... Args> void error(int line, char* func, const char* fmt, const Args&... args);
+    template <typename... Args> void critical(int line, char* func, const char* fmt, const Args&... args);
+
+    template <typename T> void log(int line, char* func, level::level_enum lvl, const T&);
+    template <typename T> void trace(int line, char* func, const T&);
+    template <typename T> void debug(int line, char* func, const T&);
+    template <typename T> void info(int line, char* func, const T&);
+    template <typename T> void warn(int line, char* func, const T&);
+    template <typename T> void error(int line, char* func, const T&);
+    template <typename T> void critical(int line, char* func, const T&);
 
     bool should_log(level::level_enum) const;
     void set_level(level::level_enum);
