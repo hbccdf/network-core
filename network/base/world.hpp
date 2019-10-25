@@ -10,7 +10,7 @@ namespace cytx
         using world_basic_type_variant_t = cytx::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double>;
     }
 
-    HAS_FUNC(set_world_func, ((world_map*)nullptr))
+    HAS_FUNC(set_world, ((world_map*)nullptr));
 
     class world_map
     {
@@ -27,7 +27,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto set(const std::string& name, T* obj) -> std::enable_if_t<has_set_world_func_v<T>>
+        auto set(const std::string& name, T* obj) -> std::enable_if_t<has_set_world_v<T>>
         {
             set(name, (void*)obj);
             set_world_impl(obj);
@@ -121,12 +121,12 @@ namespace cytx
 
     private:
         template<typename T>
-        auto set_world_impl(T* obj_ptr) -> std::enable_if_t<has_set_world_func_v<T>>
+        auto set_world_impl(T* obj_ptr) -> std::enable_if_t<has_set_world_v<T>>
         {
             obj_ptr->set_world(this);
         }
         template<typename T>
-        auto set_world_impl(T* obj_ptr) -> std::enable_if_t<!has_set_world_func_v<T>>
+        auto set_world_impl(T* obj_ptr) -> std::enable_if_t<!has_set_world_v<T>>
         {
         }
 

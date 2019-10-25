@@ -10,12 +10,13 @@ namespace cytx
         base_module(world_map* world_ptr)
             : world_ptr_(world_ptr)
         {
-            world_ptr_->set("service_mgr", &service_mgr_);
         }
 
         bool init() override
         {
             service_mgr_.register_all_service();
+            world_ptr_->set("service_mgr", &service_mgr_);
+
             service_mgr_.init_service();
             return true;
         }

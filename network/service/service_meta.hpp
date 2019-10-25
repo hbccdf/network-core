@@ -100,12 +100,12 @@ private:                                                            \
         }
 
         template<typename TT>
-        auto set_world_impl(world_map* world_ptr) -> std::enable_if_t<has_set_world_func_v<TT>>
+        auto set_world_impl(world_map* world_ptr) -> std::enable_if_t<has_set_world_v<TT>>
         {
             val_->set_world(world_ptr);
         }
         template<typename TT>
-        auto set_world_impl(world_map* world_ptr) -> std::enable_if_t<!has_set_world_func_v<TT>>
+        auto set_world_impl(world_map* world_ptr) -> std::enable_if_t<!has_set_world_v<TT>>
         {
         }
     private:

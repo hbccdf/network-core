@@ -205,7 +205,7 @@ namespace cytx {
     struct has_##token \
     {   \
     private:    \
-        template <typename P, typename = decltype(std::declval<P>().token(##__VA_ARGS__))> \
+        template <typename P, typename = decltype(std::declval<P>().token(__VA_ARGS__))> \
         static std::true_type test(int); \
         template <typename P> \
         static std::false_type test(...); \
