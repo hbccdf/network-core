@@ -9,7 +9,7 @@ namespace cytx
 {
     namespace detail
     {
-        bool is_empty_or_white_spate(const std::string& str)
+        inline bool is_empty_or_white_spate(const std::string& str)
         {
             return str.empty() || boost::trim_copy(str).empty();
         }

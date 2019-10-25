@@ -135,4 +135,7 @@ namespace cytx
         std::unordered_map<std::string, std::string> str_map_;
         std::unordered_map<std::string, detail::world_basic_type_variant_t> basic_map_;
     };
+
+    using world_t = world_map;
+    using world_prt_t = world_t*;
 }

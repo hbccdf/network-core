@@ -329,6 +329,8 @@ namespace cytx
 
 }
 
+#ifndef NO_GLOBAL_LOG_FUNC
+
 #ifdef LOG_INFO
 #undef LOG_INFO
 #endif
@@ -372,6 +374,8 @@ static inline void LOG_CRITICAL(const char* fmt, const Args&... args)
 {
     cytx::log::get().get_log()->critical(fmt, args...);
 }
+
+#endif
 
 
 #define LOGGER_TRACE(fmt, ...) cytx::log::get().get_log()->trace(__LINE__, __FUNCTION__, fmt, __VA_ARGS__)

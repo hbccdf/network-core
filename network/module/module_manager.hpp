@@ -6,7 +6,7 @@ namespace cytx
 {
     class module_manager
     {
-        using new_module_func_t = std::function<base_module*(world_map* world_ptr)>;
+        using new_module_func_t = std::function<base_module*(world_prt_t world_ptr)>;
     public:
         static module_manager& ins()
         {
@@ -65,7 +65,7 @@ namespace cytx
             reg_modules[name] = func;
         }
     private:
-        world_map world_;
+        world_t world_;
         std::unordered_map<std::string, new_module_func_t> reg_modules;
         std::unordered_map<std::string, base_module*> modules_;
     };

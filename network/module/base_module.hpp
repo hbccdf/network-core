@@ -7,8 +7,9 @@ namespace cytx
     class base_module : public imodule
     {
     public:
-        base_module(world_map* world_ptr)
+        base_module(world_prt_t world_ptr)
             : world_ptr_(world_ptr)
+            , auto_register_all_service_(false)
         {
         }
 
@@ -41,8 +42,21 @@ namespace cytx
         {
             return &service_mgr_;
         }
+
+    protected:
+        template<typename ... Args>
+        void register_service()
+        {
+            char a[]{ (service_mgr_.register_service<Args>(), 0) ... };
+        }
+
+        void register_service(const std::string& service_name)
+        {
+            service_mgr_.register_service(service_name);
+        }
     private:
-        world_map* world_ptr_;
+        world_prt_t world_ptr_;
         service_manager service_mgr_;
+        bool auto_register_all_service_;
     };
 }

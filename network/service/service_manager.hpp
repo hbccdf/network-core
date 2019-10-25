@@ -6,12 +6,12 @@ namespace cytx
     class service_manager
     {
     public:
-        void set_world(world_map* wor_ptr)
+        void set_world(world_prt_t wor_ptr)
         {
             service_set_world(wor_ptr);
         }
 
-        void service_set_world(world_map* world_ptr)
+        void service_set_world(world_prt_t world_ptr)
         {
             for (auto& p : service_map_)
             {
@@ -169,7 +169,7 @@ namespace cytx
         template<typename T>
         void reg_impl()
         {
-            iservice* service_ptr = service_factory::ins().get_service<T>();
+            iservice* service_ptr = service_factory::ins().get_iservice<T>();
             if (service_ptr)
             {
                 auto type_id = service_ptr->get_type_id();

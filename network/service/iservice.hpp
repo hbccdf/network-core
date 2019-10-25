@@ -8,7 +8,7 @@ namespace cytx
     {
     public:
         virtual ~iservice() {}
-        virtual void set_world(world_map*) = 0;
+        virtual void set_world(world_prt_t) = 0;
         virtual void init() = 0;
         virtual void start() = 0;
         virtual void stop() = 0;
