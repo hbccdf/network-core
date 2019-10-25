@@ -27,15 +27,22 @@ namespace cytx
                 std::string input;
                 while (true)
                 {
-                    read_input(input);
-                    boost::trim(input);
-                    if (input.empty())
-                        continue;
+                    try
+                    {
+                        read_input(input);
+                        boost::trim(input);
+                        if (input.empty())
+                            continue;
 
-                    if (input == exit)
-                        break;
+                        if (input == exit)
+                            break;
 
-                    cmder_service_->handle_input(input);
+                        cmder_service_->handle_input(input);
+                    }
+                    catch (std::exception& e)
+                    {
+                        std::cout << "execute error: " << e.what() << std::endl;
+                    }
                 }
 
                 return 0;
