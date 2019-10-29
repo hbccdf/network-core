@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include <map>
 #include <memory>
@@ -719,5 +719,24 @@ namespace cytx
         -> std::enable_if_t<!detail::enum_meta<T>::value, boost::optional<T>>
     {
         return boost::optional<T>{};
+    }
+}
+
+namespace fmt
+{
+    template<typename T>
+    auto format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+    {
+        boost::optional<std::string> v = cytx::ralax_to_string(val, false);
+
+        if (v)
+        {
+            f.writer().write("{}", v.get());
+        }
+        else
+        {
+            using under_type = std::underlying_type_t<std::decay_t<T>>;
+            f.writer().write("{}", (under_type)val);
+        }
     }
 }

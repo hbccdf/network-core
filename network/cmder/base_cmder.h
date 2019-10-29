@@ -158,8 +158,8 @@ namespace cytx
         }
 
     protected:
-        world_ptr_t world_ptr_;
-        icmder_manager* manager_;
+        world_ptr_t world_ptr_ = nullptr;
+        icmder_manager* manager_ = nullptr;
         bpo_parser_t de_;
         parser_func_t parser_func_;
     };

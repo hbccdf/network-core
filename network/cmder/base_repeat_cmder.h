@@ -20,7 +20,6 @@ namespace cytx
             retryTimes = 1;
         }
 
-
         virtual void set_options() override
         {
             base_waitable_cmder::set_options();
@@ -33,7 +32,6 @@ namespace cytx
                 ("retryInterval", value<int>(), "")
                 ("retryTimes", value<int>(), "");
         }
-
 
         virtual int execute() override
         {
