@@ -15,7 +15,7 @@ namespace cytx
         };
 
         template<typename T>
-        class iobj_helper
+        class iobj_helper : public iobj
         {
             using this_t = iobj_helper;
         public:
@@ -36,7 +36,7 @@ namespace cytx
 
             type_id_t get_id() const override
             {
-                return TypeId::get_id<this_t>();
+                return TypeId::id<this_t>();
             }
 
         private:

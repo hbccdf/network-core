@@ -4,6 +4,7 @@
 #include "cmder_reader.h"
 #include <boost/algorithm/string.hpp>
 #include <thread>
+#include "network/base/log.hpp"
 
 namespace cytx
 {
@@ -24,7 +25,7 @@ namespace cytx
     class execute_cmder_service : public base_service
     {
     public:
-        void init()
+        bool init()
         {
             cmder_service_ = service_mgr_->get_service<cmder_service>();
 
@@ -34,7 +35,13 @@ namespace cytx
             std::string profile = world_ptr_->get_string_or("profile", config_.profile);
 
 
-            std::cout << "profile " << profile << std::endl;
+            LOGGER_INFO("profile {}", profile);
+            if (config_.cmds.find(profile) == config_.cmds.end())
+            {
+                LOGGER_ERROR("cannt find {} cmds, invalid profile", profile);
+                return false;
+            }
+
             cmds_ptr_ = &(config_.cmds[profile]);
 
             for (int i = 0; (int)i < cmds_ptr_->size(); ++i)
@@ -45,6 +52,7 @@ namespace cytx
                     cmd_map_[cmd_node_ptr->name] = cmd_node_info{ i, cmd_node_ptr };
                 }
             }
+            return true;
         }
 
     public:

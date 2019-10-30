@@ -9,8 +9,8 @@ namespace cytx
     public:
         virtual ~iservice() {}
         virtual void set_world(world_ptr_t) = 0;
-        virtual void init() = 0;
-        virtual void start() = 0;
+        virtual bool init() = 0;
+        virtual bool start() = 0;
         virtual void stop() = 0;
         virtual void reset() = 0;
         virtual bool reload() = 0;

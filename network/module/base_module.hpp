@@ -25,14 +25,12 @@ namespace cytx
 
             world_ptr_->set("service_mgr", &service_mgr_);
 
-            service_mgr_.init_service();
-            return true;
+            return service_mgr_.init_service();
         }
 
         bool start() override
         {
-            service_mgr_.start_service();
-            return true;
+            return service_mgr_.start_service();
         }
 
         bool reload() override

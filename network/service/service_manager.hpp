@@ -18,19 +18,18 @@ namespace cytx
                 p.second->set_world(world_ptr);
             }
         }
-        void init_service()
+        bool init_service()
         {
-            for (auto& p : service_map_)
-            {
-                p.second->init();
-            }
+            return std::all_of(std::begin(service_map_), std::end(service_map_), [](auto& p) {
+                return p.second->init();
+            });
         }
-        void start_service()
+
+        bool start_service()
         {
-            for (auto& p : service_map_)
-            {
-                p.second->start();
-            }
+            return std::all_of(std::begin(service_map_), std::end(service_map_), [](auto& p) {
+                return p.second->start();
+            });
         }
         void stop_service()
         {

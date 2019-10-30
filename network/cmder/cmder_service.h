@@ -8,9 +8,10 @@ namespace cytx
     class cmder_service : public base_service
     {
     public:
-        void init()
+        bool init()
         {
             manager_ = world_ptr_->get<icmder_manager>("icmder_mgr");
+            return true;
         }
 
     public:

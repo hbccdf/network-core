@@ -40,7 +40,6 @@ private:                                                            \
         }
         service_helper(T* val)
             : val_(val)
-            , type_id_(TypeId::id<this_t>())
         {
         }
         virtual ~service_helper()
@@ -58,34 +57,49 @@ private:                                                            \
         {
             set_world_impl<T>(world_ptr);
         }
-        void init() override
+        bool init() override
         {
-            init_impl<T>();
+            return init_impl<T>();
+        }
+        bool start() override
+        {
+            return start_impl<T>();
         }
         bool reload() override
         {
             return reload_impl<T>();
         }
 
-        SERVICE_FUNC_IMPL(start)
         SERVICE_FUNC_IMPL(stop)
         SERVICE_FUNC_IMPL(reset)
 
     public:
         type_id_t get_type_id() const override
         {
-            return type_id_;
+            return TypeId::id<this_t>();
         }
 
     private:
         template<typename TT>
-        auto init_impl() -> std::enable_if_t<has_init_v<TT>>
+        auto init_impl() -> std::enable_if_t<has_init_v<TT>, bool>
         {
-            val_->init();
+            return val_->init();
         }
         template<typename TT>
-        auto init_impl()->std::enable_if_t<!has_init_v<TT>>
+        auto init_impl()->std::enable_if_t<!has_init_v<TT>, bool>
         {
+            return true;
+        }
+
+        template<typename TT>
+        auto start_impl() -> std::enable_if_t<has_start_v<TT>, bool>
+        {
+            return val_->start();
+        }
+        template<typename TT>
+        auto start_impl()->std::enable_if_t<!has_start_v<TT>, bool>
+        {
+            return true;
         }
 
         template<typename TT>
@@ -110,7 +124,6 @@ private:                                                            \
         }
     private:
         T* val_;
-        type_id_t type_id_;
     };
 
 
