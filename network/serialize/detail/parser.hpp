@@ -1,7 +1,5 @@
-#pragma once
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/info_parser.hpp>
+﻿#pragma once
+#include "whitespace_config.hpp"
 
 namespace cytx
 {
