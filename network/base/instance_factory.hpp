@@ -36,7 +36,7 @@ namespace cytx
 
             type_id_t get_id() const override
             {
-                return TypeId::id<this_t>();
+                return TypeId::id<T>();
             }
 
         private:
@@ -58,7 +58,7 @@ namespace cytx
         {
             using real_type = detail::iobj_helper<T>;
 
-            type_id_t tid = TypeId::id<real_type>();
+            type_id_t tid = TypeId::id<T>();
             auto it = type_to_objs_.find(tid);
             if (it != type_to_objs_.end())
             {

@@ -60,7 +60,7 @@ namespace cytx
                 return nullptr;
 
             using real_type = service_helper<T>;
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
 
             T* service_ptr = internal_get_service<T>(type_id);
             if (service_ptr)
@@ -86,7 +86,7 @@ namespace cytx
                 return type_list;
 
             using real_type = service_helper<T>;
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
 
             T* service_ptr = internal_get_service<T>(type_id);
             if (service_ptr)

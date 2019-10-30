@@ -76,7 +76,7 @@ private:                                                            \
     public:
         type_id_t get_type_id() const override
         {
-            return TypeId::id<this_t>();
+            return TypeId::id<T>();
         }
 
     private:
@@ -149,10 +149,9 @@ private:                                                            \
         template<typename T>
         int register_service(const std::string& service_name)
         {
-            //std::cout << fmt::format("register service {}", service_name) << std::endl;
             using real_type = service_helper<T>;
 
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
                 return 0;
@@ -168,11 +167,10 @@ private:                                                            \
         template<typename T, typename BaseT>
         int register_service(const std::string& service_name)
         {
-            //std::cout << fmt::format("register service with base class {}", service_name) << std::endl;
             using real_type = service_helper<T>;
             using real_base_type = service_helper<BaseT>;
 
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
                 return 0;
@@ -183,7 +181,7 @@ private:                                                            \
                 name_map_.emplace(service_name, type_id);
             }
 
-            type_id_t base_type_id = TypeId::id<real_base_type>();
+            type_id_t base_type_id = TypeId::id<BaseT>();
             auto& type_list = derived_service_map_[base_type_id];
             type_list.push_back(type_id);
             return 0;
@@ -193,7 +191,7 @@ private:                                                            \
         T* get_service() const
         {
             using real_type = service_helper<T>;
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
             {
@@ -214,7 +212,7 @@ private:                                                            \
             std::vector<T*> type_list;
 
             using real_type = service_helper<T>;
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
             {
@@ -234,7 +232,7 @@ private:                                                            \
         bool find_service() const
         {
             using real_type = service_helper<T>;
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
                 return true;
@@ -257,7 +255,7 @@ private:                                                            \
         iservice* get_iservice() const
         {
             using real_type = service_helper<T>;
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
             {
@@ -296,7 +294,7 @@ private:                                                            \
         {
             std::vector<type_id_t> type_list;
             using real_type = service_helper<T>;
-            type_id_t base_type_id = TypeId::id<real_type>();
+            type_id_t base_type_id = TypeId::id<T>();
 
             auto it = derived_service_map_.find(base_type_id);
             if (it == derived_service_map_.end() || it->second.empty())
@@ -312,7 +310,7 @@ private:                                                            \
         {
             using real_type = service_helper<T>;
 
-            type_id_t type_id = TypeId::id<real_type>();
+            type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
                 return it->second;
@@ -337,7 +335,7 @@ private:                                                            \
         {
             std::vector<BaseT*> derived_list;
             using real_type = service_helper<BaseT>;
-            type_id_t base_type_id = TypeId::id<real_type>();
+            type_id_t base_type_id = TypeId::id<BaseT>();
 
             auto it = derived_service_map_.find(base_type_id);
             if (it == derived_service_map_.end() || it->second.empty())
