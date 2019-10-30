@@ -30,12 +30,13 @@ namespace cytx
     public:
         int wait()
         {
-            wait(0);
+            return wait(waitTime);
         }
 
         int wait(int milliseconds)
         {
             wait_result_.wait(milliseconds);
+            return get_and_clear_result();
         }
 
         void notify(int result)
