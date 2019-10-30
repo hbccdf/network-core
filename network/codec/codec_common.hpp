@@ -1,5 +1,5 @@
-#pragma once
-#include "../base/GameObjectStream.h"
+﻿#pragma once
+#include "network/base/GameObjectStream.h"
 namespace cytx
 {
     namespace codec

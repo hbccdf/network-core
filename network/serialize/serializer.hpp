@@ -1,6 +1,6 @@
-#pragma once
-#include "../traits/traits.hpp"
-#include "../meta/meta.hpp"
+﻿#pragma once
+#include "network/traits/traits.hpp"
+#include "network/meta/meta.hpp"
 
 namespace cytx {
 

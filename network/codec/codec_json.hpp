@@ -1,9 +1,9 @@
-#pragma once
-#include "../traits/traits.hpp"
-#include "../serialize/serializer.hpp"
-#include "../serialize/deserializer.hpp"
-#include "../serialize/json_adapter.hpp"
-#include "../base/excetion.hpp"
+﻿#pragma once
+#include "network/traits/traits.hpp"
+#include "network/serialize/serializer.hpp"
+#include "network/serialize/deserializer.hpp"
+#include "network/serialize/json_adapter.hpp"
+#include "network/base/excetion.hpp"
 
 namespace cytx {
     namespace codec {

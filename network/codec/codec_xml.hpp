@@ -1,8 +1,8 @@
-#pragma once
-#include "../traits/traits.hpp"
-#include "../serialize/serializer.hpp"
-#include "../serialize/deserializer.hpp"
-#include "../serialize/xml_adapter.hpp"
+﻿#pragma once
+#include "network/traits/traits.hpp"
+#include "network/serialize/serializer.hpp"
+#include "network/serialize/deserializer.hpp"
+#include "network/serialize/xml_adapter.hpp"
 
 namespace cytx {
     namespace codec {

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "db_common.hpp"
 #include <errmsg.h>
 #ifdef max
@@ -9,7 +9,7 @@
 #endif
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-#include "../base/log.hpp"
+#include "network/base/log.hpp"
 
 namespace cytx
 {
@@ -312,7 +312,7 @@ namespace cytx
                     {
                         if(log_)
                             log_->warn("[query_id:{}] connect disconnect, code:{}, msg:{}", query_id, err, mysql_error(mysql));
-                        //ĞèÒªÖØÁ¬
+                        //éœ€è¦é‡è¿
                         is_connected_ = false;
                         mysql_close(conn_);
                         conn_ = nullptr;

@@ -1,7 +1,7 @@
-#pragma once
+﻿#pragma once
 
-#include "../serialize/deserializer.hpp"
-#include "../serialize/xml_adapter.hpp"
+#include "network/serialize/deserializer.hpp"
+#include "network/serialize/xml_adapter.hpp"
 #include "common.hpp"
 #include "raw_msg.hpp"
 

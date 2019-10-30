@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include "../net/router_register.hpp"
-#include "../net/rpc_task.hpp"
-#include "../net/ios_wrapper.hpp"
-#include "../net/ios_pool.hpp"
+#include "network/rpc/net/router_register.hpp"
+#include "network/rpc/net/rpc_task.hpp"
+#include "network/rpc/net/ios_wrapper.hpp"
+#include "network/rpc/net/ios_pool.hpp"
 
 namespace cytx {
     namespace rpc

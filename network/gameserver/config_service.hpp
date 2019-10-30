@@ -1,5 +1,5 @@
-#pragma once
-#include "../service/service_meta.hpp"
+﻿#pragma once
+#include "network/service/service_meta.hpp"
 #include "server_config.hpp"
 
 namespace cytx

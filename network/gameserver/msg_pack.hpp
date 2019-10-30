@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 
 #include "raw_msg.hpp"
-#include "../codec/codec_gos.hpp"
-#include "../codec/codec_thrift.hpp"
+#include "network/codec/codec_gos.hpp"
+#include "network/codec/codec_thrift.hpp"
 
 namespace cytx
 {

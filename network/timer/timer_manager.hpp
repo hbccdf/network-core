@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 #include <boost/asio.hpp>
 #include "schedule_timer.hpp"
-#include "../traits/traits.hpp"
-#include "../base/date_time.hpp"
-#include "../base/log.hpp"
+#include "network/traits/traits.hpp"
+#include "network/base/date_time.hpp"
+#include "network/base/log.hpp"
 namespace cytx
 {
 #define TIMER_LOG(level, str, ...)              \

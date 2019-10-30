@@ -1,6 +1,6 @@
-#pragma once
-#include "../base/common.h"
-#include "../base/log.hpp"
+﻿#pragma once
+#include "network/base/common.h"
+#include "network/base/log.hpp"
 
 namespace cytx
 {

@@ -1,5 +1,5 @@
-#pragma once
-#include "../meta/meta.hpp"
+ï»¿#pragma once
+#include "network/meta/meta.hpp"
 namespace cytx
 {
     namespace gameserver
@@ -13,11 +13,11 @@ namespace cytx
                 BroadcastMsg = 0x60a001a,
 
                 //center msg ids, ids is simple msg id
-                BroadcastServerMsg = 170000,    //Ïò·şÎñÆ÷¹ã²¥ÏûÏ¢
-                CS_RegisterServer = 170001,     //×¢²á·şÎñ£¬ÀàĞÍ£¬ip£¬¶Ë¿Ú
-                SC_RegisterServer = 170002,     //»Ø¸´×Ô¶¯Éú³ÉµÄid
+                BroadcastServerMsg = 170000,    //å‘æœåŠ¡å™¨å¹¿æ’­æ¶ˆæ¯
+                CS_RegisterServer = 170001,     //æ³¨å†ŒæœåŠ¡ï¼Œç±»å‹ï¼Œipï¼Œç«¯å£
+                SC_RegisterServer = 170002,     //å›å¤è‡ªåŠ¨ç”Ÿæˆçš„id
 
-                CS_GetServerInfo = 170003,      //»ñÈ¡·şÎñĞÅÏ¢
+                CS_GetServerInfo = 170003,      //è·å–æœåŠ¡ä¿¡æ¯
                 SC_GetServerInfo = 170004,
 
                 SC_ServerEvent = 170006,

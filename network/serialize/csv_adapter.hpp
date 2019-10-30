@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 #include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include "detail/csv_parser.hpp"
-#include "../base/cast.hpp"
+#include "network/base/cast.hpp"
 
 namespace cytx
 {

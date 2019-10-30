@@ -1,7 +1,7 @@
-#pragma once
-#include "../base/common.h"
-#include "../base/utils.hpp"
-#include "../base/GameObjectStream.h"
+﻿#pragma once
+#include "network/base/common.h"
+#include "network/base/utils.hpp"
+#include "network/base/GameObjectStream.h"
 #include <boost/asio/buffer.hpp>
 
 namespace cytx {

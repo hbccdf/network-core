@@ -1,11 +1,11 @@
-#pragma once
+﻿#pragma once
 #include <boost/optional.hpp>
 #include <vector>
 #include <map>
 #include <memory>
 #include <cstdint>
-#include "../traits/traits.hpp"
-#include "../base/cast.hpp"
+#include "network/traits/traits.hpp"
+#include "network/base/cast.hpp"
 
 namespace cytx {
     namespace orm
