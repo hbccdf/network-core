@@ -3,6 +3,7 @@
 #include <string>
 #include "network/traits/traits.hpp"
 #include "network/msgbus/event.hpp"
+#include "instance_factory.hpp"
 
 namespace cytx
 {
@@ -182,6 +183,12 @@ namespace cytx
             return dispatcher_.has_subscribed<E>();
         }
 
+    public:
+        instance_factory& factory()
+        {
+            return factory_;
+        }
+
     private:
         template<typename T>
         auto set_world_impl(T* obj_ptr) -> std::enable_if_t<has_set_world_v<T>>
@@ -200,6 +207,7 @@ namespace cytx
 
     private:
         dispatcher_t dispatcher_;
+        instance_factory factory_;
     };
 
     using world_t = world_map;
