@@ -26,6 +26,6 @@ namespace cytx
 
         REG_META(sleep_cmder, millisecond);
 
-        REGISTER_CMDER(sleep_cmder, "sleep", "sleep some millisecond time")("millisecond,m", value<int>(), "Millisecond").end();
+        REG_CMDER(sleep_cmder, "sleep", "sleep some millisecond time")("millisecond,m", value<int>(), "Millisecond").end();
     }
 }

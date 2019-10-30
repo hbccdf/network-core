@@ -186,7 +186,7 @@ namespace cytx
     public:
         instance_factory& factory()
         {
-            return factory_;
+            return instance_factory::ins();
         }
 
     private:
@@ -207,7 +207,6 @@ namespace cytx
 
     private:
         dispatcher_t dispatcher_;
-        instance_factory factory_;
     };
 
     using world_t = world_map;

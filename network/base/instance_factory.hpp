@@ -4,42 +4,45 @@
 
 namespace cytx
 {
-    class iobj
+    namespace detail
     {
-    public:
-        virtual ~iobj() {}
-
-        virtual type_id_t get_id() const = 0;
-    };
-
-    template<typename T>
-    class iobj_helper
-    {
-        using this_t = iobj_helper;
-    public:
-        iobj_helper()
-            : iobj()
-            , val_(new T())
-        {}
-
-        virtual ~iobj_helper()
+        class iobj
         {
-            delete val_;
-        }
+        public:
+            virtual ~iobj() {}
 
-        T* get_val() const
+            virtual type_id_t get_id() const = 0;
+        };
+
+        template<typename T>
+        class iobj_helper
         {
-            return val_;
-        }
+            using this_t = iobj_helper;
+        public:
+            iobj_helper()
+                : iobj()
+                , val_(new T())
+            {}
 
-        type_id_t get_id() const override
-        {
-            return TypeId::get_id<this_t>();
-        }
+            virtual ~iobj_helper()
+            {
+                delete val_;
+            }
 
-    private:
-        T* val_;
-    };
+            T* get_val() const
+            {
+                return val_;
+            }
+
+            type_id_t get_id() const override
+            {
+                return TypeId::get_id<this_t>();
+            }
+
+        private:
+            T* val_;
+        };
+    }
 
     class instance_factory
     {
@@ -53,7 +56,7 @@ namespace cytx
         template<typename T>
         auto get()
         {
-            using real_type = iobj_helper<T>;
+            using real_type = detail::iobj_helper<T>;
 
             type_id_t tid = TypeId::id<real_type>();
             auto it = type_to_objs_.find(tid);
@@ -69,7 +72,7 @@ namespace cytx
         }
 
     private:
-        std::unordered_map<type_id_t, iobj*> type_to_objs_;
+        std::unordered_map<type_id_t, detail::iobj*> type_to_objs_;
     };
 }
 

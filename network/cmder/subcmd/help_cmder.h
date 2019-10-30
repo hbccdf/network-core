@@ -44,7 +44,7 @@ namespace cytx
         };
 
         REG_META(help_cmder, command);
-        REGISTER_CMDER(help_cmder, "help", "show help info")
+        REG_CMDER(help_cmder, "help", "show help info")
             ("command", value<std::string>(), "command", -1).end();
     }
 }

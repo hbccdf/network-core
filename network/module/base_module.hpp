@@ -7,15 +7,22 @@ namespace cytx
     class base_module : public imodule
     {
     public:
-        base_module(world_ptr_t world_ptr)
-            : world_ptr_(world_ptr)
+        base_module()
+            : world_ptr_(nullptr)
             , auto_register_all_service_(false)
         {
         }
 
+        void set_world(world_ptr_t world_ptr)
+        {
+            world_ptr_ = world_ptr;
+        }
+
         bool init() override
         {
-            service_mgr_.register_all_service();
+            if(auto_register_all_service_)
+                service_mgr_.register_all_service();
+
             world_ptr_->set("service_mgr", &service_mgr_);
 
             service_mgr_.init_service();

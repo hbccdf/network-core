@@ -4,7 +4,7 @@
 
 namespace cytx
 {
-    using base_cmder_ptr = std::shared_ptr<base_cmder>;
+    using base_cmder_ptr = base_cmder*;
     class icmder_manager
     {
     public:

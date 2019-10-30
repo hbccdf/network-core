@@ -64,7 +64,7 @@ namespace cytx
         };
 
         REG_META(interactive_cmder, prompt, exit);
-        REGISTER_CMDER(interactive_cmder, "interactive", "interactive mode")
+        REG_CMDER(interactive_cmder, "interactive", "interactive mode")
             ("prompt", value<std::string>(), "prompt text, default is fc>")
             ("exit", value<std::string>(), "exit when input equal the value").end();
     }

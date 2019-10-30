@@ -30,7 +30,7 @@ namespace cytx
         };
 
         REG_META(wait_cmder, input);
-        REGISTER_CMDER(wait_cmder, "wait", "wait input")
+        REG_CMDER(wait_cmder, "wait", "wait input")
             ("input,i", value<std::string>(), "waiting input content").end();
     }
 }
