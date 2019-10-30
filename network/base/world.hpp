@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <string>
 #include "network/traits/traits.hpp"
+#include "network/msgbus/event.hpp"
 
 namespace cytx
 {
@@ -14,6 +15,7 @@ namespace cytx
 
     class world_map
     {
+        using dispatcher_t = msg_dispatcher;
     public:
         static world_map& global()
         {
@@ -119,6 +121,67 @@ namespace cytx
             return or_value;
         }
 
+    public:
+        template <typename Receiver, typename ... ARGS>
+        void subscribe(Receiver &receiver)
+        {
+            char a[]{ (dispatcher_.subscribe<ARGS>(receiver), 0) ... };
+        }
+
+        template <typename Receiver, typename ... ARGS>
+        void unsubscribe(Receiver &receiver)
+        {
+            char a[]{ (dispatcher_.unsubscribe<ARGS>(receiver), 0) ... };
+        }
+
+        template<typename Receiver>
+        void unsubscribe_all(Receiver &receiver)
+        {
+            dispatcher_.unsubscribe_all(receiver);
+        }
+
+        template <typename Receiver, typename ... ARGS>
+        void subscribe(Receiver* receiver)
+        {
+            char a[]{ (dispatcher_.subscribe<ARGS>(*receiver), 0) ... };
+        }
+
+        template <typename Receiver, typename ... ARGS>
+        void unsubscribe(Receiver* receiver)
+        {
+            char a[]{ (dispatcher_.unsubscribe<ARGS>(*receiver), 0) ... };
+        }
+
+        template<typename Receiver>
+        void unsubscribe_all(Receiver* receiver)
+        {
+            dispatcher_.unsubscribe_all(*receiver);
+        }
+
+        template <typename E>
+        void emit(const E &event)
+        {
+            dispatcher_.emit(event);
+        }
+
+        template <typename E>
+        void emit(std::unique_ptr<E> event)
+        {
+            dispatcher_.emit(event);
+        }
+
+        template <typename E, typename ... Args>
+        void emit(Args && ... args)
+        {
+            dispatcher_.emit<E>(std::forward<Args>(args) ...);
+        }
+
+        template<typename E>
+        bool has_subscribed()
+        {
+            return dispatcher_.has_subscribed<E>();
+        }
+
     private:
         template<typename T>
         auto set_world_impl(T* obj_ptr) -> std::enable_if_t<has_set_world_v<T>>
@@ -134,8 +197,14 @@ namespace cytx
         std::unordered_map<std::string, void*> obj_map_;
         std::unordered_map<std::string, std::string> str_map_;
         std::unordered_map<std::string, detail::world_basic_type_variant_t> basic_map_;
+
+    private:
+        dispatcher_t dispatcher_;
     };
 
     using world_t = world_map;
     using world_ptr_t = world_t*;
+
+    template<typename T>
+    using receiver_t = cytx::Receiver<T>;
 }

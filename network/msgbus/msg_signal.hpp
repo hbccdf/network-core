@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <assert.h>
 #include <stdint.h>
 #include <vector>
@@ -211,6 +211,21 @@ namespace cytx {
                     old->decref();
                 } while (link != callback_ring_);
                 return size;
+            }
+
+            bool empty() {
+                SignalLink *link = callback_ring_;
+                link->incref();
+                do {
+                    if (link->function != 0) {
+                        return false;
+                    }
+                    SignalLink *old = link;
+                    link = old->next;
+                    link->incref();
+                    old->decref();
+                } while (link != callback_ring_);
+                return true;
             }
         };
 

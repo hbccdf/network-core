@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 #include <cstddef>
@@ -145,6 +145,26 @@ namespace cytx {
             base.connections_.erase(Event<E>::family());
         }
 
+        template<typename Receiver>
+        void unsubscribe_all(Receiver &receiver)
+        {
+            BaseReceiver& base = receiver;
+            assert(!base.connections_.empty());
+
+            for (auto& p : base.connections_)
+            {
+                auto connection = p.second.second;
+                auto& ptr = p.second.first;
+
+                if (!ptr.expired())
+                {
+                    ptr.lock()->disconnect(connection);
+                }
+            }
+
+            base.connections_.clear();
+        }
+
         template <typename E>
         void emit(const E &event) {
             auto sig = signal_for(Event<E>::family());
@@ -185,6 +205,22 @@ namespace cytx {
                 if (handler) size += handler->size();
             }
             return size;
+        }
+
+        template<typename E>
+        bool has_subscribed()
+        {
+            std::size_t id = Event<E>::family();
+            if (id >= handlers_.size())
+                return false;
+
+            if (!handlers_[id])
+                return false;
+
+            if (handlers_[id]->empty())
+                return false;
+
+            return true;
         }
 
     private:
