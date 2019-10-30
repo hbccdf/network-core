@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 #ifdef WIN32
 #include <dbghelp.h>
+#include <boost/filesystem.hpp>
 #endif
 #include <type_traits>
 #include "date_time.hpp"
@@ -44,9 +45,20 @@ namespace cytx
                 dump_dir_ = dir;
             }
 
+            std::string module_name() const
+            {
+                return module_name_;
+            }
+
+            void module_name(const std::string& name)
+            {
+                module_name_ = name;
+            }
+
         private:
             bool only_ensure_info_ = true;
             std::string dump_dir_ = "log/more_info";
+            std::string module_name_;
         };
 
         using namespace std;
@@ -112,9 +124,11 @@ namespace cytx
                 unsigned code = ep ? ep->ExceptionRecord->ExceptionCode : 0;
 
                 auto t = date_time::now();
-                string file_name = fmt::format("log_with_more_info_{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}.log", t.year(), t.month(), t.day(), t.hour(), t.minute(), t.second());
+                auto name = ensure_exception_setting::ins().module_name();
+                string file_name = fmt::format("{}_more_info_{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}.log", name, t.year(), t.month(), t.day(), t.hour(), t.minute(), t.second());
 
-                wstring path = fmt::format(_T("{}/{}"), ensure_exception_setting::ins().dump_dir(), file_name);
+                auto dir = ensure_exception_setting::ins().dump_dir();
+                wstring path = fmt::format(_T("{}/{}"), dir, file_name);
 
                 HANDLE hfile = CreateFile(path.c_str()
                     , GENERIC_READ | GENERIC_WRITE
@@ -168,9 +182,24 @@ namespace cytx
                ensure_exception_setting::ins().only_ensure_info(is_only_ensure_info);
            }
 
-           void dump_dir(const std::string& dir)
+           static void dump_dir(const std::string& dir)
            {
                ensure_exception_setting::ins().dump_dir(dir);
+           }
+
+           static void init(const std::string& set_module_name, bool is_only_ensure_log = true)
+           {
+               ensure_exception_setting::ins().module_name(set_module_name);
+               ensure_exception_setting::ins().only_ensure_info(is_only_ensure_log);
+
+               if (!is_only_ensure_log)
+               {
+                   auto dir = ensure_exception_setting::ins().dump_dir();
+                   if (!boost::filesystem::exists(dir))
+                   {
+                       boost::filesystem::create_directories(dir);
+                   }
+               }
            }
 
         private:
@@ -195,13 +224,13 @@ namespace cytx
 
 #ifndef ENSURE_EXCEPTION_WITHOUT_DUMP
 #  if !defined TEST_NOENSURE
-#       define ENSURE(expr) {static_assert(is_same<decltype(expr), bool>::value, "ENSURE(expr) can only be used with bool");} \
+#       define ENSURE(expr) {static_assert(std::is_same<decltype(expr), bool>::value, "ENSURE(expr) can only be used with bool");} \
         if((expr)) ; else throw cytx::make_ensure_exception(#expr, __FILE__, __FUNCTION__, __LINE__).make_dump().SMART_ENSURE_A
 #  else
-#       define ENSURE(expr) {static_assert(is_same<decltype(expr), bool>::value, "ENSURE(expr) can only be used with bool");} \
+#       define ENSURE(expr) {static_assert(std::is_same<decltype(expr), bool>::value, "ENSURE(expr) can only be used with bool");} \
         if((expr)) ; else  cytx::make_ensure_exception(#expr, __FILE__, __FUNCTION__, __LINE__).make_dump().SMART_ENSURE_A
 #  endif
 #else
-#define ENSURE(expr) {static_assert(is_same<decltype(expr), bool>::value, "ENSURE(expr) can only be used with bool");} \
+#define ENSURE(expr) {static_assert(std::is_same<decltype(expr), bool>::value, "ENSURE(expr) can only be used with bool");} \
   if((expr)) ; else throw cytx::make_ensure_exception(#expr, __FILE__, __FUNCTION__, __LINE__).SMART_ENSURE_A
 #endif
