@@ -32,6 +32,13 @@ namespace cytx
             });
         }
 
+        void stop()
+        {
+            std::for_each(std::begin(modules_), std::end(modules_), [](auto& p) {
+                p.second->stop();
+            });
+        }
+
         bool reload()
         {
             return std::all_of(std::begin(modules_), std::end(modules_), [](auto& p) {
