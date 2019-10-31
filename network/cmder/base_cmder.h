@@ -153,8 +153,17 @@ namespace cytx
 
         virtual int execute()
         {
-            dump_help();
-            return 1;
+            if (need_help())
+            {
+                show_help();
+            }
+            return 0;
+        }
+
+    protected:
+        bool need_help() const
+        {
+            return de_.vm().count("help") > 0;
         }
 
     protected:

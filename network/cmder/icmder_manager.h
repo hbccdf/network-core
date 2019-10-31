@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "base_cmder.h"
 #include "network/base/world.hpp"
+#include <algorithm>
 
 namespace cytx
 {
@@ -35,6 +36,11 @@ namespace cytx
         void register_cmder(std::string cmd_name, base_cmder_ptr cmder)
         {
             cmders_[cmd_name] = cmder;
+            int cmd_name_size = (int)cmd_name.size();
+            if (cmder_max_length_ < cmd_name_size)
+            {
+                cmder_max_length_ = cmd_name_size;
+            }
         }
 
         void register_cmder(base_cmder_ptr cmder)
@@ -42,7 +48,7 @@ namespace cytx
             register_cmder(cmder->name(), cmder);
         }
 
-        base_cmder_ptr get_cmder(std::string cmd_name)
+        base_cmder_ptr get_cmder(std::string cmd_name) const
         {
             auto it = cmders_.find(cmd_name);
             if (it != cmders_.end())
@@ -88,9 +94,9 @@ namespace cytx
             return result;
         }
 
-        void dump_help()
+        void show_help() const
         {
-            std::string fmt_str = "{:15}{}";
+            std::string fmt_str = fmt::format("{}{}{}", "{:", cmder_max_length_ + 4, "}{}");
             for (auto& c : cmders_)
             {
                 std::cout << fmt::format(fmt_str, c.first, c.second->desc()) << std::endl;
@@ -99,6 +105,7 @@ namespace cytx
     protected:
         world_ptr_t world_ptr_;
         std::unordered_map<std::string, base_cmder_ptr> cmders_;
+        int cmder_max_length_ = 0;
     };
 
     using icmder_manager_ptr = icmder_manager*;

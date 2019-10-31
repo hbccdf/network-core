@@ -27,7 +27,7 @@ namespace cytx
 
         void show_help()
         {
-            manager_->dump_help();
+            manager_->show_help();
         }
 
         void show_cmder_help(const std::string& cmd_name)
@@ -35,7 +35,7 @@ namespace cytx
             auto cmder_ptr = manager_->get_cmder(cmd_name);
             if (cmder_ptr)
             {
-                cmder_ptr->dump_help();
+                cmder_ptr->show_help();
             }
             else
             {

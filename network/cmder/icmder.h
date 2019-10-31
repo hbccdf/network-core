@@ -106,11 +106,11 @@ namespace cytx
 
         virtual int handle_input(int argc, const char* argv[])
         {
-            dump_help();
+            show_help();
             return 0;
         }
 
-        void dump_help()
+        void show_help()
         {
             std::cout << (*op_) << std::endl;
         }
@@ -130,7 +130,7 @@ namespace cytx
     public:
         virtual int handle_vm(const bpo::variables_map& vm)
         {
-            dump_help();
+            show_help();
             return 0;
         }
 

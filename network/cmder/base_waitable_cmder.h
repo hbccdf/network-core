@@ -22,6 +22,12 @@ namespace cytx
 
         int execute() override
         {
+            if (need_help())
+            {
+                show_help();
+                return 0;
+            }
+
             return process();
         }
 
