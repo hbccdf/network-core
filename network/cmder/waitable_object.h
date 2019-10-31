@@ -104,7 +104,7 @@ namespace cytx
             return object_.is_over();
         }
 
-    private:
+    protected:
         boost::optional<T> result_;
         waitable_object object_;
     };
@@ -136,7 +136,7 @@ namespace cytx
             return object_.is_over();
         }
 
-    private:
+    protected:
         waitable_object object_;
     };
 }
