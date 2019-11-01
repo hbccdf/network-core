@@ -20,19 +20,6 @@ namespace cytx
                 ("waitTime", value<int>(), "waitTime");
         }
 
-        int execute() override
-        {
-            if (need_help())
-            {
-                show_help();
-                return 0;
-            }
-
-            return process();
-        }
-
-        virtual int process() = 0;
-
     public:
         int wait()
         {

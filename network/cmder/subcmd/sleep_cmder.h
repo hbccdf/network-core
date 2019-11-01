@@ -14,7 +14,7 @@ namespace cytx
                 millisecond = 0;
             }
 
-            int execute() override
+            int process() override
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(millisecond));
                 return 0;

@@ -208,7 +208,7 @@ namespace cytx {
         }
 
         template<typename E>
-        bool has_subscribed()
+        bool has_subscribed() const
         {
             std::size_t id = Event<E>::family();
             if (id >= handlers_.size())

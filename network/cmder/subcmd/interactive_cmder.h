@@ -22,7 +22,7 @@ namespace cytx
                 exit = "exit";
             }
 
-            int execute() override
+            int process() override
             {
                 std::string input;
                 while (true)

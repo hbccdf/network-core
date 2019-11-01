@@ -94,7 +94,7 @@ namespace cytx
                 return *this;
             }
 
-            const char* what() { return str_what_.c_str(); }
+            const char* what() const { return str_what_.c_str(); }
 
             string dump_path() const { return dump_path_; }
 

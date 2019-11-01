@@ -21,7 +21,7 @@ namespace cytx
                 command = "";
             }
 
-            int execute() override
+            int process() override
             {
                 boost::trim(command);
                 if (command.empty())

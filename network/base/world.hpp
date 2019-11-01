@@ -46,7 +46,7 @@ namespace cytx
         }
 
         template<typename T>
-        T* get()
+        T* get() const
         {
             using obj_type = std::decay_t<T>;
             std::string type_name = typeid(T).name();
@@ -54,7 +54,7 @@ namespace cytx
         }
 
         template<typename T>
-        T* get(const std::string& name)
+        T* get(const std::string& name) const
         {
             auto it = obj_map_.find(name);
             if (it != obj_map_.end())
@@ -70,7 +70,7 @@ namespace cytx
             str_map_[name] = value;
         }
 
-        std::string get_string(const std::string& name)
+        std::string get_string(const std::string& name) const
         {
             auto it = str_map_.find(name);
             if (it != str_map_.end())
@@ -81,7 +81,7 @@ namespace cytx
             return "";
         }
 
-        std::string get_string_or(const std::string& name, const std::string& or_value)
+        std::string get_string_or(const std::string& name, const std::string& or_value) const
         {
             auto it = str_map_.find(name);
             if (it != str_map_.end())
@@ -99,7 +99,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_basic(const std::string& name) -> std::enable_if_t<std::is_arithmetic<T>::value, T>
+        auto get_basic(const std::string& name) const -> std::enable_if_t<std::is_arithmetic<T>::value, T>
         {
             auto it = basic_map_.find(name);
             if (it != basic_map_.end())
@@ -111,7 +111,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_basic_or(const std::string& name, const T& or_value) -> std::enable_if_t<std::is_arithmetic<T>::value, T>
+        auto get_basic_or(const std::string& name, const T& or_value) const -> std::enable_if_t<std::is_arithmetic<T>::value, T>
         {
             auto it = basic_map_.find(name);
             if (it != basic_map_.end())
@@ -178,7 +178,7 @@ namespace cytx
         }
 
         template<typename E>
-        bool has_subscribed()
+        bool has_subscribed() const
         {
             return dispatcher_.has_subscribed<E>();
         }

@@ -110,7 +110,7 @@ namespace cytx
             return 0;
         }
 
-        void show_help()
+        void show_help() const
         {
             std::cout << (*op_) << std::endl;
         }

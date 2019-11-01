@@ -25,12 +25,12 @@ namespace cytx
             return manager_->handle_input(argc, argv);
         }
 
-        void show_help()
+        void show_help() const
         {
             manager_->show_help();
         }
 
-        void show_cmder_help(const std::string& cmd_name)
+        void show_cmder_help(const std::string& cmd_name) const
         {
             auto cmder_ptr = manager_->get_cmder(cmd_name);
             if (cmder_ptr)

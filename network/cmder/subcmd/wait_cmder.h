@@ -13,7 +13,7 @@ namespace cytx
                 input = "";
             }
 
-            int execute() override
+            int process() override
             {
                 std::string input_str;
                 std::cin >> input_str;

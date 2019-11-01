@@ -156,9 +156,12 @@ namespace cytx
             if (need_help())
             {
                 show_help();
+                return 0;
             }
-            return 0;
+            return process();
         }
+
+        virtual int process() = 0;
 
     protected:
         bool need_help() const

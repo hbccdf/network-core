@@ -17,13 +17,13 @@ namespace cytx
         }
 
         template<typename T>
-        int get()
+        int get() const
         {
             return get_or<T>(-1);
         }
 
         template<typename T>
-        int get_or(int id)
+        int get_or(int id) const
         {
             type_id_t tid = TypeId::id<T>();
             auto it = type_to_id_map_.find(tid);
