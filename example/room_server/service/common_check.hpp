@@ -1,7 +1,7 @@
 #pragma once
 #include "game_player.h"
 #include "game_room.h"
-#include <network/base/cast.hpp>
+#include <network/util/cast.hpp>
 
 namespace CytxGame
 {

@@ -4,9 +4,10 @@
 namespace CytxGame
 {
 
-    void player_service::init()
+    bool player_service::init()
     {
         LOG_DEBUG("player service init");
+        return true;
     }
 
     void player_service::reset()

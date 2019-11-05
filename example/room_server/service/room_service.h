@@ -7,7 +7,7 @@ namespace CytxGame
     class room_service : public cytx::gameserver::service_base
     {
     public:
-        void init();
+        bool init();
 
         room_ptr_t create_room(player_ptr_t& master, size_t max_size, room_mode mode);
         room_ptr_t find_room(int room_id);

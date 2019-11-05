@@ -1,7 +1,7 @@
 #include "game_player.h"
 #include "game_room.h"
 #include <network/base/log.hpp>
-#include <network/base/utils.hpp>
+#include <network/util/net.hpp>
 
 namespace CytxGame
 {

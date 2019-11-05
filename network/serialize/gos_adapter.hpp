@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <fmt/format.h>
 #include "network/base/GameObjectStream.h"
-#include "network/util/cast.hpp"
+#include "network/util/net.hpp"
 
 namespace cytx
 {

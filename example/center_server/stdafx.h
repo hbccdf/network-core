@@ -19,4 +19,4 @@
 #include <network/base/log.hpp>
 #include <network/timer/timer_manager.hpp>
 #include <network/base/thread_pool.h>
-#include <network/base/cast.hpp>
+#include <network/util/cast.hpp>

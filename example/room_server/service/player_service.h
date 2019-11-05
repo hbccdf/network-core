@@ -7,7 +7,7 @@ namespace CytxGame
     class player_service : public cytx::gameserver::service_base
     {
     public:
-        void init();
+        bool init();
         void reset();
 
         player_ptr_t find_player(int user_id, bool is_login = true);

@@ -3,14 +3,14 @@
 
 namespace CytxGame
 {
-    void update_timer::init()
+    bool update_timer::init()
     {
         LOG_DEBUG("update timer init");
         config_ = timer_config{};
 
         battle_config* config_ptr = server_->get_service<battle_config>();
         if (!config_ptr)
-            return;
+            return false;
 
         auto& config = config_ptr->get_config();
         timer_ = server_->set_fix_timer(config.update_time, std::bind(&this_t::update, this));
@@ -18,11 +18,13 @@ namespace CytxGame
         config_.custom_delta = config.custom_delta;
         config_.use_custom_delta = config.use_custom_delta;
         last_time_ = date_time::now();
+        return true;
     }
 
-    void update_timer::start()
+    bool update_timer::start()
     {
         timer_.start();
+        return true;
     }
 
     void update_timer::update()

@@ -5,9 +5,10 @@
 
 namespace CytxGame
 {
-    void room_service::init()
+    bool room_service::init()
     {
         LOG_DEBUG("room service init");
+        return true;
     }
 
     room_ptr_t room_service::create_room(player_ptr_t& master, size_t max_size, room_mode mode)

@@ -16,8 +16,8 @@ namespace CytxGame
         using this_t = update_timer;
         using timer_t = cytx::timer_proxy;
     public:
-        void init();
-        void start();
+        bool init();
+        bool start();
 
     public:
         using func_t = std::function<void(float)>;

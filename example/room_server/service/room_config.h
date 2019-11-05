@@ -14,7 +14,7 @@ namespace CytxGame
     class room_config : public cytx::gameserver::service_base
     {
     public:
-        void init();
+        bool init();
 
     public:
         room_config_info& get_config() { return config_info_; }

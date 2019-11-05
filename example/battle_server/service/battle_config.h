@@ -16,7 +16,7 @@ namespace CytxGame
     class battle_config : public cytx::gameserver::service_base
     {
     public:
-        void init();
+        bool init();
 
     public:
         battle_server_info& get_config() { return config_info_; }

@@ -4,14 +4,15 @@
 
 namespace CytxGame
 {
-    void battle_manager::init()
+    bool battle_manager::init()
     {
         LOG_DEBUG("battle manager init");
         update_timer* timer_ptr = server_->get_service<update_timer>();
         if (!timer_ptr)
-            return;
+            return false;
 
         timer_ptr->set_update_func(cytx::bind(&this_t::update, this));
+        return true;
     }
 
     void battle_manager::stop()

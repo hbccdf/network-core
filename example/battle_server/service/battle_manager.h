@@ -10,7 +10,7 @@ namespace CytxGame
     {
         using this_t = battle_manager;
     public:
-        void init();
+        bool init();
         void stop();
     public:
         void update(float delta);
