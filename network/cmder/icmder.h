@@ -6,7 +6,6 @@
 #include <iostream>
 #include <fmt/format.h>
 #include <boost/program_options.hpp>
-#include <boost/algorithm/string.hpp>
 #include "network/meta/meta.hpp"
 
 namespace cytx

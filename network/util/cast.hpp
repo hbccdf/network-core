@@ -1,8 +1,8 @@
 #pragma once
-#include "network/meta/meta.hpp"
 #include <fmt/format.h>
 #include <boost/lexical_cast.hpp>
-#include "date_time.hpp"
+#include "network/meta/meta.hpp"
+#include "network/base/date_time.hpp"
 
 namespace cytx
 {

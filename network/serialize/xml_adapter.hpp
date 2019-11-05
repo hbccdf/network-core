@@ -3,7 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include "network/traits/traits.hpp"
 #include "network/meta/meta.hpp"
-#include "network/base/cast.hpp"
+#include "network/util/cast.hpp"
 #include "detail/parser.hpp"
 
 namespace cytx

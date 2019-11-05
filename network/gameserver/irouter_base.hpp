@@ -1,5 +1,5 @@
 #pragma once
-#include "network/base/excetion.hpp"
+#include "network/base/exception.hpp"
 namespace cytx
 {
     namespace gameserver

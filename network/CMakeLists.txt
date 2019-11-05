@@ -20,6 +20,7 @@ add_files(SRC false "serialize/detail")
 add_files(SRC false "service")
 add_files(SRC false "timer")
 add_files(SRC false "traits")
+add_files(SRC false "util")
 
 add_library(network STATIC ${SRC})
 set_target_properties(network PROPERTIES LINKER_LANGUAGE CXX)

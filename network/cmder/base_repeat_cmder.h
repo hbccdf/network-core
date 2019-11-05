@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "base_waitable_cmder.h"
-#include <thread>
+#include "network/util/thread.hpp"
 
 namespace cytx
 {
@@ -90,7 +90,7 @@ namespace cytx
 
         void sleep(int milliseconds)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+            util::sleep(milliseconds);
         }
 
     public:

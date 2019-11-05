@@ -3,7 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include "detail/csv_parser.hpp"
-#include "network/base/cast.hpp"
+#include "network/util/cast.hpp"
 
 namespace cytx
 {

@@ -5,7 +5,7 @@
 #include <memory>
 #include <cstdint>
 #include "network/traits/traits.hpp"
-#include "network/base/cast.hpp"
+#include "network/util/cast.hpp"
 
 namespace cytx {
     namespace orm

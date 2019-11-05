@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "network/base/utils.hpp"
-#include "network/base/cast.hpp"
+#include "network/util/net.hpp"
+#include "network/util/cast.hpp"
 #include "tcp_server.hpp"
 #include "server_config.hpp"
 #include "msg_pack.hpp"

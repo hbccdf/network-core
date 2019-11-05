@@ -2,7 +2,7 @@
 #include <boost/program_options.hpp>
 #include "network/traits/traits.hpp"
 #include "network/meta/meta.hpp"
-#include "network/base/cast.hpp"
+#include "network/util/cast.hpp"
 
 namespace cytx
 {

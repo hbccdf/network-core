@@ -3,7 +3,7 @@
 #include "network/serialize/serializer.hpp"
 #include "network/serialize/deserializer.hpp"
 #include "network/serialize/json_adapter.hpp"
-#include "network/base/excetion.hpp"
+#include "network/base/exception.hpp"
 
 namespace cytx {
     namespace codec {

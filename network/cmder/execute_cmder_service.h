@@ -2,20 +2,12 @@
 #include "network/service/base_service.hpp"
 #include "cmder_service.h"
 #include "cmder_reader.h"
-#include <boost/algorithm/string.hpp>
-#include <thread>
 #include "network/base/log.hpp"
+#include "network/util/thread.hpp"
+#include "network/util/string.hpp"
 
 namespace cytx
 {
-    namespace detail
-    {
-        inline bool is_empty_or_white_spate(const std::string& str)
-        {
-            return str.empty() || boost::trim_copy(str).empty();
-        }
-    }
-
     struct cmd_node_info
     {
         int index;
@@ -77,7 +69,7 @@ namespace cytx
         int execute_node(cmd_node* node)
         {
             int ret = 0;
-            if (!detail::is_empty_or_white_spate(node->cmdStr) && node->times > 0)
+            if (!util::is_empty_or_white_spate(node->cmdStr) && node->times > 0)
             {
                 ret = repeat_execute_cmd_node(node);
             }
@@ -165,7 +157,7 @@ namespace cytx
     private:
         void sleep(int milliseconds)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+            util::sleep(milliseconds);
         }
 
     private:

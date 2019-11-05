@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "network/traits/traits.hpp"
 #include "network/meta/meta.hpp"
-#include "network/base/cast.hpp"
+#include "network/util/cast.hpp"
 
 namespace cytx {
 

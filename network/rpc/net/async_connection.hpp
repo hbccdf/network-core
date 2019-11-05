@@ -1,5 +1,5 @@
 #pragma once
-#include "network/base/excetion.hpp"
+#include "network/base/exception.hpp"
 #include <boost/asio.hpp>
 #include <thread>
 #include <mutex>

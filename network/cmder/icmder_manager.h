@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "base_cmder.h"
 #include "network/base/world.hpp"
-#include <algorithm>
 
 namespace cytx
 {

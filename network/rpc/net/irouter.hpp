@@ -1,6 +1,6 @@
 #pragma once
 #include <boost/asio.hpp>
-#include "network/base/excetion.hpp"
+#include "network/base/exception.hpp"
 
 namespace cytx
 {

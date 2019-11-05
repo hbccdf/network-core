@@ -4,7 +4,7 @@
 #include <queue>
 #include <boost/asio.hpp>
 #include <boost/make_unique.hpp>
-#include "network/base/excetion.hpp"
+#include "network/base/exception.hpp"
 #include "network/timer/schedule_timer.hpp"
 #include "msg_header.hpp"
 #include "wait_barrier.hpp"

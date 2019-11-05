@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "network/cmder/base_cmder.h"
-#include <thread>
+#include "network/util/thread.hpp"
 
 namespace cytx
 {
@@ -16,7 +16,7 @@ namespace cytx
 
             int process() override
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(millisecond));
+                util::sleep(millisecond);
                 return 0;
             }
 
