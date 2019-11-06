@@ -28,21 +28,14 @@ namespace cytx
 
         int wait(int milliseconds)
         {
-            wait_result_.wait(milliseconds);
-            return get_and_clear_result();
+            int result = wait_result_.get(milliseconds).get_value_or(-1);
+            wait_result_.reset();
+            return result;
         }
 
         void notify(int result)
         {
             wait_result_.set(result);
-        }
-
-    private:
-        int get_and_clear_result()
-        {
-            int result = wait_result_.get().get_value_or(-1);
-            wait_result_.reset();
-            return result;
         }
 
     public:

@@ -104,6 +104,11 @@ namespace cytx
             return object_.is_over();
         }
 
+        result_t val() const
+        {
+            return result_;
+        }
+
     protected:
         boost::optional<T> result_;
         waitable_object object_;
