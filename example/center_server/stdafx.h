@@ -18,5 +18,5 @@
 #include <network/codec/codec_thrift.hpp>
 #include <network/base/log.hpp>
 #include <network/timer/timer_manager.hpp>
-#include <network/base/thread_pool.h>
+#include <network/base/thread_pool.hpp>
 #include <network/util/cast.hpp>
