@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "network/service/base_service.hpp"
-#include "cmder_service.h"
-#include "cmder_reader.h"
+#include "cmder_service.hpp"
+#include "cmder_reader.hpp"
 #include "network/base/log.hpp"
 #include "network/util/thread.hpp"
 #include "network/util/string.hpp"

@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "network/cmder/base_cmder.h"
-#include "network/cmder/cmder_service.h"
+#include "network/cmder/base_cmder.hpp"
+#include "network/cmder/cmder_service.hpp"
 
 namespace cytx
 {

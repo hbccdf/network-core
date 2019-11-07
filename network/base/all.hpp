@@ -5,5 +5,5 @@
 
 #include "MemoryPoolMgr.h"
 #include "GameObjectStream.h"
-#include "scope_guard.h"
-#include "thread_pool.h"
+#include "scope_guard.hpp"
+#include "thread_pool.hpp"

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "cmder_config.h"
+#include "cmder_config.hpp"
 #include "network/serialize/deserializer.hpp"
 #include "network/serialize/xml_adapter.hpp"
 
