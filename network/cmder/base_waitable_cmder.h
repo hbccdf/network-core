@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "base_cmder.h"
-#include "waitable_object.h"
+#include "network/base/waitable_object.hpp"
 
 namespace cytx
 {

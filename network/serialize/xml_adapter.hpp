@@ -406,8 +406,7 @@ namespace cytx
                     return;
 
                 std::string str_val = val.data();
-                vector<std::string> values;
-                boost::algorithm::split(values, str_val, boost::is_any_of(",;"), boost::algorithm::token_compress_on);
+                auto values = string_util::split(str_val, ",;");
                 if (values.empty())
                     return;
 

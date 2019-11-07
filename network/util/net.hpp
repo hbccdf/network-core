@@ -5,7 +5,8 @@
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cstdint>
-#include <boost/algorithm/string.hpp>
+#include "network/util/string.hpp"
+#include "network/util/cast.hpp"
 
 #define SWAP_LONG(l)                \
             ( ( ((l) >> 24) & 0x000000FFL ) |       \
@@ -27,10 +28,9 @@ namespace cytx
 {
     namespace util
     {
-        static std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string_list)
+        inline static std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string)
         {
-            std::vector<std::string> address_port_list;
-            boost::algorithm::split(address_port_list, address_port_string_list, boost::is_any_of(" ,|"));
+            auto address_port_list = string_util::split(address_port_string, " ,|");
             std::vector<boost::asio::ip::tcp::endpoint> tcp_endpoints;
             for (auto const& address_port : address_port_list)
             {
@@ -39,7 +39,7 @@ namespace cytx
                 {
                     tcp_endpoints.emplace_back(
                         boost::asio::ip::address::from_string(address_port.substr(0, pos)),
-                        boost::lexical_cast<uint16_t>(address_port.substr(pos + 1))
+                        util::cast<uint16_t>(address_port.substr(pos + 1))
                     );
                 }
             }
@@ -47,16 +47,16 @@ namespace cytx
             return tcp_endpoints;
         }
 
-        static boost::asio::ip::tcp::endpoint get_tcp_endpoint(std::string const& address, uint16_t port)
+        inline static boost::asio::ip::tcp::endpoint get_tcp_endpoint(std::string const& address, uint16_t port)
         {
             return { boost::asio::ip::address::from_string(address), port };
         }
 
-        static std::string domain2ip(const std::string& ip, uint16_t port)
+        inline static std::string domain2ip(const std::string& ip, uint16_t port)
         {
             boost::asio::io_service ios;
             boost::asio::ip::tcp::resolver slv(ios);
-            boost::asio::ip::tcp::resolver::query qry(ip, boost::lexical_cast<std::string>(port));
+            boost::asio::ip::tcp::resolver::query qry(ip, util::cast_string(port));
             boost::asio::ip::tcp::resolver::iterator it = slv.resolve(qry);
             boost::asio::ip::tcp::resolver::iterator end;
             std::string host_ip;

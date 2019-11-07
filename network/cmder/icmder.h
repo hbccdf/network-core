@@ -123,29 +123,4 @@ namespace cytx
         std::unique_ptr<bpo_options_t> op_;
         bpo_pos_options_t pd_;
     };
-
-    class icmder_helper : public icmder
-    {
-    public:
-        virtual int handle_vm(const bpo::variables_map& vm)
-        {
-            show_help();
-            return 0;
-        }
-
-        virtual int handle_input(std::string input) override
-        {
-            auto vm = detail::get_vm(input, *op_.get(), pd_, true);
-            return handle_vm(vm);
-        }
-
-        virtual int handle_input(int argc, const char* argv[]) override
-        {
-            auto vm = detail::get_vm(argc, argv, *op_.get(), pd_, true);
-            return handle_vm(vm);
-        }
-
-    };
-
-    using icmder_ptr = std::shared_ptr<icmder>;
 }

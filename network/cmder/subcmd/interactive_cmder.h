@@ -30,7 +30,7 @@ namespace cytx
                     try
                     {
                         read_input(input);
-                        boost::trim(input);
+                        string_util::trim(input);
                         if (input.empty())
                             continue;
 

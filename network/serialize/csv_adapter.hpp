@@ -1,9 +1,9 @@
 ﻿#pragma once
 #include <fmt/format.h>
-#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include "detail/csv_parser.hpp"
 #include "network/util/cast.hpp"
+#include "network/util/string.hpp"
 
 namespace cytx
 {
@@ -475,12 +475,12 @@ namespace cytx
             std::vector<std::string> result;
             if (!val.empty())
             {
-                boost::algorithm::split(result, val, boost::algorithm::is_any_of(",|"), boost::algorithm::token_compress_on);
+                string_util::split(result, val, ",|");
             }
 
             for (auto& v : result)
             {
-                boost::algorithm::trim_if(v, boost::algorithm::is_any_of(" \t\r\n"));
+                string_util::trim(v, " \t\r\n");
             }
             return result;
         }

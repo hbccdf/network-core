@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "base_cmder.h"
 #include "network/base/world.hpp"
+#include "network/util/string.hpp"
 
 namespace cytx
 {
@@ -60,8 +61,7 @@ namespace cytx
 
         int handle_input(std::string input)
         {
-            std::vector<std::string> strs;
-            boost::split(strs, input, boost::is_any_of(" "), boost::token_compress_on);
+            auto strs = string_util::split(input, " ");
             if (strs.empty() || (strs.size() == 1 && strs[0].empty()))
                 return true;
             std::vector<const char*> argv;

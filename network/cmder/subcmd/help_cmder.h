@@ -23,7 +23,7 @@ namespace cytx
 
             int process() override
             {
-                boost::trim(command);
+                string_util::trim(command);
                 if (command.empty())
                 {
                     cmder_service_->show_help();

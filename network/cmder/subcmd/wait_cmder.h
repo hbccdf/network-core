@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "network/cmder/base_cmder.h"
+#include "network/util/string.hpp"
 
 namespace cytx
 {
@@ -17,8 +18,8 @@ namespace cytx
             {
                 std::string input_str;
                 std::cin >> input_str;
-                boost::trim(input_str);
-                boost::trim(input);
+                string_util::trim(input_str);
+                string_util::trim(input);
                 if (input_str.empty() || input.empty() || input_str == input)
                     return 0;
 

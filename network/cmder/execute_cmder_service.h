@@ -105,9 +105,8 @@ namespace cytx
 
         int execute_cmd_string(std::string cmd_str)
         {
-            boost::trim(cmd_str);
-            std::vector<std::string> strs;
-            boost::split(strs, cmd_str, boost::is_any_of("\r\n"), boost::token_compress_on);
+            string_util::trim(cmd_str);
+            auto strs = string_util::split(cmd_str, "\r\n");
 
             for (auto& str : strs)
             {
@@ -128,7 +127,7 @@ namespace cytx
                 return 0;
             }
 
-            boost::trim(cmd_str);
+            string_util::trim(cmd_str);
             //以注释开头
             if (boost::starts_with(cmd_str, "#"))
             {
