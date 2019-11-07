@@ -51,7 +51,7 @@ namespace cytx
         int execute()
         {
             int ret = 0;
-            while (ret == 0 && cur_cmd_index >= 0 && cur_cmd_index < (int)cmds_ptr_->size())
+            while (cur_cmd_index_ >= 0 && cur_cmd_index_ < (int)cmds_ptr_->size())
             {
                 ret = execute_one();
             }
@@ -62,7 +62,7 @@ namespace cytx
     private:
         int execute_one()
         {
-            cmd_node* node = &(cmds_ptr_->at(cur_cmd_index));
+            cmd_node* node = &(cmds_ptr_->at(cur_cmd_index_));
             return execute_node(node);
         }
 
@@ -74,7 +74,8 @@ namespace cytx
                 ret = repeat_execute_cmd_node(node);
             }
 
-            return get_next_cmd_node_index(node, ret == 0);
+            cur_cmd_index_ = get_next_cmd_node_index(node, ret == 0);
+            return ret;
         }
 
         int repeat_execute_cmd_node(cmd_node* node)
@@ -150,7 +151,7 @@ namespace cytx
                 }
             }
 
-            return ++cur_cmd_index;
+            return cur_cmd_index_ + 1;
         }
 
     private:
@@ -163,7 +164,7 @@ namespace cytx
         cmder_service* cmder_service_ = nullptr;
         cmder_config config_;
         std::vector<cmd_node>* cmds_ptr_ = nullptr;
-        int cur_cmd_index = 0;
+        int cur_cmd_index_ = 0;
 
         std::unordered_map<std::string, cmd_node_info> cmd_map_;
     };
