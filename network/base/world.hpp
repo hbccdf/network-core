@@ -33,24 +33,26 @@ namespace cytx
         auto set(const std::string& name, T* obj) -> std::enable_if_t<has_set_world_v<T>>
         {
             set(name, (void*)obj);
-            set_world_impl(obj);
+            set(obj);
         }
 
         template<typename T>
         void set(T* obj)
         {
-            using obj_type = std::decay_t<T>;
-            std::string type_name = typeid(T).name();
-            set(type_name, obj);
+            type_id_t tid = TypeId::id<T>();
+            type_obj_map_[tid] = obj;
             set_world_impl(obj);
         }
 
         template<typename T>
         T* get() const
         {
-            using obj_type = std::decay_t<T>;
-            std::string type_name = typeid(T).name();
-            return get<T>(type_name);
+            type_id_t tid = TypeId::id<T>();
+            auto it = type_obj_map_.find(tid);
+            if (it != type_obj_map_.end())
+                return (T*)it->second;
+
+            return nullptr;
         }
 
         template<typename T>
@@ -201,6 +203,7 @@ namespace cytx
         }
 
     private:
+        std::unordered_map<type_id_t, void*> type_obj_map_;
         std::unordered_map<std::string, void*> obj_map_;
         std::unordered_map<std::string, std::string> str_map_;
         std::unordered_map<std::string, detail::world_basic_type_variant_t> basic_map_;
