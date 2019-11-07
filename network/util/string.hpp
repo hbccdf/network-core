@@ -46,6 +46,21 @@ namespace cytx
             {
                 boost::trim_if(str, boost::is_any_of(chars));
             }
+
+            static bool contains_chars(const std::string& str, const std::string& chars)
+            {
+                return std::any_of(str.begin(), str.end(), [&chars](auto c) -> bool { return chars.find(c) != std::string::npos; });
+            }
+
+            static bool contains(const std::string& str, const std::string& other)
+            {
+                return str.find(other) != std::string::npos;
+            }
+
+            static void replace(std::string& str, const std::string& search_str, const std::string& replace_str)
+            {
+                boost::replace_all(str, search_str, replace_str);
+            }
         };
     }
 

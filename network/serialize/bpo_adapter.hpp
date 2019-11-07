@@ -149,7 +149,10 @@ namespace cytx
         {
             auto op = ops_.find_nothrow(key, true);
             if (op == nullptr)
+            {
+                v = false;
                 return;
+            }
             auto typed_value_ptr = dynamic_cast<const bpo::typed_value<bool>*>(op->semantic().get());
             bool is_typed_value = typed_value_ptr != nullptr;
 
@@ -165,7 +168,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val)->std::enable_if_t<!std::is_enum<std::remove_reference_t<std::remove_cv_t<T>>>::value
+        auto ReadObject(T& t, val_t& val)->std::enable_if_t<!std::is_enum<std::decay_t<T>>::value
             && !std::is_same<T, bool>::value>
         {
             if (!val.empty())
@@ -173,10 +176,9 @@ namespace cytx
         }
 
         template <typename T>
-        auto ReadObject(T& t, val_t& val) ->std::enable_if_t<std::is_enum<
-            std::remove_reference_t<std::remove_cv_t<T>>>::value>
+        auto ReadObject(T& t, val_t& val) ->std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
         {
-            using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
+            using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
 
             if (!enum_with_str_)

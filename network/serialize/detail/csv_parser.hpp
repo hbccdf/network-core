@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <fstream>
 #include <memory>
-#include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
+#include "network/util/string.hpp"
 
 namespace cytx
 {
@@ -78,7 +78,7 @@ namespace cytx
             protected:
                 void push_back(const string& value)
                 {
-                    string trim_val = boost::algorithm::trim_copy_if(value, boost::algorithm::is_any_of(" \t\r\n"));
+                    string trim_val = string_util::trim_copy(value, " \t\r\n");
                     values_.push_back(trim_val);
                 }
                 void set_header(const vector<string>* header) { header_ = header; }

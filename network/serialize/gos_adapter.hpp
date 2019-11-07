@@ -307,8 +307,8 @@ namespace cytx
             rd_.begin_array(array_size);
             typedef decltype((*t.begin()).first) first_element_t;
             typedef decltype((*t.begin()).second) second_element_t;
-            using first_val_t = std::remove_cv_t<std::remove_reference_t<first_element_t>>;
-            using second_val_t = std::remove_cv_t<std::remove_reference_t<second_element_t>>;
+            using first_val_t = std::decay_t<first_element_t>;
+            using second_val_t = std::decay_t<second_element_t>;
 
             using val_t = std::pair<first_val_t, second_val_t>;
 
@@ -339,7 +339,7 @@ namespace cytx
         auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
         {
             typedef decltype(*t.begin()) element_t;
-            using val_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
+            using val_t = std::decay_t<element_t>;
 
             size_t array_size = 0;
             rd_.begin_array(array_size);
@@ -356,7 +356,7 @@ namespace cytx
         auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<has_back_insert<T>::value>
         {
             typedef decltype(*t.begin()) element_t;
-            using val_t = std::remove_reference_t<element_t>;
+            using val_t = std::decay_t<element_t>;
 
             size_t array_size = 0;
             rd_.begin_array(array_size);
@@ -444,11 +444,9 @@ namespace cytx
         }
 
         template <typename T, typename BeginObject>
-        auto ReadObject(T& val, BeginObject) ->std::enable_if_t<std::is_enum<
-            std::remove_reference_t<std::remove_cv_t<T>>>::value>
+        auto ReadObject(T& val, BeginObject) ->std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
         {
-            using under_type = std::underlying_type_t<
-                std::remove_reference_t<std::remove_cv_t<T>>>;
+            using under_type = std::underlying_type_t<std::decay_t<T>>;
 
             under_type tmp_val{};
             rd_.read(tmp_val);

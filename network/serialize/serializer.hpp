@@ -149,10 +149,9 @@ namespace cytx {
         }
 
         template <typename T, typename BeginObject>
-        auto WriteObject(T const& val, bool is_last, BeginObject) -> std::enable_if_t<std::is_enum<
-            std::remove_reference_t<std::remove_cv_t<T>>>::value>
+        auto WriteObject(T const& val, bool is_last, BeginObject) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
         {
-            using enum_t = std::remove_reference_t<std::remove_cv_t<T>>;
+            using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
 
             if (enum_with_str_)
@@ -215,10 +214,9 @@ namespace cytx {
         }
 
         template <typename K>
-        auto WriteKey(K& val) -> std::enable_if_t<std::is_enum<
-            std::remove_reference_t<std::remove_cv_t<K>>>::value>
+        auto WriteKey(K& val) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
         {
-            using enum_t = std::remove_reference_t<std::remove_cv_t<K>>;
+            using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
 
             if (enum_with_str_)

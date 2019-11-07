@@ -593,19 +593,8 @@ namespace cytx
             template<typename T>
             boost::optional<std::string> to_string(T t, bool has_enum_name = false)
             {
-                boost::optional<std::string> result;
                 auto name = get_enum_extend_type_t<T>::name();
-                auto it = enums_.find(name);
-                if (it != enums_.end())
-                {
-                    for (auto& v : *it->second)
-                    {
-                        result = v->to_string(t, has_enum_name);
-                        if (result)
-                            return result;
-                    }
-                }
-                return result;
+                return to_string((uint32_t)t, name, has_enum_name);
             }
 
             boost::optional<std::string> to_string(uint32_t t, const char* enum_name, bool has_enum_name = false)
