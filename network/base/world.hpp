@@ -30,7 +30,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto set(const std::string& name, T* obj) -> std::enable_if_t<has_set_world_v<T>>
+        auto set(const std::string& name, T* obj)
         {
             set(name, (void*)obj);
             set(obj);
