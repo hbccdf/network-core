@@ -31,12 +31,30 @@ namespace cytx
 {
     namespace bpo = boost::program_options;
 
+    using bpo_option_t = bpo::option_description;
+    using bpo_options_t = bpo::options_description;
+    using bpo_pos_options_t = bpo::positional_options_description;
+
+    template<class T>
+    bpo::typed_value<T>* value()
+    {
+        return bpo::value<T>(0);
+    }
+
+    template<class T>
+    bpo::typed_value<T>* value(T* v)
+    {
+        bpo::typed_value<T>* r = new bpo::typed_value<T>(v);
+        return r;
+    }
+
     struct bpo_deserialize_adapter {};
 
     template<>
-    class DeSerializer<bpo_deserialize_adapter, std::tuple<>> : boost::noncopyable
+    class DeSerializer<bpo_deserialize_adapter, std::tuple<>> : public BaseDeSerializer
     {
         using val_t = boost::program_options::variable_value;
+        using bpo_option_ptr_t = boost::shared_ptr<bpo_option_t>;
     public:
         DeSerializer()
         {
@@ -47,14 +65,52 @@ namespace cytx
         {
         }
 
-        bool enum_with_str() { return enum_with_str_; }
-        void enum_with_str(bool val) { enum_with_str_ = val; }
-
-        void init(const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
+        void init(const bpo_options_t& op, bpo_pos_options_t* pod_ptr = nullptr)
         {
             for (auto& o : op.options())
             {
                 ops_.add(o);
+            }
+
+            if (pod_ptr)
+            {
+                pod_ptr_ = pod_ptr;
+            }
+        }
+
+        template<typename T>
+        auto init(T& t, const bpo_options_t& op, bpo_pos_options_t* pod_ptr = nullptr) -> std::enable_if_t<is_user_class<T>::value>
+        {
+            std::unordered_map<std::string, bpo_option_ptr_t> option_map;
+
+            for (auto& p : op.options())
+            {
+                option_map.emplace(p->long_name(), p);
+            }
+
+            auto meta_val = get_meta(t);
+            for_each(meta_val, [this, &option_map](auto& v, size_t I, bool is_last)
+            {
+                auto it = option_map.find(v.first);
+                if (it == option_map.end())
+                    return;
+
+                auto option_ptr = it->second;
+
+                auto untyped_value_ptr = dynamic_cast<const bpo::untyped_value*>(option_ptr->semantic().get());
+                bool is_untyped_value = untyped_value_ptr != nullptr;
+                if (!is_untyped_value)
+                    return;
+
+                using val_t = std::decay_t<decltype(v.second)>;
+                ops_.add(get_option_ptr<val_t>(option_ptr));
+
+                option_map.erase(it);
+            });
+
+            for (auto& p : option_map)
+            {
+                ops_.add(p.second);
             }
 
             if (pod_ptr)
@@ -89,19 +145,19 @@ namespace cytx
             bpo::notify(vm_);
         }
 
-        void parse(size_t argc, const char* const argv[], const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
+        void parse(size_t argc, const char* const argv[], const bpo_options_t& op, bpo_pos_options_t* pod_ptr = nullptr)
         {
             init(op, pod_ptr);
             parse(argc, argv);
         }
 
-        void parse(const char* cmd_line, const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
+        void parse(const char* cmd_line, const bpo_options_t& op, bpo_pos_options_t* pod_ptr = nullptr)
         {
             init(op, pod_ptr);
             parse(cmd_line);
         }
 
-        void parse(const std::vector<std::string>& args, const bpo::options_description& op, bpo::positional_options_description* pod_ptr = nullptr)
+        void parse(const std::vector<std::string>& args, const bpo_options_t& op, bpo_pos_options_t* pod_ptr = nullptr)
         {
             init(op, pod_ptr);
             parse(args);
@@ -216,10 +272,34 @@ namespace cytx
         }
 
     private:
+        template<typename T>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<std::is_same<bool, T>::value, bpo_option_ptr_t>
+        {
+            return option_ptr;
+        }
+
+        template<typename T>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const->std::enable_if_t<!std::is_same<bool, T>::value &&
+            (is_basic_type<T>::value || std::is_enum<T>::value), bpo_option_ptr_t>
+        {
+            std::string option_format_name = option_ptr->format_name();
+            char short_name = option_format_name[1] == '-' ? (char)0 : option_format_name[1];
+
+            fmt::MemoryWriter mr;
+            mr << option_ptr->long_name();
+            if (short_name != (char)0)
+            {
+                mr << "," << short_name;
+            }
+
+            boost::shared_ptr<bpo_option_t> d(new bpo_option_t(mr.str().c_str(), value<T>(), option_ptr->description().c_str()));
+            return d;
+        }
+
+    private:
         bpo::variables_map vm_;
-        bpo::options_description ops_;
-        bpo::positional_options_description pod_;
-        bpo::positional_options_description* pod_ptr_;
-        bool enum_with_str_ = false;
+        bpo_options_t ops_;
+        bpo_pos_options_t pod_;
+        bpo_pos_options_t* pod_ptr_;
     };
 }

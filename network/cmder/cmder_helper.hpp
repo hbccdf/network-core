@@ -1,34 +1,22 @@
 #pragma once
 #include "icmder.hpp"
-#include "network/serialize/deserializer.hpp"
-#include "network/serialize/bpo_adapter.hpp"
 
 namespace cytx
 {
     using bpo_parser_t = DeSerializer<bpo_deserialize_adapter>;
 
-    template<class T>
-    bpo::typed_value<T>* value()
-    {
-        return bpo::value<T>(0);
-    }
-
-    template<class T>
-    bpo::typed_value<T>* value(T* v)
-    {
-        bpo::typed_value<T>* r = new bpo::typed_value<T>(v);
-        return r;
-    }
+    using init_parser_func_t = std::function<void(bpo_parser_t&, bpo_options_t&, bpo_pos_options_t*)>;
 
     class base_cmder;
     class add_options_helper
     {
         friend class base_cmder;
     private:
-        add_options_helper(bpo_parser_t& de, bpo_options_t* op, bpo_pos_options_t* pod)
+        add_options_helper(bpo_parser_t& de, bpo_options_t* op, bpo_pos_options_t* pod, init_parser_func_t func)
             : de_(de)
             , op_(op)
             , pod_(pod)
+            , func_(func)
         {
 
         }
@@ -43,7 +31,7 @@ namespace cytx
 
         ~add_options_helper()
         {
-            de_.init(*op_, pod_);
+            func_(de_, *op_, pod_);
         }
 
         add_options_helper& operator()(const char* name, const char* desc)
@@ -100,6 +88,7 @@ namespace cytx
         bpo_parser_t& de_;
         bpo_options_t* op_;
         bpo_pos_options_t* pod_;
+        init_parser_func_t func_;
     };
 
     class cmder_helper

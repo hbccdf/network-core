@@ -96,7 +96,7 @@ namespace cytx
     };
 
     template<typename OtherTuple>
-    class DeSerializer<thrift_deserialize_adapter, OtherTuple> : boost::noncopyable
+    class DeSerializer<thrift_deserialize_adapter, OtherTuple> : public BaseDeSerializer
     {
         typedef GameObjectStream adapter_t;
     public:

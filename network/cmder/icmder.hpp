@@ -5,17 +5,11 @@
 #include <memory>
 #include <iostream>
 #include <fmt/format.h>
-#include <boost/program_options.hpp>
-#include "network/meta/meta.hpp"
+#include "network/serialize/deserializer.hpp"
+#include "network/serialize/bpo_adapter.hpp"
 
 namespace cytx
 {
-    namespace bpo = boost::program_options;
-
-    using bpo_option_t = bpo::option_description;
-    using bpo_options_t = bpo::options_description;
-    using bpo_pos_options_t = bpo::positional_options_description;
-
     namespace detail
     {
         using namespace boost::program_options;

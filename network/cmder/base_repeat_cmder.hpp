@@ -25,12 +25,12 @@ namespace cytx
             base_waitable_cmder::set_options();
 
             op_->add_options()
-                ("delay", value<int>(), "")
-                ("interval", value<int>(), "")
-                ("times", value<int>(), "")
+                ("delay", "")
+                ("interval", "")
+                ("times", "")
                 ("retryWhenFailed", "")
-                ("retryInterval", value<int>(), "")
-                ("retryTimes", value<int>(), "");
+                ("retryInterval", "")
+                ("retryTimes", "");
         }
 
         virtual int execute() override

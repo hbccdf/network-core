@@ -107,7 +107,7 @@ namespace cytx
     };
 
     template<typename OtherTuple>
-    class DeSerializer<csv_deserialize_adapter, OtherTuple> : boost::noncopyable
+    class DeSerializer<csv_deserialize_adapter, OtherTuple> : public BaseDeSerializer
     {
         typedef csv_deserialize_adapter adapter_t;
         typedef typename adapter_t::val_t val_t;
@@ -129,9 +129,6 @@ namespace cytx
         ~DeSerializer()
         {
         }
-
-        bool enum_with_str() { return enum_with_str_; }
-        void enum_with_str(bool val) { enum_with_str_ = val; }
 
         adapter_t& get_adapter() { return rd_; }
 
@@ -488,7 +485,6 @@ namespace cytx
     private:
         adapter_t rd_;
         OtherTuple tuple;
-        bool enum_with_str_ = false;
 
         size_t current_line_ = 0;
         int32_t current_id_ = 0;

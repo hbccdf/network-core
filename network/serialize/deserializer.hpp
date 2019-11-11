@@ -5,8 +5,17 @@
 
 namespace cytx {
 
+    class BaseDeSerializer : public boost::noncopyable
+    {
+    public:
+        bool enum_with_str() const { return enum_with_str_; }
+        void enum_with_str(bool val) { enum_with_str_ = val; }
+    protected:
+        bool enum_with_str_ = false;
+    };
+
     template<typename ADAPTER_T, typename OtherTuple = std::tuple<>>
-    class DeSerializer
+    class DeSerializer : public BaseDeSerializer
     {
         typedef ADAPTER_T adapter_t;
         typedef typename adapter_t::value_t val_t;
@@ -28,9 +37,6 @@ namespace cytx {
         ~DeSerializer()
         {
         }
-
-        bool enum_with_str() { return enum_with_str_; }
-        void enum_with_str(bool val) { enum_with_str_ = val; }
 
         adapter_t& get_adapter() { return rd_; }
 
@@ -363,7 +369,6 @@ namespace cytx {
     private:
         adapter_t rd_;
         OtherTuple tuple;
-        bool enum_with_str_ = false;
     };
 }
 

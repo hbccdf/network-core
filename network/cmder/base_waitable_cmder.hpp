@@ -17,7 +17,7 @@ namespace cytx
         {
             op_->add_options()
                 ("isWait", "isWait")
-                ("waitTime", value<int>(), "waitTime");
+                ("waitTime", "waitTime");
         }
 
     public:

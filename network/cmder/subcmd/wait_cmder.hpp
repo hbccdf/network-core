@@ -32,6 +32,6 @@ namespace cytx
 
         REG_META(wait_cmder, input);
         REG_CMDER(wait_cmder, "wait", "wait input")
-            ("input,i", value<std::string>(), "waiting input content").end();
+            ("input,i", "waiting input content").end();
     }
 }

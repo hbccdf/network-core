@@ -182,7 +182,7 @@ namespace cytx
     };
 
     template<typename OtherTuple>
-    class DeSerializer<gos_deserialize_adapter, OtherTuple> : boost::noncopyable
+    class DeSerializer<gos_deserialize_adapter, OtherTuple> : public BaseDeSerializer
     {
         typedef gos_deserialize_adapter adapter_t;
     public:

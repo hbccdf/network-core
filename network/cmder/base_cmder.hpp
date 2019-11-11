@@ -36,9 +36,14 @@ namespace cytx
             parser_func_ = func;
         }
 
+        virtual void set_init_parser(init_parser_func_t func)
+        {
+            init_parser_func_ = func;
+        }
+
         virtual add_options_helper add_options()
         {
-            return add_options_helper(de_, op_.get(), &pd_);
+            return add_options_helper(de_, op_.get(), &pd_, init_parser_func_);
         }
 
         virtual int handle_input(int argc, const char* argv[]) override
@@ -74,6 +79,7 @@ namespace cytx
         icmder_manager* manager_ = nullptr;
         bpo_parser_t de_;
         parser_func_t parser_func_;
+        init_parser_func_t init_parser_func_;
     };
 
     class cmder_factory
@@ -93,6 +99,10 @@ namespace cytx
 
             cmder->set_parser([cmder](auto& de) {
                 de.DeSerialize(*cmder);
+            });
+
+            cmder->set_init_parser([cmder](auto& de, auto& ops, auto pos_ops) {
+                de.init<T>(*cmder, ops, pos_ops);
             });
 
             cmder->init_options(name, desc);
