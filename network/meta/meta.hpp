@@ -454,7 +454,7 @@ namespace cytx
             }
 
             template<typename T>
-            boost::optional<std::string> to_string(T t, bool has_enum_name = false)
+            boost::optional<std::string> to_string(T t, bool has_enum_name = false) const
             {
                 boost::optional<std::string> result;
 
@@ -477,7 +477,7 @@ namespace cytx
             }
 
             template<typename T>
-            boost::optional<T> to_enum(const char* str, bool has_enum_name = false)
+            boost::optional<T> to_enum(const char* str, bool has_enum_name = false) const
             {
                 boost::optional<T> result;
                 auto r = to_enum_value<T>(str);
@@ -497,13 +497,23 @@ namespace cytx
             }
 
             template<typename T>
-            boost::optional<T> to_enum_value(const char* str)
+            boost::optional<T> to_enum_value(const char* str) const
             {
                 boost::optional<T> result;
                 auto it = map_.find(std::string(str));
                 if (it != map_.end())
                     result = (T)it->second;
                 return result;
+            }
+
+            const vec_t& get_enum_list() const
+            {
+                return vec_;
+            }
+
+            std::string get_name() const
+            {
+                return name_;
             }
 
         private:
@@ -563,8 +573,6 @@ namespace cytx
 
             void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
             {
-                //std::cout << fmt::format("reg enum {}, alias {}, field count {}", enum_name, alias_name ? alias_name : "null", enum_fields.size()) << std::endl;
-
                 auto helper_ptr = std::unique_ptr<enum_helper>(new enum_helper());
                 helper_ptr->init(enum_name, std::forward<vec_t>(enum_fields));
 
@@ -591,13 +599,13 @@ namespace cytx
             }
 
             template<typename T>
-            boost::optional<std::string> to_string(T t, bool has_enum_name = false)
+            boost::optional<std::string> to_string(T t, bool has_enum_name = false) const
             {
                 auto name = get_enum_extend_type_t<T>::name();
                 return to_string((uint32_t)t, name, has_enum_name);
             }
 
-            boost::optional<std::string> to_string(uint32_t t, const char* enum_name, bool has_enum_name = false)
+            boost::optional<std::string> to_string(uint32_t t, const char* enum_name, bool has_enum_name = false) const
             {
                 boost::optional<std::string> result;
                 auto it = enums_.find(enum_name);
@@ -614,7 +622,7 @@ namespace cytx
             }
 
             template<typename T>
-            boost::optional<T> to_enum(const char* str, bool has_enum_name = false)
+            boost::optional<T> to_enum(const char* str, bool has_enum_name = false) const
             {
                 boost::optional<T> result;
 
@@ -630,6 +638,26 @@ namespace cytx
                     }
                 }
                 return result;
+            }
+
+            template<typename T>
+            vec_t get_enum_info_list() const
+            {
+                vec_t list;
+                auto name = get_enum_extend_type_t<T>::name();
+                auto it = enums_.find(name);
+                if (it != enums_.end())
+                {
+                    for (auto& ptr : *(it->second))
+                    {
+                        if (ptr->get_name() == std::string(name))
+                        {
+                            return ptr->get_enum_list();
+                        }
+                    }
+                }
+
+                return list;
             }
 
         private:
@@ -651,6 +679,8 @@ namespace cytx
 #else
 #define ENUM_META_CHECK(name) std::is_enum<name>::value
 #endif
+
+    using enum_info_list_t = detail::enum_factory::vec_t;
 
     template<typename T>
     auto to_string(T t, bool has_enum_name = false)  -> std::enable_if_t<ENUM_META_CHECK(T), boost::optional<std::string>>
@@ -683,6 +713,18 @@ namespace cytx
         return boost::optional<T>{};
     }
 
+    template<typename T>
+    auto get_enum_info_list()  -> std::enable_if_t<ENUM_META_CHECK(T), enum_info_list_t>
+    {
+        return detail::enum_factory::instance().get_enum_info_list<T>();
+    }
+
+    template<typename T>
+    auto get_enum_info_list() -> std::enable_if_t<!ENUM_META_CHECK(T), enum_info_list_t>
+    {
+        return enum_info_list_t{};
+    }
+
 
     template<typename T>
     auto ralax_to_string(T t, bool has_enum_name = false)  -> std::enable_if_t<detail::enum_meta<T>::value, boost::optional<std::string>>
@@ -708,6 +750,18 @@ namespace cytx
         -> std::enable_if_t<!detail::enum_meta<T>::value, boost::optional<T>>
     {
         return boost::optional<T>{};
+    }
+
+    template<typename T>
+    auto ralax_get_enum_info_list()  -> std::enable_if_t<detail::enum_meta<T>::value, enum_info_list_t>
+    {
+        return detail::enum_factory::instance().get_enum_info_list<T>();
+    }
+
+    template<typename T>
+    auto ralax_get_enum_info_list() -> std::enable_if_t<!detail::enum_meta<T>::value, enum_info_list_t>
+    {
+        return enum_info_list_t{};
     }
 }
 

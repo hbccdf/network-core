@@ -111,7 +111,7 @@ namespace cytx
             return 0;
         }
 
-        void show_help() const
+        virtual void show_help() const
         {
             std::cout << (*op_) << std::endl;
         }

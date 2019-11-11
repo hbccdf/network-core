@@ -4,6 +4,29 @@
 #include "network/meta/meta.hpp"
 #include "network/util/cast.hpp"
 
+namespace boost
+{
+    namespace program_options
+    {
+        template<class T>
+        auto validate(boost::any& v, const std::vector<std::string>& xs, T*, long) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+        {
+            validators::check_first_occurrence(v);
+            std::string s(validators::get_single_string(xs));
+            try
+            {
+                //cast only verify the string is valid enum string
+                //the val still storage string
+                T t = cytx::util::cast<T>(s);
+                v = any(s);
+            }
+            catch (const bad_lexical_cast&) {
+                boost::throw_exception(invalid_option_value(s));
+            }
+        }
+    }
+}
+
 namespace cytx
 {
     namespace bpo = boost::program_options;
