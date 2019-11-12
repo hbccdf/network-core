@@ -381,7 +381,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_container<T>::value, bpo_option_ptr_t>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) -> std::enable_if_t<is_container<T>::value, bpo_option_ptr_t>
         {
             auto_set_type_keys_.insert(option_ptr->long_name());
 
