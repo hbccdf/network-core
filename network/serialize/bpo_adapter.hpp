@@ -3,6 +3,7 @@
 #include "network/traits/traits.hpp"
 #include "network/meta/meta.hpp"
 #include "network/util/cast.hpp"
+#include "network/util/string.hpp"
 
 namespace boost
 {
@@ -247,15 +248,37 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val)->std::enable_if_t<!std::is_enum<std::decay_t<T>>::value
+        auto ReadObject(T& t, val_t& val) -> std::enable_if_t<is_container<T>::value>
+        {
+            if (val.empty())
+                return;
+
+            std::vector<std::string> strs = val.as<std::vector<std::string>>();
+            std::vector<std::string> vals = process_array(strs);
+
+            ReadContainer(t, vals);
+        }
+
+        template<typename T>
+        auto ReadObject(T& t, val_t& val) -> std::enable_if_t<is_pair<T>::value>
+        {
+            if (val.empty())
+                return;
+
+            std::string vals = val.as<std::string>();
+            ReadContainerElement(t, vals);
+        }
+
+        template<typename T>
+        auto ReadObject(T& t, val_t& val)->std::enable_if_t<is_basic_type<T>::value
             && !std::is_same<T, bool>::value>
         {
             if (!val.empty())
-                t = val.as<T>();
+                t = val.as<std::decay_t<T>>();
         }
 
         template <typename T>
-        auto ReadObject(T& t, val_t& val) ->std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+        auto ReadObject(T& t, val_t& val) ->std::enable_if_t<std::is_enum<T>::value>
         {
             using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
@@ -271,6 +294,64 @@ namespace cytx
             }
         }
 
+        template<typename T>
+        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<has_only_insert<T>::value>
+        {
+            using element_t = decltype(*t.begin());
+            using ele_t = std::decay_t<element_t>;
+            for (auto& str : vals)
+            {
+                ele_t el{};
+                ReadContainerElement(el, str);
+                std::fill_n(std::inserter(t, t.end()), 1, std::move(el));
+            }
+        }
+
+        template<typename T>
+        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<has_back_insert<T>::value>
+        {
+            using element_t = decltype(*t.begin());
+            using ele_t = std::decay_t<element_t>;
+            for (auto& str : vals)
+            {
+                ele_t el{};
+                ReadContainerElement(el, str);
+                std::fill_n(std::back_inserter(t), 1, std::move(el));
+            }
+        }
+
+        template<typename T>
+        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<is_map_container<T>::value>
+        {
+            using element_t = decltype(*t.begin());
+            using pair_t = std::decay_t<element_t>;
+            using first_type = std::decay_t<typename pair_t::first_type>;
+            using second_type = typename pair_t::second_type;
+
+            using ele_t = std::pair<first_type, second_type>;
+
+            for (auto& str : vals)
+            {
+                ele_t el{};
+                ReadContainerElement(el, str);
+                t[el.first] = el.second;
+            }
+        }
+
+        template<typename T>
+        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_basic_type<T>::value>
+        {
+            t = util::cast<T>(val);
+        }
+
+        template<typename T>
+        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_pair<T>::value>
+        {
+            std::vector<std::string> list = string_util::split(val, "=");
+            ReadContainerElement(t.first, list[0]);
+            ReadContainerElement(t.second, list[1]);
+        }
+
     private:
         template<typename T>
         auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<std::is_same<bool, T>::value, bpo_option_ptr_t>
@@ -279,8 +360,29 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_option_ptr(bpo_option_ptr_t option_ptr) const->std::enable_if_t<!std::is_same<bool, T>::value &&
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<!std::is_same<bool, T>::value &&
             (is_basic_type<T>::value || std::is_enum<T>::value), bpo_option_ptr_t>
+        {
+
+            bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<T>(), option_ptr->description().c_str()));
+            return d;
+        }
+
+        template<typename T>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_container<T>::value, bpo_option_ptr_t>
+        {
+            bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<std::vector<std::string>>(), option_ptr->description().c_str()));
+            return d;
+        }
+
+        template<typename T>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_pair<T>::value, bpo_option_ptr_t>
+        {
+            bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<std::string>(), option_ptr->description().c_str()));
+            return d;
+        }
+
+        std::string get_option_name(bpo_option_ptr_t option_ptr) const
         {
             std::string option_format_name = option_ptr->format_name();
             char short_name = option_format_name[1] == '-' ? (char)0 : option_format_name[1];
@@ -291,9 +393,18 @@ namespace cytx
             {
                 mr << "," << short_name;
             }
+            return mr.str();
+        }
 
-            boost::shared_ptr<bpo_option_t> d(new bpo_option_t(mr.str().c_str(), value<T>(), option_ptr->description().c_str()));
-            return d;
+        std::vector<std::string> process_array(std::vector<std::string>& strs)
+        {
+            std::vector<std::string> vals;
+            for (auto& str : strs)
+            {
+                auto strs = string_util::split(str, ",;");
+                std::copy(strs.begin(), strs.end(), std::back_inserter(vals));
+            }
+            return vals;
         }
 
     private:
