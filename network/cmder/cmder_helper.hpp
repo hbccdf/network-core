@@ -152,6 +152,18 @@ namespace cytx
             return t;
         }
 
+        template<typename T>
+        T parse(const std::string& cmd_line)
+        {
+            T t;
+
+            de_.init<T>(t, op_, &pod_);
+            de_.parse(cmd_line.c_str());
+            de_.DeSerialize(t);
+
+            return t;
+        }
+
     private:
         bpo_parser_t de_;
         std::string name_;

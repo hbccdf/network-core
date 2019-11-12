@@ -176,7 +176,7 @@ namespace cytx
             if (vm_.count(key))
             {
                 val_t val = vm_[key];
-                ReadObject(t, val);
+                ReadObjectWithKey(t, val, key);
             }
         }
 
@@ -215,7 +215,7 @@ namespace cytx
             if (vm_.count(p.first))
             {
                 val_t val = vm_[p.first];
-                ReadObject(p.second, val);
+                ReadObjectWithKey(p.second, val, p.first);
             }
         }
 
@@ -248,15 +248,27 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val) -> std::enable_if_t<is_container<T>::value>
+        auto ReadObjectWithKey(T& t, val_t& val, const std::string& key) -> std::enable_if_t<is_container<T>::value>
         {
             if (val.empty())
                 return;
+
+            if (auto_set_type_keys_.find(key) == auto_set_type_keys_.end())
+            {
+                t = val.as<T>();
+                return;
+            }
 
             std::vector<std::string> strs = val.as<std::vector<std::string>>();
             std::vector<std::string> vals = process_array(strs);
 
             ReadContainer(t, vals);
+        }
+
+        template<typename T>
+        auto ReadObjectWithKey(T& t, val_t& val, const std::string&) -> std::enable_if_t<!is_container<T>::value>
+        {
+            ReadObject(t, val);
         }
 
         template<typename T>
@@ -371,6 +383,8 @@ namespace cytx
         template<typename T>
         auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_container<T>::value, bpo_option_ptr_t>
         {
+            auto_set_type_keys_.insert(option_ptr->long_name());
+
             bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<std::vector<std::string>>(), option_ptr->description().c_str()));
             return d;
         }
@@ -412,5 +426,6 @@ namespace cytx
         bpo_options_t ops_;
         bpo_pos_options_t pod_;
         bpo_pos_options_t* pod_ptr_;
+        std::unordered_set<std::string> auto_set_type_keys_;
     };
 }

@@ -50,7 +50,7 @@ namespace cytx
         class base_serialize_adapter
         {
         public:
-            enum { use_field_separator = 0, use_begin_map = 0, ralax_check_enum = 0 };
+            enum { use_field_separator = 0, use_begin_map = 0 };
 
             base_serialize_adapter() {}
 

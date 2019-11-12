@@ -11,6 +11,7 @@
 #include "db_meta.hpp"
 #include "struct_meta.hpp"
 
+#include "network/base/type_id.hpp"
 #include "network/traits/traits.hpp"
 
 namespace cytx
@@ -406,8 +407,6 @@ namespace cytx
 {
     namespace detail
     {
-        class enum_factory;
-
         static boost::optional<std::pair<std::string, std::string>> split_enum_str(std::string str, const char* split_field)
         {
             boost::optional<std::pair<std::string, std::string>> result;
@@ -434,13 +433,25 @@ namespace cytx
             return result;
         }
 
+        template< typename ENUM_T, typename T>
+        std::vector<std::pair<std::string, uint32_t>> get_vec(const T& t)
+        {
+            std::vector<std::pair<std::string, uint32_t>> vec;
+            for_each(t, [&vec](const auto& p, size_t I, bool is_last)
+            {
+                vec.emplace_back(std::make_pair(p.first, (uint32_t)p.second));
+            });
+            return std::move(vec);
+        }
+
+        class enum_factory;
         class enum_helper
         {
             friend enum_factory;
         public:
             using pair_t = std::pair<std::string, uint32_t>;
             using vec_t = std::vector<pair_t>;
-            using map_t = std::map<std::string, uint32_t>;
+            using map_t = std::unordered_map<std::string, uint32_t>;
 
             void init(std::string name, vec_t&& vec)
             {
@@ -523,17 +534,6 @@ namespace cytx
             map_t map_;
         };
 
-        template< typename ENUM_T, typename T>
-        std::vector<std::pair<const char*, ENUM_T>> get_vec(const T& t)
-        {
-            std::vector<std::pair<const char*, ENUM_T>> vec;
-            for_each(t, [&vec](const auto& p, size_t I, bool is_last)
-            {
-                vec.push_back(p);
-            });
-            return std::move(vec);
-        }
-
         class enum_factory
         {
         public:
@@ -543,9 +543,10 @@ namespace cytx
             using enum_helper_ptr = std::unique_ptr<enum_helper>;
             using value_t = std::vector<enum_helper_ptr>;
             using value_ptr = std::shared_ptr<value_t>;
-            using map_t = std::map<std::string, value_ptr>;
+            using map_t = std::unordered_map<std::string, value_ptr>;
+            using typeid_map_t = std::unordered_map<type_id_t, value_ptr>;
 
-            static enum_factory& instance()
+            static enum_factory& ins()
             {
                 static enum_factory ef;
                 return ef;
@@ -555,54 +556,37 @@ namespace cytx
             void reg()
             {
                 using enum_type = get_enum_extend_type_t<T>;
+                type_id_t tid = TypeId::id<T>();
                 const char* enum_name = enum_type::name();
-                auto it = enums_.find(std::string(enum_name));
-                if (it != enums_.end())
+
+                auto it = typeid_enums_.find(tid);
+                if (it != typeid_enums_.end())
                     return;
 
-                auto meta_value = get_meta<T>();
-                auto enum_vec = get_vec<T>(meta_value);
-                vec_t vec;
-                for (auto& p : enum_vec)
-                {
-                    vec.push_back({ p.first, (uint32_t)p.second });
-                }
+                auto meta_tuple = get_meta<T>();
+                auto enum_vec = get_vec<T>(meta_tuple);
 
-                reg(enum_name, enum_type::alias_name(), std::move(vec));
-            }
-
-            void reg(const char* enum_name, const char* alias_name, vec_t&& enum_fields)
-            {
-                auto helper_ptr = std::unique_ptr<enum_helper>(new enum_helper());
-                helper_ptr->init(enum_name, std::forward<vec_t>(enum_fields));
-
-                value_ptr val_ptr = nullptr;
-                if (alias_name != nullptr)
-                {
-                    auto it = enums_.find(alias_name);
-                    if (it != enums_.end())
-                    {
-                        val_ptr = it->second;
-                    }
-                }
-                if (!val_ptr)
-                {
-                    val_ptr = std::make_shared<value_t>();
-                }
-
-                val_ptr->emplace_back(std::move(helper_ptr));
-                enums_.emplace(enum_name, val_ptr);
-                if (alias_name)
-                {
-                    enums_.emplace(alias_name, val_ptr);
-                }
+                inter_reg(tid, enum_name, enum_type::alias_name(), std::move(enum_vec));
             }
 
             template<typename T>
             boost::optional<std::string> to_string(T t, bool has_enum_name = false) const
             {
-                auto name = get_enum_extend_type_t<T>::name();
-                return to_string((uint32_t)t, name, has_enum_name);
+                boost::optional<std::string> result;
+
+                type_id_t tid = TypeId::id<T>();
+
+                auto it = typeid_enums_.find(tid);
+                if (it != typeid_enums_.end())
+                {
+                    for (auto& v : *it->second)
+                    {
+                        result = v->to_string(t, has_enum_name);
+                        if (result)
+                            return result;
+                    }
+                }
+                return result;
             }
 
             boost::optional<std::string> to_string(uint32_t t, const char* enum_name, bool has_enum_name = false) const
@@ -626,9 +610,10 @@ namespace cytx
             {
                 boost::optional<T> result;
 
-                auto name = get_enum_extend_type_t<T>::name();
-                auto it = enums_.find(name);
-                if (it != enums_.end())
+                type_id_t tid = TypeId::id<T>();
+
+                auto it = typeid_enums_.find(tid);
+                if (it != typeid_enums_.end())
                 {
                     for (auto& v : *it->second)
                     {
@@ -644,16 +629,16 @@ namespace cytx
             vec_t get_enum_info_list() const
             {
                 vec_t list;
-                auto name = get_enum_extend_type_t<T>::name();
-                auto it = enums_.find(name);
-                if (it != enums_.end())
+
+                type_id_t tid = TypeId::id<T>();
+
+                auto it = typeid_enums_.find(tid);
+                if (it != typeid_enums_.end())
                 {
                     for (auto& ptr : *(it->second))
                     {
-                        if (ptr->get_name() == std::string(name))
-                        {
-                            return ptr->get_enum_list();
-                        }
+                        list = ptr->get_enum_list();
+                        break;
                     }
                 }
 
@@ -663,105 +648,72 @@ namespace cytx
         private:
             enum_factory() {}
 
+            void inter_reg(type_id_t enum_tid, const char* enum_name, const char* alias_name, vec_t&& enum_fields)
+            {
+                auto helper_ptr = std::unique_ptr<enum_helper>(new enum_helper());
+                helper_ptr->init(enum_name, std::forward<vec_t>(enum_fields));
+
+                value_ptr val_ptr = nullptr;
+                if (alias_name != nullptr)
+                {
+                    auto it = enums_.find(alias_name);
+                    if (it != enums_.end())
+                    {
+                        val_ptr = it->second;
+                    }
+                }
+                if (!val_ptr)
+                {
+                    val_ptr = std::make_shared<value_t>();
+                }
+
+                val_ptr->emplace_back(std::move(helper_ptr));
+                typeid_enums_.emplace(enum_tid, val_ptr);
+                enums_.emplace(enum_name, val_ptr);
+                if (alias_name)
+                {
+                    enums_.emplace(alias_name, val_ptr);
+                }
+            }
+        private:
             map_t enums_;
+            typeid_map_t typeid_enums_;
         };
 
         template<typename T>
         int reg_enum()
         {
-            enum_factory::instance().reg<T>();
+            enum_factory::ins().reg<T>();
             return 0;
         }
     }
 
-#ifdef ENUM_META_RALAX_CHECK
-#define ENUM_META_CHECK(name) detail::enum_meta<name>::value
-#else
 #define ENUM_META_CHECK(name) std::is_enum<name>::value
-#endif
 
     using enum_info_list_t = detail::enum_factory::vec_t;
 
     template<typename T>
     auto to_string(T t, bool has_enum_name = false)  -> std::enable_if_t<ENUM_META_CHECK(T), boost::optional<std::string>>
     {
-        return detail::enum_factory::instance().to_string<T>(t, has_enum_name);
-    }
-
-    template<typename T>
-    auto to_string(T t, bool has_enum_name = false) -> std::enable_if_t<!ENUM_META_CHECK(T), boost::optional<std::string>>
-    {
-        return boost::optional<std::string>{};
+        return detail::enum_factory::ins().to_string<T>(t, has_enum_name);
     }
 
     inline auto to_string(uint32_t t, const char* enum_name, bool has_enum_name = false)  -> boost::optional<std::string>
     {
-        return detail::enum_factory::instance().to_string(t, enum_name, has_enum_name);
+        return detail::enum_factory::ins().to_string(t, enum_name, has_enum_name);
     }
 
     template<typename T>
     auto to_enum(const char* str, bool has_enum_name = false)
         -> std::enable_if_t<ENUM_META_CHECK(T), boost::optional<T>>
     {
-        return detail::enum_factory::instance().to_enum<T>(str, has_enum_name);
-    }
-
-    template<typename T>
-    auto to_enum(const char* str, bool has_enum_name = false)
-        -> std::enable_if_t<!ENUM_META_CHECK(T), boost::optional<T>>
-    {
-        return boost::optional<T>{};
+        return detail::enum_factory::ins().to_enum<T>(str, has_enum_name);
     }
 
     template<typename T>
     auto get_enum_info_list()  -> std::enable_if_t<ENUM_META_CHECK(T), enum_info_list_t>
     {
-        return detail::enum_factory::instance().get_enum_info_list<T>();
-    }
-
-    template<typename T>
-    auto get_enum_info_list() -> std::enable_if_t<!ENUM_META_CHECK(T), enum_info_list_t>
-    {
-        return enum_info_list_t{};
-    }
-
-
-    template<typename T>
-    auto ralax_to_string(T t, bool has_enum_name = false)  -> std::enable_if_t<detail::enum_meta<T>::value, boost::optional<std::string>>
-    {
-        return detail::enum_factory::instance().to_string<T>(t, has_enum_name);
-    }
-
-    template<typename T>
-    auto ralax_to_string(T t, bool has_enum_name = false) -> std::enable_if_t<!detail::enum_meta<T>::value, boost::optional<std::string>>
-    {
-        return boost::optional<std::string>{};
-    }
-
-    template<typename T>
-    auto ralax_to_enum(const char* str, bool has_enum_name = false)
-        -> std::enable_if_t<detail::enum_meta<T>::value, boost::optional<T>>
-    {
-        return detail::enum_factory::instance().to_enum<T>(str, has_enum_name);
-    }
-
-    template<typename T>
-    auto ralax_to_enum(const char* str, bool has_enum_name = false)
-        -> std::enable_if_t<!detail::enum_meta<T>::value, boost::optional<T>>
-    {
-        return boost::optional<T>{};
-    }
-
-    template<typename T>
-    auto ralax_get_enum_info_list()  -> std::enable_if_t<detail::enum_meta<T>::value, enum_info_list_t>
-    {
-        return detail::enum_factory::instance().get_enum_info_list<T>();
-    }
-
-    template<typename T>
-    auto ralax_get_enum_info_list() -> std::enable_if_t<!detail::enum_meta<T>::value, enum_info_list_t>
-    {
-        return enum_info_list_t{};
+        return detail::enum_factory::ins().get_enum_info_list<T>();
     }
 }
 
@@ -770,7 +722,7 @@ namespace fmt
     template<typename T>
     auto format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
     {
-        boost::optional<std::string> v = cytx::ralax_to_string(val, false);
+        boost::optional<std::string> v = cytx::to_string(val, false);
 
         if (v)
         {

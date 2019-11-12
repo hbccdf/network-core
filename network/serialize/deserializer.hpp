@@ -159,7 +159,7 @@ namespace cytx {
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
         {
             using element_t = decltype(*t.begin());
-            using ele_t = std::decay_t<element_t>>;
+            using ele_t = std::decay_t<element_t>;
 
             process_array<ele_t>(val);
             auto it = rd_.array_begin(val);
@@ -247,7 +247,7 @@ namespace cytx {
         template<typename T>
         auto ReadObject(T& t, val_t& val, std::true_type bo) -> std::enable_if_t<is_pair<T>::value>
         {
-            using pair_t = std:;decay_t<T> ;
+            using pair_t = std::decay_t<T> ;
             using first_type = typename pair_t::first_type;
             using second_type = typename pair_t::second_type;
 

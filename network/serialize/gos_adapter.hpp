@@ -9,7 +9,7 @@ namespace cytx
     {
     public:
         gos_serialize_adapter(GameObjectStream& gos, bool is_big_endian = false) : gos_(gos), is_big_endian_(is_big_endian) {}
-        enum { use_field_separator = 0, use_begin_map = 1, ralax_check_enum = 1 };
+        enum { use_field_separator = 0, use_begin_map = 1 };
     public:
         void begin_serialize(const std::string& key = "") {  }
         void end_serialize() {}

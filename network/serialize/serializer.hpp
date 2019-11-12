@@ -329,14 +329,9 @@ namespace cytx {
         }
 
         template<typename enum_t, typename ADAPTER = adapter_t>
-        auto write_enum(enum_t e)->std::enable_if_t<ADAPTER::ralax_check_enum == 0, boost::optional<std::string>>
+        boost::optional<std::string> write_enum(enum_t e)
         {
             return to_string(e, false);
-        }
-        template<typename enum_t, typename ADAPTER = adapter_t>
-        auto write_enum(enum_t e)->std::enable_if_t<ADAPTER::ralax_check_enum == 1, boost::optional<std::string>>
-        {
-            return ralax_to_string(e, false);
         }
 
     private:
