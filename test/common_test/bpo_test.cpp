@@ -118,7 +118,7 @@ TEST_F(bpo_type, int_throw)
 TEST_F(bpo_type, int_no_throw)
 {
     op.add_options()
-        ("test", value<int>(), "show help info");
+        ("test", cytx::value<int>(), "show help info");
     auto dv = get_de<int>(op, "test", "--test 3");
     assert_eq(dv, 3);
 }
@@ -134,7 +134,7 @@ REG_ENUM(test1, first, second, thire);
 TEST_F(bpo_type, enum)
 {
     op.add_options()
-        ("test", value<int>(), "show help info");
+        ("test", cytx::value<int>(), "show help info");
     auto dv = get_de<test1>(op, "test", "--test 2");
     assert_eq(dv, test1::thire);
 }
@@ -142,7 +142,7 @@ TEST_F(bpo_type, enum)
 TEST_F(bpo_type, enum_str)
 {
     op.add_options()
-        ("test", value<std::string>(), "show help info");
+        ("test", cytx::value<std::string>(), "show help info");
     de.enum_with_str(true);
     auto dv = get_de<test1>(op, "test", "--test thire");
     assert_eq(dv, test1::thire);
@@ -151,7 +151,7 @@ TEST_F(bpo_type, enum_str)
 TEST_F(bpo_type, vector)
 {
     op.add_options()
-        ("test", value<vector<int>>(), "show help info");
+        ("test", cytx::value<vector<int>>(), "show help info");
     de.enum_with_str(true);
     auto dv = get_de<vector<int>>(op, "test", "--test=1 --test=3");
     assert_eq(dv[0], 1);
@@ -180,7 +180,7 @@ TEST_F(bpo_type, struct_int)
         META(test);
     };
     op.add_options()
-        ("test,t", value<int>(), "show help info");
+        ("test,t", cytx::value<int>(), "show help info");
     de.enum_with_str(true);
     auto dv = get_de<st>(op, "-t 10");
     auto is_empty = de.empty();
@@ -196,7 +196,7 @@ TEST_F(bpo_type, struct_int1)
         META(test);
     };
     op.add_options()
-        ("test,t", value<int>(), "show help info");
+        ("test,t", cytx::value<int>(), "show help info");
     de.enum_with_str(true);
     auto dv = get_de<st>(op, "");
     auto is_empty = de.empty();
