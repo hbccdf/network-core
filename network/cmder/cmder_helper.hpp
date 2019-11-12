@@ -145,7 +145,7 @@ namespace cytx
         {
             T t;
 
-            de_.init(op_, &pod_);
+            de_.init<T>(t, op_, &pod_);
             de_.parse(argc, argv);
             de_.DeSerialize(t);
 
