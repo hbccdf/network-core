@@ -305,8 +305,8 @@ namespace cytx
             rd_.begin_object();
             size_t array_size = 0;
             rd_.begin_array(array_size);
-            typedef decltype((*t.begin()).first) first_element_t;
-            typedef decltype((*t.begin()).second) second_element_t;
+            using first_element_t = decltype((*t.begin()).first) ;
+            using second_element_t = decltype((*t.begin()).second);
             using first_val_t = std::decay_t<first_element_t>;
             using second_val_t = std::decay_t<second_element_t>;
 
@@ -338,7 +338,7 @@ namespace cytx
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
         {
-            typedef decltype(*t.begin()) element_t;
+            using element_t = decltype(*t.begin());
             using val_t = std::decay_t<element_t>;
 
             size_t array_size = 0;
@@ -355,7 +355,7 @@ namespace cytx
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<has_back_insert<T>::value>
         {
-            typedef decltype(*t.begin()) element_t;
+            using element_t = decltype(*t.begin());
             using val_t = std::decay_t<element_t>;
 
             size_t array_size = 0;
@@ -399,8 +399,8 @@ namespace cytx
         template<typename Array>
         void ReadArray(Array & v, size_t array_size)
         {
-            typedef decltype((v)[0]) element_t;
-            using val_t = std::remove_reference_t<element_t>;
+            using element_t = decltype(*t.begin());
+            using val_t = std::decay_t<element_t>;
 
             rd_.begin_array(array_size);
             for (size_t i = 0; i < array_size; ++i)

@@ -143,9 +143,9 @@ namespace cytx {
             auto it_end = rd_.member_end(val);
             for (; it != it_end; ++it)
             {
-                typedef decltype(*t.begin()) element_t;
-                using pair_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
-                using first_type = std::remove_cv_t<typename pair_t::first_type>;
+                using element_t = decltype(*t.begin());
+                using pair_t = std::decay_t<element_t>;
+                using first_type = std::decay_t<typename pair_t::first_type>;
                 using second_type = typename pair_t::second_type;
 
                 first_type f = cytx::util::cast<first_type>(rd_.first(it));
@@ -158,8 +158,8 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
         {
-            typedef decltype(*t.begin()) element_t;
-            using ele_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
+            using element_t = decltype(*t.begin());
+            using ele_t = std::decay_t<element_t>>;
 
             process_array<ele_t>(val);
             auto it = rd_.array_begin(val);
@@ -175,8 +175,8 @@ namespace cytx {
         template<typename T, typename BeginObjec>
         auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_back_insert<T>::value>
         {
-            typedef decltype(*t.begin()) element_t;
-            using ele_t = std::remove_reference_t<element_t>;
+            using element_t = decltype(*t.begin());
+            using ele_t = std::decay_t<element_t>;
 
             process_array<ele_t>(val);
             auto it = rd_.array_begin(val);
@@ -247,7 +247,7 @@ namespace cytx {
         template<typename T>
         auto ReadObject(T& t, val_t& val, std::true_type bo) -> std::enable_if_t<is_pair<T>::value>
         {
-            using pair_t = std::remove_cv_t<std::remove_reference_t<T>>;
+            using pair_t = std:;decay_t<T> ;
             using first_type = typename pair_t::first_type;
             using second_type = typename pair_t::second_type;
 
@@ -292,8 +292,8 @@ namespace cytx {
         template<typename Array>
         void ReadArray(Array & t, val_t& val)
         {
-            typedef decltype((t)[0]) element_t;
-            using ele_t = std::remove_reference_t<element_t>;
+            using element_t = decltype((t)[0]);
+            using ele_t = std::decay_t<element_t>;
 
             process_array<ele_t>(val);
             auto it = rd_.array_begin(val);

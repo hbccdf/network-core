@@ -184,8 +184,8 @@ namespace cytx
             auto it_end = rd_.end();
             for (; it != it_end; ++it)
             {
-                typedef decltype(*t.begin()) element_t;
-                using pair_t = std::remove_cv_t<std::remove_reference_t<element_t>>;
+                using element_t = decltype(*t.begin());
+                using pair_t = std::decay_t<element_t>;
                 using second_type = typename pair_t::second_type;
 
                 ++current_line_;
@@ -407,8 +407,8 @@ namespace cytx
         template<typename T>
         void ReadBase(std::vector<T>& t, const std::string& val)
         {
-            typedef decltype((t)[0]) element_t;
-            using ele_t = std::remove_reference_t<element_t>;
+            using element_t = decltype((t)[0]);
+            using ele_t = std::decay_t<element_t>;
 
             std::vector<std::string> vals = process_array(val);
             auto it = vals.begin();
