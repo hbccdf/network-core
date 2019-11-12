@@ -339,7 +339,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_basic_type<T>::value>
+        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_basic_type<T>::value || std::is_enum<T>::value>
         {
             t = util::cast<T>(val);
         }
