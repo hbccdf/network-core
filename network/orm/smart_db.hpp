@@ -186,7 +186,7 @@ namespace cytx
             using mysql_db::mysql_db;
 
             template<typename T>
-            auto insert(T&& t) -> std::enable_if_t<is_reflection<std::decay_t<T>>::value>
+            auto insert(T&& t) -> std::enable_if_t<is_reflection_v<T>>
             {
                 fmt::MemoryWriter names_wr;
                 fmt::MemoryWriter values_wr;
@@ -228,7 +228,7 @@ namespace cytx
             }
 
             template<typename T>
-            auto update(T&& t) -> std::enable_if_t<is_reflection<std::decay_t<T>>::value, update_proxy>
+            auto update(T&& t) -> std::enable_if_t<is_reflection_v<T>, update_proxy>
             {
                 fmt::MemoryWriter values_wr;
                 bool is_first = true;
@@ -264,15 +264,14 @@ namespace cytx
             }
 
             template<typename T>
-            auto delete_item()
-                -> std::enable_if_t<is_reflection<std::decay_t<T>>::value, delete_proxy>
+            auto delete_item() -> std::enable_if_t<is_reflection_v<T>, delete_proxy>
             {
                 std::string delete_sql = fmt::format("DELETE FROM `{}`", get_name<T>());
                 return delete_proxy(this, delete_sql);
             }
 
             template<typename T>
-            auto query() -> std::enable_if_t<is_reflection<std::decay_t<T>>::value, query_proxy<T>>
+            auto query() -> std::enable_if_t<is_reflection_v<T>, query_proxy<T>>
             {
                 return query_proxy<T>(this, fmt::format(" from {} ", get_name<T>()));
             }

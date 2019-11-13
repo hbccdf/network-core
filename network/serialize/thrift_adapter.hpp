@@ -35,7 +35,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto Serialize(T& t) -> std::enable_if_t<is_tuple<T>::value, GameObjectStream>
+        auto Serialize(T& t) -> std::enable_if_t<is_tuple_v<T>, GameObjectStream>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -51,7 +51,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto Serialize(T& t) -> std::enable_if_t<!is_tuple<T>::value, GameObjectStream>
+        auto Serialize(T& t) -> std::enable_if_t<!is_tuple_v<T>, GameObjectStream>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -67,7 +67,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<is_tuple<T>::value>
+        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<is_tuple_v<T>>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -81,7 +81,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<!is_tuple<T>::value>
+        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<!is_tuple_v<T>>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -98,7 +98,7 @@ namespace cytx
     template<typename OtherTuple>
     class DeSerializer<thrift_deserialize_adapter, OtherTuple> : public BaseDeSerializer
     {
-        typedef GameObjectStream adapter_t;
+        using adapter_t = GameObjectStream;
     public:
         DeSerializer(adapter_t& gos)
             : gos_(gos)
@@ -106,7 +106,7 @@ namespace cytx
         }
 
         DeSerializer(OtherTuple&& t, adapter_t& gos)
-            : tuple(std::move(t))
+            : tuple_(std::move(t))
             , gos_(gos)
         {
         }
@@ -117,7 +117,7 @@ namespace cytx
 
         void set_tuple(OtherTuple&& t)
         {
-            tuple = std::move(t);
+            tuple_ = std::move(t);
         }
 
         adapter_t& get_adapter() { return gos_; }
@@ -158,7 +158,7 @@ namespace cytx
         template<typename T>
         auto get_tuple_elem() -> std::enable_if_t<tuple_contains<T, OtherTuple>::value, T>
         {
-            return std::get<tuple_index<T, OtherTuple>::value>(tuple);
+            return std::get<tuple_index<T, OtherTuple>::value>(tuple_);
         }
 
         template<typename T>
@@ -180,6 +180,6 @@ namespace cytx
         }
     private:
         GameObjectStream& gos_;
-        OtherTuple tuple;
+        OtherTuple tuple_;
     };
 }

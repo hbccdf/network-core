@@ -41,7 +41,7 @@ namespace cytx
     struct function_traits_impl;
 
     template<typename T>
-    struct function_traits : function_traits_impl<std::remove_cv_t<std::remove_reference_t<T>>>
+    struct function_traits : function_traits_impl<std::decay_t<T>>
     {};
 
     template<typename Ret, typename... Args>
@@ -117,91 +117,94 @@ namespace std
 
 namespace cytx
 {
-    template<typename Tuple>
-    struct max_arg_index;
-
-    template<>
-    struct max_arg_index<std::tuple<>>
+    namespace detail
     {
-        constexpr static int value = 0;
-    };
+        template<typename Tuple>
+        struct max_arg_index;
 
-    template<typename Head, typename ... Tail>
-    struct max_arg_index<std::tuple<Head, Tail...>>
-    {
-        constexpr static int head_value = std::is_placeholder<Head>::value;
-        constexpr static int tail_value = max_arg_index<std::tuple<Tail...>>::value;
-        constexpr static int value = head_value > tail_value ? head_value : tail_value;
-    };
+        template<>
+        struct max_arg_index<std::tuple<>>
+        {
+            constexpr static int value = 0;
+        };
 
-    template<typename Index_t, typename FuncArgs, int max_index>
-    struct cat_impl;
+        template<typename Head, typename ... Tail>
+        struct max_arg_index<std::tuple<Head, Tail...>>
+        {
+            constexpr static int head_value = std::is_placeholder<Head>::value;
+            constexpr static int tail_value = max_arg_index<std::tuple<Tail...>>::value;
+            constexpr static int value = head_value > tail_value ? head_value : tail_value;
+        };
+
+        template<typename Index_t, typename FuncArgs, int max_index>
+        struct cat_impl;
 
 #ifdef LINUX
-    template<size_t ... Is, typename FuncArgs, int max_index>
-    struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
-    {
-        using type = std::tuple<std::_Placeholder<Is + max_index + 1> ...>;
-    };
+        template<size_t ... Is, typename FuncArgs, int max_index>
+        struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
+        {
+            using type = std::tuple<std::_Placeholder<Is + max_index + 1> ...>;
+        };
 #else
-    template<size_t ... Is, typename FuncArgs, int max_index>
-    struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
-    {
-        using type = std::tuple<std::_Ph<Is + max_index + 1> ...>;
-    };
+        template<size_t ... Is, typename FuncArgs, int max_index>
+        struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
+        {
+            using type = std::tuple<std::_Ph<Is + max_index + 1> ...>;
+        };
 #endif
 
-    template<bool IsMemberFunc, typename TupleArgs, typename FuncArgs>
-    struct cat_helper
-    {
-        constexpr static size_t args_size = std::tuple_size<FuncArgs>::value + (IsMemberFunc ? 1 : 0) - std::tuple_size<TupleArgs>::value;
-        using func_args_index_t = std::make_index_sequence<args_size>;
-        constexpr static int max_index = max_arg_index<TupleArgs>::value;
-        using type = typename cat_impl<func_args_index_t, FuncArgs, max_index>::type;
-    };
-
-    template<typename F, typename TupleArgs>
-    struct cat
-    {
-        using type = typename cat_helper<function_traits<F>::is_class_member_func, TupleArgs,
-            typename function_traits<F>::raw_tuple_type >::type;
-    };
-
-    template<typename T>
-    struct bind_help
-    {
-        template<typename F, typename ... Args>
-        static auto bind_impl(F&& f, Args&& ... args)
+        template<bool IsMemberFunc, typename TupleArgs, typename FuncArgs>
+        struct cat_helper
         {
-            return std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-        }
-    };
+            constexpr static size_t args_size = std::tuple_size<FuncArgs>::value + (IsMemberFunc ? 1 : 0) - std::tuple_size<TupleArgs>::value;
+            using func_args_index_t = std::make_index_sequence<args_size>;
+            constexpr static int max_index = max_arg_index<TupleArgs>::value;
+            using type = typename cat_impl<func_args_index_t, FuncArgs, max_index>::type;
+        };
 
-    template<typename ... tuple_args>
-    struct bind_help<std::tuple<tuple_args ...>>
-    {
-        template<typename F, typename ... Args>
-        static auto bind_impl(F&& f, Args&& ... args)
+        template<typename F, typename TupleArgs>
+        struct cat
         {
-            return std::bind(std::forward<F>(f), std::forward<Args>(args)..., tuple_args{}...);
-        }
-    };
+            using type = typename cat_helper<function_traits<F>::is_class_member_func, TupleArgs,
+                typename function_traits<F>::raw_tuple_type >::type;
+        };
 
-    template<>
-    struct bind_help<std::tuple<>>
-    {
-        template<typename F, typename ... Args>
-        static auto bind_impl(F&& f, Args&& ... args)
+        template<typename T>
+        struct bind_help
         {
-            return std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-        }
-    };
+            template<typename F, typename ... Args>
+            static auto bind_impl(F&& f, Args&& ... args)
+            {
+                return std::bind(std::forward<F>(f), std::forward<Args>(args)...);
+            }
+        };
+
+        template<typename ... tuple_args>
+        struct bind_help<std::tuple<tuple_args ...>>
+        {
+            template<typename F, typename ... Args>
+            static auto bind_impl(F&& f, Args&& ... args)
+            {
+                return std::bind(std::forward<F>(f), std::forward<Args>(args)..., tuple_args{}...);
+            }
+        };
+
+        template<>
+        struct bind_help<std::tuple<>>
+        {
+            template<typename F, typename ... Args>
+            static auto bind_impl(F&& f, Args&& ... args)
+            {
+                return std::bind(std::forward<F>(f), std::forward<Args>(args)...);
+            }
+        };
+    }
 
     template <typename F, typename ... Args>
     auto bind(F&& f, Args&& ... args)
     {
-        using args_tuple_t = typename cat<F, std::tuple<Args...>>::type;
-        using help_t = bind_help<args_tuple_t>;
+        using args_tuple_t = typename cytx::detail::cat<F, std::tuple<Args...>>::type;
+        using help_t = cytx::detail::bind_help<args_tuple_t>;
         using func_t = typename function_traits<F>::stl_function_type;
         return static_cast<func_t>(help_t::template bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }

@@ -17,8 +17,8 @@ namespace cytx {
     template<typename ADAPTER_T, typename OtherTuple = std::tuple<>>
     class DeSerializer : public BaseDeSerializer
     {
-        typedef ADAPTER_T adapter_t;
-        typedef typename adapter_t::value_t val_t;
+        using adapter_t = ADAPTER_T;
+        using val_t = typename adapter_t::value_t;
     public:
 
         template<typename... ARGS>
@@ -29,7 +29,7 @@ namespace cytx {
 
         template<typename... ARGS>
         DeSerializer(OtherTuple&& t, ARGS&&... args)
-            : tuple(std::move(t))
+            : tuple_(std::move(t))
             , rd_(std::forward<ARGS>(args)...)
         {
         }
@@ -42,7 +42,7 @@ namespace cytx {
 
         void set_tuple(OtherTuple&& t)
         {
-            tuple = std::move(t);
+            tuple_ = std::move(t);
         }
 
         template<typename ... ARGS>
@@ -109,7 +109,7 @@ namespace cytx {
         template<typename T>
         auto get_tuple_elem(size_t& index, val_t& val) -> std::enable_if_t<tuple_contains<T, OtherTuple>::value, T>
         {
-            return std::get<T>(tuple);
+            return std::get<T>(tuple_);
         }
 
         template<typename T>
@@ -130,14 +130,14 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_user_class<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_user_class_v<T>>
         {
             auto m = get_meta(t);
             ReadTuple(m, val, 0, std::false_type{});
         }
 
         template<typename T, typename BeginObject>
-        auto ReadObject(T& t, val_t& val, BeginObject bo) -> std::enable_if_t<is_map_container<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObject bo) -> std::enable_if_t<is_map_container_v<T>>
         {
             auto it = rd_.member_begin(val);
             auto it_end = rd_.member_end(val);
@@ -156,7 +156,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_only_insert<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_only_insert_v<T>>
         {
             using element_t = decltype(*t.begin());
             using ele_t = std::decay_t<element_t>;
@@ -173,7 +173,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_back_insert<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<has_back_insert_v<T>>
         {
             using element_t = decltype(*t.begin());
             using ele_t = std::decay_t<element_t>;
@@ -190,13 +190,13 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_singlevalue_container<T>::value && !has_back_insert<T>::value && !has_only_insert<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_singlevalue_container_v<T> && !has_back_insert_v<T> && !has_only_insert_v<T>>
         {
             ReadArray(t, val);
         }
 
         template<typename T, typename BeginObjec>
-        auto ReadObject(T& t, val_t& val, BeginObjec bo) -> std::enable_if_t<is_tuple<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObjec bo) -> std::enable_if_t<is_tuple_v<T>>
         {
             ReadTuple(t, val, 0, bo);
         }
@@ -227,7 +227,7 @@ namespace cytx {
         template<typename T>
         auto ReadTupleVal(T& t, val_t& val, size_t& index) -> std::enable_if_t<tuple_contains<T, OtherTuple>::value>
         {
-            t = std::get<T>(tuple);
+            t = std::get<T>(tuple_);
         }
 
         template<typename T>
@@ -245,7 +245,7 @@ namespace cytx {
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val, std::true_type bo) -> std::enable_if_t<is_pair<T>::value>
+        auto ReadObject(T& t, val_t& val, std::true_type bo) -> std::enable_if_t<is_pair_v<T>>
         {
             using pair_t = std::decay_t<T> ;
             using first_type = typename pair_t::first_type;
@@ -261,7 +261,7 @@ namespace cytx {
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val, std::false_type) -> std::enable_if_t<is_pair<T>::value>
+        auto ReadObject(T& t, val_t& val, std::false_type) -> std::enable_if_t<is_pair_v<T>>
         {
             auto it = rd_.get_member(t.first, val);
             if(it != rd_.member_end(val))
@@ -319,13 +319,13 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObject>
-        auto ReadObject(T& t, val_t& val, BeginObject) -> std::enable_if_t<is_basic_type<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObject) -> std::enable_if_t<is_basic_type_v<T>>
         {
             rd_.read(t, val);
         }
 
         template<typename T, typename BeginObject>
-        auto ReadObject(T& t, val_t& val, BeginObject) -> std::enable_if_t<is_optional<T>::value>
+        auto ReadObject(T& t, val_t& val, BeginObject) -> std::enable_if_t<is_optional_v<T>>
         {
             using value_type = typename T::value_type;
             if (!rd_.is_null(val))
@@ -337,7 +337,7 @@ namespace cytx {
         }
 
         template <typename T, typename BeginObject>
-        auto ReadObject(T& t, val_t& val, BeginObject) ->std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+        auto ReadObject(T& t, val_t& val, BeginObject) ->std::enable_if_t<is_enum_type_v<T>>
         {
             using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
@@ -354,21 +354,19 @@ namespace cytx {
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<is_basic_type<std::decay_t<T>>::value
-            || std::is_enum<std::decay_t<T>>::value>
+        auto process_array(val_t& val) -> std::enable_if_t<is_basic_type_v<T> || is_enum_type_v<T>>
         {
             rd_.process_array(val);
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<!is_basic_type<std::decay_t<T>>::value
-            && !std::is_enum<std::decay_t<T>>::value>
+        auto process_array(val_t& val) -> std::enable_if_t<!(is_basic_type_v<T> || is_enum_type_v<T>)>
         {
         }
 
     private:
         adapter_t rd_;
-        OtherTuple tuple;
+        OtherTuple tuple_;
     };
 }
 

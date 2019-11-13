@@ -49,9 +49,9 @@ namespace cytx {
     class json_deserialize_adapter
     {
     public:
-        typedef json_util::value_type value_t;
-        typedef json_util::array_iterator array_iterator;
-        typedef json_util::member_iterator member_iterator;
+        using value_t = json_util::value_type;
+        using array_iterator = json_util::array_iterator;
+        using member_iterator = json_util::member_iterator ;
 
         json_deserialize_adapter() {}
         void parse(const char* str) { json_.parse(str); }

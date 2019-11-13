@@ -33,32 +33,28 @@ namespace cytx
         {
             using type = decltype(to_enum_extend((std::decay_t<T>*)nullptr));
         };
-        template<typename T>
-        using get_enum_extend_type_t = typename get_enum_extend_type<T>::type;
+        TEMPLATE_TYPE(get_enum_extend_type);
 
         template<typename T>
         struct get_db_extend_type
         {
             using type = decltype(to_db_extend((std::decay_t<T>*)nullptr));
         };
-        template<typename T>
-        using get_db_extend_type_t = typename get_db_extend_type<T>::type;
+        TEMPLATE_TYPE(get_db_extend_type);
 
         template<typename T>
         struct get_st_extend_type
         {
             using type = decltype(to_st_extend((std::decay_t<T>*)nullptr));
         };
-        template<typename T>
-        using get_st_extend_type_t = typename get_st_extend_type<T>::type;
+        TEMPLATE_TYPE(get_st_extend_type);
 
         /*template<typename T>
         struct get_method_extend_type
         {
             using type = decltype(to_method_extend((std::decay_t<T>*)nullptr));
         };
-        template<typename T>
-        struct get_method_extend_type_t = typename get_method_extend_type<T>::type;*/
+        TEMPLATE_TYPE(get_method_extend_type);*/
 
         template<typename T, class = std::void_t<>>
         struct enum_meta : public std::false_type {};
@@ -67,8 +63,7 @@ namespace cytx
         struct enum_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_enum_extend_type_t<T>>>>> : std::true_type
         {};
 
-        template<typename T>
-        constexpr bool enum_meta_v = enum_meta<std::decay_t<T>>::value;
+        TEMPLATE_VALUE(enum_meta);
 
         template<typename T, class = std::void_t<>>
         struct db_meta : public std::false_type {};
@@ -77,10 +72,11 @@ namespace cytx
         struct db_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_db_extend_type_t<T>>>>> : std::true_type
         {};
 
-        template<typename T>
-        constexpr bool db_meta_v = db_meta<std::decay_t<T>>::value;
+        TEMPLATE_VALUE(db_meta);
 
         template<typename T> struct is_db_meta : std::integral_constant<bool, std::is_base_of<base_db_meta, std::decay_t<T>>::value> {};
+
+        TEMPLATE_VALUE(is_db_meta);
 
         template<typename T, class = std::void_t<>>
         struct st_meta : public std::false_type {};
@@ -89,8 +85,7 @@ namespace cytx
         struct st_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_st_extend_type_t<T>>>>> : std::true_type
         {};
 
-        template<typename T>
-        constexpr bool st_meta_v = st_meta<std::decay_t<T>>::value;
+        TEMPLATE_VALUE(st_meta);
 
         /*template<typename T, class = std::void_t<>>
         struct method_meta : public std::false_type {};
@@ -99,8 +94,7 @@ namespace cytx
         struct method_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_method_extend_type_t<T>>>>> : std::true_type
         {};
 
-        template<typename T>
-        constexpr bool method_meta_v = method_meta<std::decay_t<T>>::value;*/
+        TEMPLATE_VALUE(method_meta);*/
 
 
         template <typename T, class = std::void_t<>>
@@ -132,6 +126,8 @@ namespace cytx
         struct is_reflection<T, std::void_t<std::enable_if_t<method_meta_v<T>>>> : std::true_type
         {
         };*/
+
+        TEMPLATE_VALUE(is_reflection);
 
         template<typename T, class = std::void_t<>>
         struct get_meta_impl;
@@ -273,21 +269,25 @@ namespace cytx
             }
         };
 
-        template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
+        template<typename T> struct tuple_total_size<T, std::void_t<std::enable_if_t<st_meta_v<T>>>>
         {
             constexpr static int value = tuple_total_size<typename get_meta_impl<T>::type::meta_type>::value;
         };
 
-        template<typename T> struct tuple_total_size_impl<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
+        template<typename T> struct tuple_total_size<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>>
         {
             constexpr static int value = tuple_total_size<typename get_meta_impl<T>::type::meta_type>::value;
         };
+
+        TEMPLATE_VALUE(tuple_total_size);
 
         template<typename F, typename T>
         struct is_result_bool
         {
             constexpr static bool value = !std::is_void_v<std::result_of_t<F(T, size_t, bool)>>;
         };
+
+        TEMPLATE_VALUE(is_result_bool);
     }
 
     template<typename T>
@@ -296,8 +296,7 @@ namespace cytx
     template<typename T>
     using is_reflection = detail::is_reflection<T>;
 
-    template<typename T>
-    constexpr static bool is_reflection_v = is_reflection<T>::value;
+    TEMPLATE_VALUE(is_reflection);
 
 
     template<typename T>
@@ -688,7 +687,7 @@ namespace cytx
         }
     }
 
-#define ENUM_META_CHECK(name) std::is_enum<name>::value
+#define ENUM_META_CHECK(name) is_enum_type_v<name>
 
     using enum_info_list_t = detail::enum_factory::vec_t;
 
@@ -704,8 +703,7 @@ namespace cytx
     }
 
     template<typename T>
-    auto to_enum(const char* str, bool has_enum_name = false)
-        -> std::enable_if_t<ENUM_META_CHECK(T), boost::optional<T>>
+    auto to_enum(const char* str, bool has_enum_name = false) -> std::enable_if_t<ENUM_META_CHECK(T), boost::optional<T>>
     {
         return detail::enum_factory::ins().to_enum<T>(str, has_enum_name);
     }
@@ -720,7 +718,7 @@ namespace cytx
 namespace fmt
 {
     template<typename T>
-    auto format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+    auto format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<cytx::is_enum_type_v<T>>
     {
         boost::optional<std::string> v = cytx::to_string(val, false);
 

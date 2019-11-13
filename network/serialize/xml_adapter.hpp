@@ -530,7 +530,7 @@ namespace cytx
             }
         protected:
             ptree pt_;
-            std::map<std::string, std::string> properties_;
+            std::unordered_map<std::string, std::string> properties_;
         };
     }
 

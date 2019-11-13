@@ -6,18 +6,19 @@
 #include <cstdint>
 #include "network/traits/traits.hpp"
 #include "network/util/cast.hpp"
+#include "network/base/date_time.hpp"
 
 namespace cytx {
     namespace orm
     {
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<T, date_time>::value, std::string>
+        auto cast_string(const T& t) -> std::enable_if_t<is_date_time_type_v<T>, std::string>
         {
             return fmt::format("'{}'", t.to_string());
         }
 
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<cytx::is_nullable<T>::value, std::string>
+        auto cast_string(const T& t) -> std::enable_if_t<is_nullable_v<T>, std::string>
         {
             if (t)
                 return cast_string(t.get());
@@ -26,13 +27,13 @@ namespace cytx {
         }
 
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type<T>::value && !std::is_same<std::string, T>::value, std::string>
+        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type_v<T> && !is_string_v<T>, std::string>
         {
             return fmt::format("{}", t);
         }
 
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<std::string, T>::value, std::string>
+        auto cast_string(const T& t) -> std::enable_if_t<is_string_v<T>, std::string>
         {
             return fmt::format("'{}'", t);
         }

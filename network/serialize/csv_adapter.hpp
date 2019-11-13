@@ -121,7 +121,7 @@ namespace cytx
 
         template<typename... ARGS>
         DeSerializer(OtherTuple&& t, ARGS&&... args)
-            : tuple(std::move(t))
+            : tuple_(std::move(t))
             , rd_(std::forward<ARGS>(args)...)
         {
         }
@@ -134,7 +134,7 @@ namespace cytx
 
         void set_tuple(OtherTuple&& t)
         {
-            tuple = std::move(t);
+            tuple_ = std::move(t);
         }
 
         template<typename ... ARGS>
@@ -221,7 +221,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val, const std::string& key_name) ->std::enable_if_t<is_user_class<T>::value>
+        auto ReadObject(T& t, val_t& val, const std::string& key_name) ->std::enable_if_t<is_user_class_v<T>>
         {
             auto meta_tuple = get_meta(t);
             auto meta_name = get_name<T>();
@@ -297,7 +297,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(std::vector<T>& t, val_t& val, const std::string& key_name) ->std::enable_if_t<is_user_class<T>::value>
+        auto ReadObject(std::vector<T>& t, val_t& val, const std::string& key_name) ->std::enable_if_t<is_user_class_v<T>>
         {
             auto meta_name = get_name<T>();
             std::string new_key_name = fmt::format("{}(", key_name);
@@ -376,7 +376,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val, const std::string& key_name) ->std::enable_if_t<!is_user_class<T>::value>
+        auto ReadObject(T& t, val_t& val, const std::string& key_name) ->std::enable_if_t<!is_user_class_v<T>>
         {
             if (rd_.has_field(key_name))
             {
@@ -434,13 +434,13 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadBase(T& t, const std::string& val) -> std::enable_if_t<is_basic_type<T>::value>
+        auto ReadBase(T& t, const std::string& val) -> std::enable_if_t<is_basic_type_v<T>>
         {
             t = cytx::util::cast<T>(val);
         }
 
         template<typename T>
-        auto ReadBase(T& t, const std::string& val) -> std::enable_if_t<is_optional<T>::value>
+        auto ReadBase(T& t, const std::string& val) -> std::enable_if_t<is_optional_v<T>>
         {
             using value_type = typename T::value_type;
             if (val != "null")
@@ -452,7 +452,7 @@ namespace cytx
         }
 
         template <typename T>
-        auto ReadBase(T& t, const std::string& val) ->std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+        auto ReadBase(T& t, const std::string& val) ->std::enable_if_t<is_enum_type_v<T>>
         {
             using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
@@ -484,7 +484,7 @@ namespace cytx
 
     private:
         adapter_t rd_;
-        OtherTuple tuple;
+        OtherTuple tuple_;
 
         size_t current_line_ = 0;
         int32_t current_id_ = 0;

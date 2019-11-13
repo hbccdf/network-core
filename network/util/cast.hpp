@@ -9,7 +9,7 @@ namespace cytx
     namespace util
     {
         template<typename T>
-        auto to_str(T t, bool has_enum_name = true) -> std::enable_if_t<std::is_enum<T>::value, std::string>
+        auto to_str(T t, bool has_enum_name = true) -> std::enable_if_t<is_enum_type_v<T>, std::string>
         {
             boost::optional<std::string> v = cytx::to_string(t, has_enum_name);
             if (v)
@@ -28,13 +28,13 @@ namespace cytx
         }
 
         template<typename T>
-        auto cast(const std::string& str) -> std::enable_if_t<std::is_same<T, bool>::value, T>
+        auto cast(const std::string& str) -> std::enable_if_t<is_bool_type_v<T>, T>
         {
             return !(str.empty() || str == "false" || str == "FALSE" || str == "0" || str == "off" || str == "OFF");
         }
 
         template<typename T>
-        auto cast(const std::string& str) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value, T>
+        auto cast(const std::string& str) -> std::enable_if_t<is_enum_type_v<T>, T>
         {
             using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
@@ -51,19 +51,19 @@ namespace cytx
         }
 
         template<typename T>
-        auto cast(const std::string& str) -> std::enable_if_t<!std::is_same<T, bool>::value && !std::is_enum<std::decay_t<T>>::value && is_basic_type<T>::value, T>
+        auto cast(const std::string& str) -> std::enable_if_t<!is_bool_type_v<T> && !is_enum_type_v<T> && is_basic_type_v<T>, T>
         {
             return boost::lexical_cast<T>(str);
         }
 
         template<typename T>
-        auto cast(const char* str) -> std::enable_if_t<std::is_same<T, date_time>::value, T>
+        auto cast(const char* str) -> std::enable_if_t<is_date_time_type_v<T>, T>
         {
             return date_time::parse(str);
         }
 
         template<typename T>
-        auto cast(const char* str) -> std::enable_if_t<is_nullable<T>::value, T>
+        auto cast(const char* str) -> std::enable_if_t<is_nullable_v<T>, T>
         {
             if (str == nullptr)
                 return T();
@@ -74,7 +74,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type<T>::value, std::string>
+        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type_v<T>, std::string>
         {
             return fmt::format("{}", t);
         }
@@ -91,7 +91,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<std::is_same<T, date_time>::value, std::string>
+        auto cast_string(const T& t) -> std::enable_if_t<is_date_time_type_v<T>, std::string>
         {
             return t.to_string();
         }

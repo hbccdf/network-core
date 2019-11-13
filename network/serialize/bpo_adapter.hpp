@@ -10,7 +10,7 @@ namespace boost
     namespace program_options
     {
         template<class T>
-        auto validate(boost::any& v, const std::vector<std::string>& xs, T*, long) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+        auto validate(boost::any& v, const std::vector<std::string>& xs, T*, long) -> std::enable_if_t<cytx::is_enum_type_v<T>>
         {
             validators::check_first_occurrence(v);
             std::string s(validators::get_single_string(xs));
@@ -80,7 +80,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto init(T& t, const bpo_options_t& op, bpo_pos_options_t* pod_ptr = nullptr) -> std::enable_if_t<is_user_class<T>::value>
+        auto init(T& t, const bpo_options_t& op, bpo_pos_options_t* pod_ptr = nullptr) -> std::enable_if_t<is_user_class_v<T>>
         {
             std::unordered_map<std::string, bpo_option_ptr_t> option_map;
 
@@ -165,13 +165,13 @@ namespace cytx
         }
 
         template<typename T>
-        auto DeSerialize(T& t, const std::string& key) -> std::enable_if_t<!is_user_class<T>::value>
+        auto DeSerialize(T& t, const std::string& key) -> std::enable_if_t<!is_user_class_v<T>>
         {
             DeSerialize(t, key.c_str());
         }
 
         template<typename T>
-        auto DeSerialize(T& t, const char* key) -> std::enable_if_t<!is_user_class<T>::value>
+        auto DeSerialize(T& t, const char* key) -> std::enable_if_t<!is_user_class_v<T>>
         {
             if (vm_.count(key))
             {
@@ -186,7 +186,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto DeSerialize(T& t) -> std::enable_if_t<is_user_class<T>::value>
+        auto DeSerialize(T& t) -> std::enable_if_t<is_user_class_v<T>>
         {
             auto meta_val = get_meta(t);
             for_each(meta_val, [this](auto& v, size_t I, bool is_last)
@@ -248,7 +248,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObjectWithKey(T& t, val_t& val, const std::string& key) -> std::enable_if_t<is_container<T>::value>
+        auto ReadObjectWithKey(T& t, val_t& val, const std::string& key) -> std::enable_if_t<is_container_v<T>>
         {
             if (val.empty())
                 return;
@@ -266,13 +266,13 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObjectWithKey(T& t, val_t& val, const std::string&) -> std::enable_if_t<!is_container<T>::value>
+        auto ReadObjectWithKey(T& t, val_t& val, const std::string&) -> std::enable_if_t<!is_container_v<T>>
         {
             ReadObject(t, val);
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val) -> std::enable_if_t<is_pair<T>::value>
+        auto ReadObject(T& t, val_t& val) -> std::enable_if_t<is_pair_v<T>>
         {
             if (val.empty())
                 return;
@@ -282,15 +282,14 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val)->std::enable_if_t<is_basic_type<T>::value
-            && !std::is_same<T, bool>::value>
+        auto ReadObject(T& t, val_t& val)->std::enable_if_t<is_basic_type_v<T> && !is_bool_type_v<T>>
         {
             if (!val.empty())
                 t = val.as<std::decay_t<T>>();
         }
 
         template <typename T>
-        auto ReadObject(T& t, val_t& val) ->std::enable_if_t<std::is_enum<T>::value>
+        auto ReadObject(T& t, val_t& val) ->std::enable_if_t<is_enum_type_v<T>>
         {
             using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
@@ -307,7 +306,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<has_only_insert<T>::value>
+        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<has_only_insert_v<T>>
         {
             using element_t = decltype(*t.begin());
             using ele_t = std::decay_t<element_t>;
@@ -320,7 +319,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<has_back_insert<T>::value>
+        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<has_back_insert_v<T>>
         {
             using element_t = decltype(*t.begin());
             using ele_t = std::decay_t<element_t>;
@@ -333,7 +332,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<is_map_container<T>::value>
+        auto ReadContainer(T& t, std::vector<std::string>& vals) -> std::enable_if_t<is_map_container_v<T>>
         {
             using element_t = decltype(*t.begin());
             using pair_t = std::decay_t<element_t>;
@@ -351,13 +350,13 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_basic_type<T>::value || std::is_enum<T>::value>
+        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_basic_type_v<T> || is_enum_type_v<T>>
         {
             t = util::cast<T>(val);
         }
 
         template<typename T>
-        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_pair<T>::value>
+        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_pair_v<T>>
         {
             std::vector<std::string> list = string_util::split(val, "=");
             ReadContainerElement(t.first, list[0]);
@@ -366,22 +365,21 @@ namespace cytx
 
     private:
         template<typename T>
-        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<std::is_same<bool, T>::value, bpo_option_ptr_t>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_bool_type_v<T>, bpo_option_ptr_t>
         {
             return option_ptr;
         }
 
         template<typename T>
-        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<!std::is_same<bool, T>::value &&
-            (is_basic_type<T>::value || std::is_enum<T>::value), bpo_option_ptr_t>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<!is_bool_type_v<T> &&
+            (is_basic_type_v<T> || is_enum_type_v<T>), bpo_option_ptr_t>
         {
-
             bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<T>(), option_ptr->description().c_str()));
             return d;
         }
 
         template<typename T>
-        auto get_option_ptr(bpo_option_ptr_t option_ptr) -> std::enable_if_t<is_container<T>::value, bpo_option_ptr_t>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) -> std::enable_if_t<is_container_v<T>, bpo_option_ptr_t>
         {
             auto_set_type_keys_.insert(option_ptr->long_name());
 
@@ -390,7 +388,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_pair<T>::value, bpo_option_ptr_t>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_pair_v<T>, bpo_option_ptr_t>
         {
             bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<std::string>(), option_ptr->description().c_str()));
             return d;

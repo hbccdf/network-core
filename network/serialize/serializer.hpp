@@ -7,7 +7,7 @@ namespace cytx {
     template<typename ADAPTER_T>
     class Serializer
     {
-        typedef ADAPTER_T adapter_t;
+        using adapter_t = ADAPTER_T;
     public:
 
         template<typename... ARGS>
@@ -35,7 +35,7 @@ namespace cytx {
 
     private:
         template <typename T, typename BeginObjec>
-        auto WriteObject(T const& t, bool is_last, BeginObjec bj) -> std::enable_if_t<is_optional<T>::value>
+        auto WriteObject(T const& t, bool is_last, BeginObjec bj) -> std::enable_if_t<is_optional_v<T>>
         {
             bool is_null = !static_cast<bool>(t);
             WriteIsNull(is_null, is_last);
@@ -46,7 +46,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto WriteObject(const T& t, bool is_last, BeginObjec) -> std::enable_if_t<is_reflection<T>::value && !std::is_enum<T>::value>
+        auto WriteObject(const T& t, bool is_last, BeginObjec) -> std::enable_if_t<is_reflection_v<T> && !is_enum_type_v<T>>
         {
             adapter_begin_object();
             for_each(get_meta(t), [this](auto& v, size_t I, bool is_last)
@@ -57,7 +57,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto WriteObject(T const& t, bool is_last, BeginObjec bo) -> std::enable_if_t<is_tuple<T>::value>
+        auto WriteObject(T const& t, bool is_last, BeginObjec bo) -> std::enable_if_t<is_tuple_v<T>>
         {
             adapter_begin_fixed_array(std::tuple_size<T>::value);
             for_each(t, [this, bo](auto& v, size_t I, bool is_last)
@@ -68,13 +68,13 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto WriteObject(T const& t, bool is_last, BeginObjec) -> std::enable_if_t<is_singlevalue_container<T>::value>
+        auto WriteObject(T const& t, bool is_last, BeginObjec) -> std::enable_if_t<is_singlevalue_container_v<T>>
         {
             WriteArray(t, t.size(), is_last);
         }
 
         template<typename T, typename BeginObject>
-        auto WriteObject(T const& t, bool is_last, BeginObject) -> std::enable_if_t<is_map_container<T>::value>
+        auto WriteObject(T const& t, bool is_last, BeginObject) -> std::enable_if_t<is_map_container_v<T>>
         {
             auto array_size = t.size();
             adapter_begin_object();
@@ -90,7 +90,7 @@ namespace cytx {
         }
 
         template<typename T>
-        auto WriteObject(T const& t, bool is_last, std::true_type) -> std::enable_if_t<is_pair<T>::value>
+        auto WriteObject(T const& t, bool is_last, std::true_type) -> std::enable_if_t<is_pair_v<T>>
         {
             adapter_begin_object();
             WriteKV(t.first, t.second, is_last, std::true_type{});
@@ -98,7 +98,7 @@ namespace cytx {
         }
 
         template<typename T>
-        auto WriteObject(T const& t, bool is_last, std::false_type) -> std::enable_if_t<is_pair<T>::value>
+        auto WriteObject(T const& t, bool is_last, std::false_type) -> std::enable_if_t<is_pair_v<T>>
         {
             WriteKV(t.first, t.second, is_last, std::false_type{});
         }
@@ -149,7 +149,7 @@ namespace cytx {
         }
 
         template <typename T, typename BeginObject>
-        auto WriteObject(T const& val, bool is_last, BeginObject) -> std::enable_if_t<std::is_enum<std::decay_t<T>>::value>
+        auto WriteObject(T const& val, bool is_last, BeginObject) -> std::enable_if_t<is_enum_type_v<T>>
         {
             using enum_t = std::decay_t<T>;
             using under_type = std::underlying_type_t<enum_t>;
@@ -197,7 +197,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObject>
-        auto WriteObject(T const& t, bool is_last, BeginObject) -> std::enable_if_t<is_basic_type<T>::value>
+        auto WriteObject(T const& t, bool is_last, BeginObject) -> std::enable_if_t<is_basic_type_v<T>>
         {
             adapter_write_field(t, is_last);
         }
@@ -208,13 +208,13 @@ namespace cytx {
         }
 
         template<typename K>
-        auto WriteKey(K& k) -> std::enable_if_t<is_basic_type<K>::value>
+        auto WriteKey(K& k) -> std::enable_if_t<is_basic_type_v<K>>
         {
             wr_.write_key(k);
         }
 
         template <typename K>
-        auto WriteKey(K& val) -> std::enable_if_t<std::is_enum<std::decay_t<K>>::value>
+        auto WriteKey(K& val) -> std::enable_if_t<is_enum_type_v<K>>
         {
             using enum_t = std::decay_t<K>;
             using under_type = std::underlying_type_t<enum_t>;
@@ -328,7 +328,7 @@ namespace cytx {
             adapter_end_array(is_last);
         }
 
-        template<typename enum_t, typename ADAPTER = adapter_t>
+        template<typename enum_t>
         boost::optional<std::string> write_enum(enum_t e)
         {
             return to_string(e, false);

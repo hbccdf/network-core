@@ -5,6 +5,7 @@
 #include <boost/algorithm/string.hpp>
 #include <time.h>
 #include <fmt/format.h>
+#include "network/traits/traits.hpp"
 
 namespace cytx
 {
@@ -339,4 +340,6 @@ namespace cytx
     }
 
     using date_time = detail::date_time;
+
+    IS_SAME_TYPE(date_time);
 }

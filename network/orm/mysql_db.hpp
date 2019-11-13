@@ -7,9 +7,9 @@
 #ifdef min
 #undef min
 #endif
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+
 #include "network/base/log.hpp"
+#include "network/util/string.hpp"
 
 namespace cytx
 {
@@ -21,17 +21,15 @@ namespace cytx
             {
                 std::map<std::string, std::string> connect_args;
 
-                std::vector<std::string> tmp_strs;
-                boost::split(tmp_strs, connect_str, boost::is_any_of(";"), boost::token_compress_on);
-                for (auto tmp_str : tmp_strs)
+                std::vector<std::string> tmp_strs = string_util::split(connect_str, ";");
+                for (auto& tmp_str : tmp_strs)
                 {
-                    std::vector<std::string> pairs;
-                    boost::split(pairs, tmp_str, boost::is_any_of("="), boost::token_compress_on);
+                    std::vector<std::string> pairs = string_util::split(tmp_str, "=");
                     if (pairs.size() != 2)
                         continue;
                     connect_args[pairs[0]] = pairs[1];
                 }
-                return std::move(connect_args);
+                return connect_args;
             }
         }
 

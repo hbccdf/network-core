@@ -95,13 +95,13 @@ namespace cytx
         }
 
         template<typename T>
-        auto set_basic(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<detail::decay_t<T>>::value>
+        auto set_basic(const std::string& name, const T& value) -> std::enable_if_t<std::is_arithmetic<std::decay_t<T>>::value>
         {
             basic_map_[name] = value;
         }
 
         template<typename T>
-        auto get_basic(const std::string& name) const -> std::enable_if_t<std::is_arithmetic<T>::value, T>
+        auto get_basic(const std::string& name) const -> std::enable_if_t<std::is_arithmetic<std::decay_t<T>>::value, T>
         {
             auto it = basic_map_.find(name);
             if (it != basic_map_.end())
@@ -113,7 +113,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_basic_or(const std::string& name, const T& or_value) const -> std::enable_if_t<std::is_arithmetic<T>::value, T>
+        auto get_basic_or(const std::string& name, const T& or_value) const -> std::enable_if_t<std::is_arithmetic<std::decay_t<T>>::value, T>
         {
             auto it = basic_map_.find(name);
             if (it != basic_map_.end())
