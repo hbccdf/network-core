@@ -213,6 +213,11 @@ namespace cytx {
 
     TEMPLATE_VALUE(is_enum_type);
 
+    template<typename T>
+    struct is_number_type : std::integral_constant<bool, std::is_arithmetic<std::decay_t<T>>::value> {};
+
+    TEMPLATE_VALUE(is_number_type);
+
     IS_SAME_TYPE(bool);
 
     template<typename T>
