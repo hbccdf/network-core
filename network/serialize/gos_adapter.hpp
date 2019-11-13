@@ -193,34 +193,21 @@ namespace cytx
     };
 
     template<typename OtherTuple>
-    class DeSerializer<gos_deserialize_adapter, OtherTuple> : public BaseDeSerializer
+    class DeSerializer<gos_deserialize_adapter, OtherTuple> : public BaseDeSerializer<gos_deserialize_adapter, OtherTuple>
     {
+        using base_t = BaseDeSerializer<gos_deserialize_adapter, OtherTuple>;
         using adapter_t = gos_deserialize_adapter;
     public:
 
         template<typename... ARGS>
         DeSerializer(ARGS&&... args)
-            : rd_(std::forward<ARGS>(args)...)
-        {
-        }
-
-        template<typename... ARGS>
-        DeSerializer(OtherTuple&& t, ARGS&&... args)
-            : tuple_(std::move(t))
-            , rd_(std::forward<ARGS>(args)...)
+            : base_t(std::forward<ARGS>(args)...)
         {
         }
 
         ~DeSerializer()
         {
         }
-
-        void set_tuple(OtherTuple&& t)
-        {
-            tuple_ = std::move(t);
-        }
-
-        adapter_t& get_adapter() { return rd_; }
 
         template<typename T>
         void DeSerialize(T& t)
@@ -485,9 +472,5 @@ namespace cytx
             ReadObject(k, std::true_type{});
             ReadObject(v, std::true_type{});
         }
-
-    private:
-        adapter_t rd_;
-        OtherTuple tuple_;
     };
 }

@@ -96,17 +96,19 @@ namespace cytx
     };
 
     template<typename OtherTuple>
-    class DeSerializer<thrift_deserialize_adapter, OtherTuple> : public BaseDeSerializer
+    class DeSerializer<thrift_deserialize_adapter, OtherTuple> : public BaseDeSerializer<thrift_deserialize_adapter, OtherTuple>
     {
-        using adapter_t = GameObjectStream;
+        using base_t = BaseDeSerializer<thrift_deserialize_adapter, OtherTuple>;
+        using gos_t = GameObjectStream;
     public:
-        DeSerializer(adapter_t& gos)
-            : gos_(gos)
+        DeSerializer(gos_t& gos)
+            : base_t()
+            , gos_(gos)
         {
         }
 
-        DeSerializer(OtherTuple&& t, adapter_t& gos)
-            : tuple_(std::move(t))
+        DeSerializer(OtherTuple&& t, gos_t& gos)
+            : base_t(std::forward<OtherTuple>(t))
             , gos_(gos)
         {
         }
@@ -115,12 +117,7 @@ namespace cytx
         {
         }
 
-        void set_tuple(OtherTuple&& t)
-        {
-            tuple_ = std::move(t);
-        }
-
-        adapter_t& get_adapter() { return gos_; }
+        gos_t& get_gos() { return gos_; }
 
         template<typename T>
         void DeSerialize(T& t)
@@ -180,6 +177,5 @@ namespace cytx
         }
     private:
         GameObjectStream& gos_;
-        OtherTuple tuple_;
     };
 }

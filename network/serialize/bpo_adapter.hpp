@@ -53,7 +53,7 @@ namespace cytx
     struct bpo_deserialize_adapter {};
 
     template<>
-    class DeSerializer<bpo_deserialize_adapter, std::tuple<>> : public BaseDeSerializer
+    class DeSerializer<bpo_deserialize_adapter, std::tuple<>> : public BaseDeSerializer<bpo_deserialize_adapter, std::tuple<>>
     {
         using val_t = boost::program_options::variable_value;
         using bpo_option_ptr_t = boost::shared_ptr<bpo_option_t>;

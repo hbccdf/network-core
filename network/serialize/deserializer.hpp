@@ -5,44 +5,55 @@
 
 namespace cytx {
 
+    template<typename ADAPTER_T, typename OtherTuple>
     class BaseDeSerializer : public boost::noncopyable
     {
+        using adapter_t = ADAPTER_T;
     public:
+        template<typename... ARGS>
+        BaseDeSerializer(ARGS&&... args)
+            : rd_(std::forward<ARGS>(args)...)
+        {}
+        template<typename... ARGS>
+        BaseDeSerializer(OtherTuple&& t, ARGS&&... args)
+            : tuple_(std::move(t))
+            , rd_(std::forward<ARGS>(args)...)
+        {}
+
         bool enum_with_str() const { return enum_with_str_; }
         void enum_with_str(bool val) { enum_with_str_ = val; }
+
+        void set_tuple(OtherTuple&& t)
+        {
+            tuple_ = std::move(t);
+        }
+
+        adapter_t& get_adapter() { return rd_; }
+
+        const adapter_t& get_adapter() const { return rd_; }
+
     protected:
         bool enum_with_str_ = false;
+        OtherTuple tuple_;
+        adapter_t rd_;
     };
 
     template<typename ADAPTER_T, typename OtherTuple = std::tuple<>>
-    class DeSerializer : public BaseDeSerializer
+    class DeSerializer : public BaseDeSerializer<ADAPTER_T, OtherTuple>
     {
+        using base_t = BaseDeSerializer<ADAPTER_T, OtherTuple>;
         using adapter_t = ADAPTER_T;
         using val_t = typename adapter_t::value_t;
     public:
 
         template<typename... ARGS>
         DeSerializer(ARGS&&... args)
-            : rd_(std::forward<ARGS>(args)...)
-        {
-        }
-
-        template<typename... ARGS>
-        DeSerializer(OtherTuple&& t, ARGS&&... args)
-            : tuple_(std::move(t))
-            , rd_(std::forward<ARGS>(args)...)
+            : base_t(std::forward<ARGS>(args)...)
         {
         }
 
         ~DeSerializer()
         {
-        }
-
-        adapter_t& get_adapter() { return rd_; }
-
-        void set_tuple(OtherTuple&& t)
-        {
-            tuple_ = std::move(t);
         }
 
         template<typename ... ARGS>
@@ -372,10 +383,6 @@ namespace cytx {
         auto process_array(val_t& val) -> std::enable_if_t<!(is_basic_type_v<T> || is_enum_type_v<T> || is_date_time_type_v<T>)>
         {
         }
-
-    private:
-        adapter_t rd_;
-        OtherTuple tuple_;
     };
 }
 

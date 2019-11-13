@@ -108,34 +108,21 @@ namespace cytx
     };
 
     template<typename OtherTuple>
-    class DeSerializer<csv_deserialize_adapter, OtherTuple> : public BaseDeSerializer
+    class DeSerializer<csv_deserialize_adapter, OtherTuple> : public BaseDeSerializer<csv_deserialize_adapter, OtherTuple>
     {
+        using base_t = BaseDeSerializer<csv_deserialize_adapter, OtherTuple>;
         using adapter_t = csv_deserialize_adapter;
-        using val_t = typename adapter_t::val_t;
+        using val_t = adapter_t::val_t;
     public:
 
         template<typename... ARGS>
         DeSerializer(ARGS&&... args)
-            : rd_(std::forward<ARGS>(args)...)
-        {
-        }
-
-        template<typename... ARGS>
-        DeSerializer(OtherTuple&& t, ARGS&&... args)
-            : tuple_(std::move(t))
-            , rd_(std::forward<ARGS>(args)...)
+            : base_t()
         {
         }
 
         ~DeSerializer()
         {
-        }
-
-        adapter_t& get_adapter() { return rd_; }
-
-        void set_tuple(OtherTuple&& t)
-        {
-            tuple_ = std::move(t);
         }
 
         template<typename ... ARGS>
@@ -484,9 +471,6 @@ namespace cytx
 
 
     private:
-        adapter_t rd_;
-        OtherTuple tuple_;
-
         size_t current_line_ = 0;
         int32_t current_id_ = 0;
         std::string current_key_name_;
