@@ -4,6 +4,7 @@
 #include "network/traits/traits.hpp"
 #include "network/meta/meta.hpp"
 #include "network/util/cast.hpp"
+#include "network/util/string.hpp"
 #include "detail/parser.hpp"
 
 namespace cytx
@@ -20,8 +21,10 @@ namespace cytx
             std::string key;
             ptree val;
 
-            xml_node(xml_node&& node) : key(std::move(node.key)),
-                val(std::move(node.val)), type(node.type) {}
+            xml_node(xml_node&& node)
+                : key(std::move(node.key))
+                , val(std::move(node.val))
+                , type(node.type) {}
             xml_node(node_type t) : type(t) {}
             xml_node(xml_node& node) : key(node.key), val(node.val), type(node.type) {}
 
@@ -40,11 +43,6 @@ namespace cytx
                 val.clear();
             }
         };
-
-        inline bool find(std::string str, std::string chars)
-        {
-            return std::any_of(str.begin(), str.end(), [chs = std::move(chars)](auto c) -> bool { return chs.find(c) != std::string::npos; });
-        }
 
         template<typename T>
         class base_serialize_adapter
@@ -180,7 +178,7 @@ namespace cytx
                 if (cur_node_.key.empty())
                 {
                     auto str = fmt::format("{}", t);
-                    if (find(str, "@,.<>\"'/&; \t\r\n"))
+                    if (string_util::contains_chars(str, "@,.<>\"'/&; \t\r\n"))
                     {
                         cur_node_.key = "@key";
                         cur_node_.val.add("<xmlattr>.name", str);
@@ -255,9 +253,9 @@ namespace cytx
         class base_deserialize_adapter
         {
         public:
-            typedef ptree value_t;
-            typedef ptree::iterator array_iterator;
-            typedef ptree::iterator member_iterator;
+            using value_t = ptree;
+            using array_iterator = ptree::iterator;
+            using member_iterator = ptree::iterator;
 
             base_deserialize_adapter() {}
             void parse(const char* str) { parse(string(str)); }
@@ -344,24 +342,20 @@ namespace cytx
             template<typename T1>
             void read(T1& t, value_t& val)
             {
-                auto& str = val.data();
-                auto pos = val.data().find("$(");
-                if (pos != std::string::npos)
+                auto str = val.data();
+
+                auto extend_func = [this](const std::string& prop, std::string& val) -> bool {
+                    auto it = properties_.find(prop);
+                    if (it == properties_.end())
+                        return false;
+
+                    val = it->second;
+                    return true;
+                };
+
+                if (string_util::extend_all(str, "$(", ")", extend_func))
                 {
-                    auto end_pos = str.find(")", pos);
-                    if (end_pos != std::string::npos)
-                    {
-                        std::string str_prop, new_str;
-                        auto str_val = str.substr(pos + 2, end_pos - (pos + 2));
-                        auto it = properties_.find(str_val);
-                        if (it != properties_.end())
-                        {
-                            str_prop = it->second;
-                            new_str = str;
-                            new_str.replace(pos, end_pos - pos + 1, str_prop.c_str());
-                        }
-                        t = util::cast<T1>(new_str);
-                    }
+                    t = util::cast<T1>(str);
                 }
                 else
                 {

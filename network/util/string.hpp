@@ -119,6 +119,64 @@ namespace cytx
             {
                 boost::replace_all(str, search_str, replace_str);
             }
+
+            static bool extend_all(std::string& str, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            {
+                size_t offset = 0;
+                bool result = true;
+                do
+                {
+                    result = internal_extend(str, offset, begin_extend, end_extend, extend_func);
+                } while (result && offset != std::string::npos);
+
+                return result;
+            }
+
+            static bool extend_any(std::string& str, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            {
+                size_t offset = 0;
+                bool result = false;
+                do
+                {
+                    result = internal_extend(str, offset, begin_extend, end_extend, extend_func);
+                } while (offset != std::string::npos);
+
+                return result;
+            }
+
+            static bool extend(std::string& str, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            {
+                size_t offset = 0;
+                return internal_extend(str, offset, begin_extend, end_extend, extend_func);
+            }
+
+        private:
+            static bool internal_extend(std::string& str, size_t& offset, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            {
+                auto pos = str.find(begin_extend, offset);
+                offset = std::string::npos;
+
+                if (pos == std::string::npos)
+                    return false;
+
+                auto end_pos = str.find(end_extend, pos);
+                if (end_pos == std::string::npos)
+                    return false;
+
+                size_t begin_extend_length = begin_extend.length();
+                size_t end_extend_length = end_extend.length();
+
+                offset = end_pos + end_extend_length;
+
+                std::string str_prop, new_str;
+                auto str_val = str.substr(pos + begin_extend_length, end_pos - (pos + begin_extend_length));
+                if (!extend_func(str_val, str_prop))
+                    return false;
+
+                str.replace(pos, end_pos - pos + end_extend_length, str_prop);
+
+                return true;
+            }
         };
     }
 

@@ -2,6 +2,7 @@
 #include <fmt/format.h>
 #include "network/base/GameObjectStream.h"
 #include "network/util/net.hpp"
+#include "deserializer.hpp"
 
 namespace cytx
 {

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <fmt/format.h>
 #include <boost/filesystem.hpp>
+#include "deserializer.hpp"
 #include "detail/csv_parser.hpp"
 #include "network/util/cast.hpp"
 #include "network/util/string.hpp"
