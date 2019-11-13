@@ -10,29 +10,12 @@
 
 #include "network/base/log.hpp"
 #include "network/util/string.hpp"
+#include "network/util/cast.hpp"
 
 namespace cytx
 {
     namespace orm
     {
-        namespace detail
-        {
-            inline std::map<std::string, std::string> split(std::string connect_str)
-            {
-                std::map<std::string, std::string> connect_args;
-
-                std::vector<std::string> tmp_strs = string_util::split(connect_str, ";");
-                for (auto& tmp_str : tmp_strs)
-                {
-                    std::vector<std::string> pairs = string_util::split(tmp_str, "=");
-                    if (pairs.size() != 2)
-                        continue;
-                    connect_args[pairs[0]] = pairs[1];
-                }
-                return connect_args;
-            }
-        }
-
         using log_ptr_t = std::shared_ptr<spdlog::logger>;
 
         class mysql_db;
@@ -71,9 +54,9 @@ namespace cytx
 
                 conn_ = mysql_init(conn_);
                 connect_str_ = connect_str;
-                auto args = detail::split(connect_str_);
+                auto args = string_util::split_to_map(connect_str_);
                 ip_ = args["ip"];
-                port_ = boost::lexical_cast<uint32_t>(args["port"]);
+                port_ = util::cast<uint32_t>(args["port"]);
                 user_ = args["user"];
                 pwd_ = args["pwd"];
 
@@ -194,8 +177,7 @@ namespace cytx
 
             void execute_batch(std::string sql_str)
             {
-                std::vector<std::string> sqls;
-                boost::algorithm::split(sqls, sql_str, boost::is_any_of(";"), boost::algorithm::token_compress_on);
+                std::vector<std::string> sqls = string_util::split(sql_str, ";");
                 for (const auto& s : sqls)
                 {
                     if (!s.empty())

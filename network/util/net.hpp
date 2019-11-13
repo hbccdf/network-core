@@ -30,7 +30,7 @@ namespace cytx
     {
         inline static std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string)
         {
-            auto address_port_list = string_util::split(address_port_string, " ,|");
+            auto address_port_list = string_util::split(address_port_string, " ,|;");
             std::vector<boost::asio::ip::tcp::endpoint> tcp_endpoints;
             for (auto const& address_port : address_port_list)
             {

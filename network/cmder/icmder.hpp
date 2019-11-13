@@ -17,7 +17,7 @@ namespace cytx
 
         inline vector<string> get_args(string input)
         {
-            return split_winmain(input);
+            return split_unix(input);
         }
 
         inline bool all_default(const variables_map& vm)

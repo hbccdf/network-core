@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <boost/program_options.hpp>
+#include "deserializer.hpp"
 #include "network/traits/traits.hpp"
 #include "network/meta/meta.hpp"
 #include "network/util/cast.hpp"
@@ -129,14 +130,8 @@ namespace cytx
 
         void parse(const char* cmd_line)
         {
-            clear();
-#ifdef LINUX
             std::vector<std::string> args = bpo::split_unix(cmd_line);
-#else
-            std::vector<std::string> args = bpo::split_winmain(cmd_line);
-#endif
-            bpo::store(bpo::command_line_parser(args).options(ops_).positional(*pod_ptr_).run(), vm_);
-            bpo::notify(vm_);
+            parse(args);
         }
 
         void parse(const std::vector<std::string>& args)

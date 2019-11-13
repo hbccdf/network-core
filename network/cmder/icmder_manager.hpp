@@ -61,7 +61,7 @@ namespace cytx
 
         int handle_input(std::string input)
         {
-            auto strs = string_util::split(input, " ");
+            auto strs = detail::get_args(input);
             if (strs.empty() || (strs.size() == 1 && strs[0].empty()))
                 return true;
             std::vector<const char*> argv;

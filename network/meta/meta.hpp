@@ -13,6 +13,7 @@
 
 #include "network/base/type_id.hpp"
 #include "network/traits/traits.hpp"
+#include "network/util/string.hpp"
 
 namespace cytx
 {
@@ -56,21 +57,13 @@ namespace cytx
         };
         TEMPLATE_TYPE(get_method_extend_type);*/
 
-        template<typename T, class = std::void_t<>>
-        struct enum_meta : public std::false_type {};
-
         template<typename T>
-        struct enum_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_enum_extend_type_t<T>>>>> : std::true_type
-        {};
+        struct enum_meta : std::integral_constant<bool, !std::is_void_v<get_enum_extend_type_t<T>>> {};
 
         TEMPLATE_VALUE(enum_meta);
 
-        template<typename T, class = std::void_t<>>
-        struct db_meta : public std::false_type {};
-
         template<typename T>
-        struct db_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_db_extend_type_t<T>>>>> : std::true_type
-        {};
+        struct db_meta : std::integral_constant<bool, !std::is_void_v<get_db_extend_type_t<T>>> {};
 
         TEMPLATE_VALUE(db_meta);
 
@@ -78,54 +71,18 @@ namespace cytx
 
         TEMPLATE_VALUE(is_db_meta);
 
-        template<typename T, class = std::void_t<>>
-        struct st_meta : public std::false_type {};
-
         template<typename T>
-        struct st_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_st_extend_type_t<T>>>>> : std::true_type
-        {};
+        struct st_meta : std::integral_constant<bool, !std::is_void_v<get_st_extend_type_t<T>>> {};
 
         TEMPLATE_VALUE(st_meta);
 
-        /*template<typename T, class = std::void_t<>>
-        struct method_meta : public std::false_type {};
-
-        template<typename T>
-        struct method_meta<T, std::void_t<std::enable_if_t<!std::is_void_v<get_method_extend_type_t<T>>>>> : std::true_type
-        {};
+        /*template<typename T>
+        struct method_meta : std::integral_constant<bool, !std::is_void_v<get_method_extend_type_t<T>>> {};
 
         TEMPLATE_VALUE(method_meta);*/
 
-
-        template <typename T, class = std::void_t<>>
-        struct is_reflection : std::false_type
-        {
-        };
-
-        template <typename T>
-        struct is_reflection<T, std::void_t<std::enable_if_t<db_meta_v<T>>>> : std::true_type
-        {
-        };
-
-        template <typename T>
-        struct is_reflection<T, std::void_t<std::enable_if_t<st_meta_v<T>>>> : std::true_type
-        {
-        };
-
-        template <typename T>
-        struct is_reflection<T, std::void_t<std::enable_if_t<has_meta_macro_v<T>>>> : std::true_type
-        {
-        };
-
         template<typename T>
-        struct is_reflection <T, std::void_t<std::enable_if_t<enum_meta_v<T>>>> : std::true_type
-        {
-        };
-
-        /*template <typename T>
-        struct is_reflection<T, std::void_t<std::enable_if_t<method_meta_v<T>>>> : std::true_type
-        {
-        };*/
+        struct is_reflection : std::integral_constant<bool, db_meta_v<T> || st_meta_v<T> || has_meta_macro_v<T> || enum_meta_v<T> /*|| method_meta_v<T>*/> {};
 
         TEMPLATE_VALUE(is_reflection);
 
@@ -406,32 +363,6 @@ namespace cytx
 {
     namespace detail
     {
-        static boost::optional<std::pair<std::string, std::string>> split_enum_str(std::string str, const char* split_field)
-        {
-            boost::optional<std::pair<std::string, std::string>> result;
-            auto pos = str.find(split_field);
-            if (pos != std::string::npos)
-            {
-                std::pair<std::string, std::string> p;
-                p.first = str.substr(0, pos);
-                p.second = str.substr(pos + std::string(split_field).length());
-                result = p;
-            }
-            return result;
-        }
-
-        static boost::optional<std::pair<std::string, std::string>> split_enum_str(std::string str, std::vector<const char*>&& splits)
-        {
-            boost::optional<std::pair<std::string, std::string>> result;
-            for (auto & s : splits)
-            {
-                result = split_enum_str(str, s);
-                if (result)
-                    break;
-            }
-            return result;
-        }
-
         template< typename ENUM_T, typename T>
         std::vector<std::pair<std::string, uint32_t>> get_vec(const T& t)
         {
@@ -497,7 +428,7 @@ namespace cytx
                 }
                 else if (has_enum_name)
                 {
-                    auto r = split_enum_str(str, "::");
+                    auto r = string_util::split_by_string(str, "::");
                     if (r && r->first == name_)
                     {
                         return to_enum_value<T>(str);
@@ -554,7 +485,7 @@ namespace cytx
             template<typename T>
             void reg()
             {
-                using enum_type = get_enum_extend_type_t<T>;
+                using enum_type = meta_t<T>;
                 type_id_t tid = TypeId::id<T>();
                 const char* enum_name = enum_type::name();
 

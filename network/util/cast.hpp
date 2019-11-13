@@ -27,6 +27,7 @@ namespace cytx
                 return fmt::format("{}", (uint32_t)t);
         }
 
+
         template<typename T>
         auto cast(const std::string& str) -> std::enable_if_t<is_bool_type_v<T>, T>
         {
@@ -51,13 +52,13 @@ namespace cytx
         }
 
         template<typename T>
-        auto cast(const std::string& str) -> std::enable_if_t<!is_bool_type_v<T> && !is_enum_type_v<T> && is_basic_type_v<T>, T>
+        auto cast(const std::string& str) -> std::enable_if_t<!is_bool_type_v<T> && is_basic_type_v<T>, T>
         {
             return boost::lexical_cast<T>(str);
         }
 
         template<typename T>
-        auto cast(const char* str) -> std::enable_if_t<is_date_time_type_v<T>, T>
+        auto cast(const std::string& str) -> std::enable_if_t<is_date_time_type_v<T>, T>
         {
             return date_time::parse(str);
         }
@@ -73,11 +74,6 @@ namespace cytx
             }
         }
 
-        template<typename T>
-        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type_v<T>, std::string>
-        {
-            return fmt::format("{}", t);
-        }
 
         inline std::string cast_string(const char* str)
         {
@@ -88,6 +84,12 @@ namespace cytx
         std::string cast_string(char(&str)[N])
         {
             return str;
+        }
+
+        template<typename T>
+        auto cast_string(const T& t) -> std::enable_if_t<is_basic_type_v<T>, std::string>
+        {
+            return fmt::format("{}", t);
         }
 
         template<typename T>
