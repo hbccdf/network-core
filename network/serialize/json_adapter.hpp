@@ -1,6 +1,7 @@
 #pragma once
 #include <fmt/format.h>
 #include "detail/json_util.hpp"
+#include "network/base/date_time.hpp"
 
 namespace cytx {
 
@@ -31,6 +32,11 @@ namespace cytx {
         void write(T&& t)
         {
             json_.write_value(std::forward<T>(t));
+        }
+
+        void write(date_time& t)
+        {
+            json_.write_value(t.to_string());
         }
 
         void write_is_null(bool is_null)

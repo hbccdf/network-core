@@ -110,8 +110,8 @@ namespace cytx
     template<typename OtherTuple>
     class DeSerializer<csv_deserialize_adapter, OtherTuple> : public BaseDeSerializer
     {
-        typedef csv_deserialize_adapter adapter_t;
-        typedef typename adapter_t::val_t val_t;
+        using adapter_t = csv_deserialize_adapter;
+        using val_t = typename adapter_t::val_t;
     public:
 
         template<typename... ARGS>
@@ -435,7 +435,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadBase(T& t, const std::string& val) -> std::enable_if_t<is_basic_type_v<T>>
+        auto ReadBase(T& t, const std::string& val) -> std::enable_if_t<is_basic_type_v<T> || is_date_time_type_v<T>>
         {
             t = cytx::util::cast<T>(val);
         }

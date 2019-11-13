@@ -72,11 +72,22 @@ public:
     }
 
     template<typename T>
-    T get_de(const bpo::options_description& op, const char* cmd_line)
+    auto get_de(const bpo::options_description& op, const char* cmd_line) -> std::enable_if_t<!is_user_class_v<T>, T>
     {
         using value_t = std::decay_t<T>;
         value_t dv;
         de.parse(cmd_line, op);
+        de.DeSerialize(dv);
+        return std::move(dv);
+    }
+
+    template<typename T>
+    auto get_de(const bpo::options_description& op, const char* cmd_line) -> std::enable_if_t<is_user_class_v<T>, T>
+    {
+        using value_t = std::decay_t<T>;
+        value_t dv;
+        de.init(dv, op);
+        de.parse(cmd_line);
         de.DeSerialize(dv);
         return std::move(dv);
     }
@@ -201,4 +212,22 @@ TEST_F(bpo_type, struct_int1)
     auto dv = get_de<st>(op, "");
     auto is_empty = de.empty();
     assert_eq(is_empty, true);
+}
+
+TEST_F(bpo_type, struct_date_time)
+{
+    struct st
+    {
+        date_time dt;
+        META(dt);
+    };
+
+    op.add_options()
+        ("dt", "dt");
+    de.enum_with_str(true);
+
+    auto dv = get_de<st>(op, R"(--dt "2019-11-13 17:02:03")");
+    date_time dd("2019-11-13 17:02:03");
+
+    assert_eq(dv.dt, dd);
 }

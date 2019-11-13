@@ -130,7 +130,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObjec>
-        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_user_class_v<T>>
+        auto ReadObject(T& t, val_t& val, BeginObjec) -> std::enable_if_t<is_user_class_v<T> && !is_date_time_type_v<T>>
         {
             auto m = get_meta(t);
             ReadTuple(m, val, 0, std::false_type{});
@@ -324,6 +324,15 @@ namespace cytx {
             rd_.read(t, val);
         }
 
+        template<typename BeginObject>
+        void ReadObject(date_time& t, val_t& val, BeginObject)
+        {
+            std::string str;
+            rd_.read(str, val);
+            t = util::cast<date_time>(str);
+        }
+
+
         template<typename T, typename BeginObject>
         auto ReadObject(T& t, val_t& val, BeginObject) -> std::enable_if_t<is_optional_v<T>>
         {
@@ -354,13 +363,13 @@ namespace cytx {
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<is_basic_type_v<T> || is_enum_type_v<T>>
+        auto process_array(val_t& val) -> std::enable_if_t<is_basic_type_v<T> || is_enum_type_v<T> || is_date_time_type_v<T>>
         {
             rd_.process_array(val);
         }
 
         template<typename T>
-        auto process_array(val_t& val) -> std::enable_if_t<!(is_basic_type_v<T> || is_enum_type_v<T>)>
+        auto process_array(val_t& val) -> std::enable_if_t<!(is_basic_type_v<T> || is_enum_type_v<T> || is_date_time_type_v<T>)>
         {
         }
 

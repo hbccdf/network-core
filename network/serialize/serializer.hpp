@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "network/traits/traits.hpp"
 #include "network/meta/meta.hpp"
+#include "network/base/date_time.hpp"
 
 namespace cytx {
 
@@ -197,7 +198,7 @@ namespace cytx {
         }
 
         template<typename T, typename BeginObject>
-        auto WriteObject(T const& t, bool is_last, BeginObject) -> std::enable_if_t<is_basic_type_v<T>>
+        auto WriteObject(T const& t, bool is_last, BeginObject) -> std::enable_if_t<is_basic_type_v<T> || is_date_time_type_v<T>>
         {
             adapter_write_field(t, is_last);
         }

@@ -1093,3 +1093,44 @@ TEST_F(xml_type, vector_with_comment)
     assert_eq(dv.size(), 1);
     assert_eq(dv[0].c, 1);
 }
+
+TEST_F(xml_type, vector_with_date_time)
+{
+    struct person
+    {
+        date_time dt;
+        META(dt);
+    };
+    auto dv = get_de<vector<person>>(R"(<+><+ dt="2018-12-11 10:09:08"/></+>)");
+    auto dd = date_time::parse("2018-12-11 10:09:08");
+    assert_eq(dv.size(), 1);
+    assert_eq(dv[0].dt, dd);
+}
+
+TEST_F(xml_type, vector_with_date_time1)
+{
+    struct person
+    {
+        date_time dt;
+        META(dt);
+    };
+    auto dv = get_de<vector<person>>(R"(<+><+><dt>2018-12-11 10:09:08</dt></+></+>)");
+    auto dd = date_time::parse("2018-12-11 10:09:08");
+    assert_eq(dv.size(), 1);
+    assert_eq(dv[0].dt, dd);
+}
+
+TEST_F(xml_type, vector_with_date_time2)
+{
+    struct person
+    {
+        date_time dt;
+        META(dt);
+    };
+
+    person p;
+    p.dt = date_time::parse("2018-12-11 10:09:08");
+
+    auto dv = get_de(p);
+    assert_eq(p.dt, dv.dt);
+}

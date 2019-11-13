@@ -267,7 +267,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadObject(T& t, val_t& val) -> std::enable_if_t<is_pair_v<T>>
+        auto ReadObject(T& t, val_t& val) -> std::enable_if_t<is_pair_v<T> || is_date_time_type_v<T>>
         {
             if (val.empty())
                 return;
@@ -345,7 +345,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_basic_type_v<T> || is_enum_type_v<T>>
+        auto ReadContainerElement(T& t, const std::string& val) -> std::enable_if_t<is_basic_type_v<T> || is_enum_type_v<T> || is_date_time_type_v<T>>
         {
             t = util::cast<T>(val);
         }
@@ -383,7 +383,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_pair_v<T>, bpo_option_ptr_t>
+        auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_pair_v<T> || is_date_time_type_v<T>, bpo_option_ptr_t>
         {
             bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<std::string>(), option_ptr->description().c_str()));
             return d;

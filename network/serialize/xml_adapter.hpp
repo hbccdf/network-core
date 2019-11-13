@@ -6,6 +6,7 @@
 #include "network/util/cast.hpp"
 #include "network/util/string.hpp"
 #include "detail/parser.hpp"
+#include "network/base/date_time.hpp"
 
 namespace cytx
 {
@@ -219,6 +220,12 @@ namespace cytx
                 {
                     cur_node_.val.put_value(t);
                 }
+            }
+
+            void write(const date_time& t)
+            {
+                std::string str = t.to_string();
+                write(str);
             }
 
             void write_is_null(bool is_null)

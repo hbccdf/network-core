@@ -3,6 +3,7 @@
 #include "network/base/GameObjectStream.h"
 #include "network/util/net.hpp"
 #include "deserializer.hpp"
+#include "network/base/date_time.hpp"
 
 namespace cytx
 {
@@ -35,6 +36,11 @@ namespace cytx
         void write_key(T&& t)
         {
             write(std::forward<T>(t));
+        }
+
+        void write(const date_time& t)
+        {
+            write<int64_t>(t.utc_milliseconds());
         }
 
         template<typename T> std::enable_if_t<std::is_same<T, bool>::value> write(T t)
@@ -266,7 +272,7 @@ namespace cytx
         }
 
         template<typename T, typename BeginObjec>
-        auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<is_user_class_v<T>>
+        auto ReadObject(T& t, BeginObjec) -> std::enable_if_t<is_user_class_v<T> && !is_date_time_type_v<T>>
         {
             rd_.begin_object();
             auto target_meta = get_meta(t);
@@ -432,6 +438,14 @@ namespace cytx
         auto ReadObject(T& t, BeginObject) -> std::enable_if_t<is_basic_type_v<T>>
         {
             rd_.read(t);
+        }
+
+        template<typename BeginObject>
+        auto ReadObject(date_time& t, BeginObject)
+        {
+            int64_t utc_millisecond = 0;
+            rd_.read(utc_millisecond);
+            t = date_time::from_utc_milliseconds(utc_millisecond);
         }
 
         template<typename T, typename BeginObject>
