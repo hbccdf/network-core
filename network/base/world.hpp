@@ -14,6 +14,32 @@ namespace cytx
 
     HAS_FUNC(set_world, ((world_map*)nullptr));
 
+    /*class world_map;*/
+    class world_proxy
+    {
+        friend class world_map;
+    public:
+        world_proxy(world_proxy&& other)
+            : world_ptr_(other.world_ptr_)
+            , name_(std::move(other.name_))
+        {}
+
+        template<typename T>
+        operator T() const;
+
+        template<typename T>
+        world_proxy& operator=(T&& t);
+
+    protected:
+        world_proxy(world_map* world_ptr, const std::string& name)
+            : world_ptr_(world_ptr)
+            , name_(name)
+        {}
+
+        world_map* world_ptr_;
+        std::string name_;
+    };
+
     class world_map
     {
         using dispatcher_t = msg_dispatcher;
@@ -22,6 +48,12 @@ namespace cytx
         {
             static world_map world;
             return world;
+        }
+
+    public:
+        world_proxy operator[](const std::string& name)
+        {
+            return world_proxy(this, name);
         }
     public:
         void set(const std::string& name, void* obj)
@@ -241,4 +273,17 @@ namespace cytx
 
     template<typename T>
     using receiver_t = cytx::Receiver<T>;
+
+    template<typename T>
+    world_proxy::operator T() const
+    {
+        return world_ptr_->get<T>(name_);
+    }
+
+    template<typename T>
+    world_proxy& world_proxy::operator=(T&& t)
+    {
+        world_ptr_->set(name_, std::forward<T>(t));
+        return *this;
+    }
 }
