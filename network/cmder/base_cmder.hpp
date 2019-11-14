@@ -19,8 +19,7 @@ namespace cytx
         void set_world(world_ptr_t world_ptr)
         {
             world_ptr_ = world_ptr;
-
-            manager_ = world_ptr_->get<icmder_manager>("icmder_mgr");
+            manager_ = world_ptr_["icmder_mgr"];
         }
 
     public:

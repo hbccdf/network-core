@@ -10,7 +10,7 @@ namespace cytx
     public:
         bool init()
         {
-            manager_ = world_ptr_->get<icmder_manager>("icmder_mgr");
+            manager_ = world_ptr_["icmder_mgr"];
             return true;
         }
 

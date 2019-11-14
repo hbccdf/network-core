@@ -11,8 +11,7 @@ namespace cytx
         public:
             void init() override
             {
-                service_manager* service_mgr = world_ptr_->get<service_manager>("service_mgr");
-
+                service_manager* service_mgr = world_ptr_["service_mgr"];
                 cmder_service_ = service_mgr->get_service<cmder_service>();
             }
 

@@ -12,12 +12,12 @@ namespace cytx
         using world_basic_type_variant_t = cytx::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double>;
     }
 
-    HAS_FUNC(set_world, ((world_map*)nullptr));
+    HAS_FUNC(set_world, (*(world_ptr_proxy*)nullptr));
 
-    /*class world_map;*/
     class world_proxy
     {
         friend class world_map;
+        friend class world_ptr_proxy;
     public:
         world_proxy(world_proxy&& other)
             : world_ptr_(other.world_ptr_)
@@ -52,6 +52,10 @@ namespace cytx
 
     public:
         world_proxy operator[](const std::string& name)
+        {
+            return world_proxy(this, name);
+        }
+        world_proxy operator[](const char* name)
         {
             return world_proxy(this, name);
         }
@@ -268,16 +272,10 @@ namespace cytx
         dispatcher_t dispatcher_;
     };
 
-    using world_t = world_map;
-    using world_ptr_t = world_t*;
-
-    template<typename T>
-    using receiver_t = cytx::Receiver<T>;
-
     template<typename T>
     world_proxy::operator T() const
     {
-        return world_ptr_->get<T>(name_);
+        return world_ptr_->get<std::remove_pointer_t<T>>(name_);
     }
 
     template<typename T>
@@ -286,4 +284,77 @@ namespace cytx
         world_ptr_->set(name_, std::forward<T>(t));
         return *this;
     }
+
+    class world_ptr_proxy
+    {
+    public:
+        world_ptr_proxy()
+            : world_ptr_(nullptr)
+        {}
+
+        world_ptr_proxy(world_map* world_ptr)
+            : world_ptr_(world_ptr)
+        {}
+
+        world_map& operator*() const
+        {
+            return *world_ptr_;
+        }
+
+        world_map* operator->() const
+        {
+            return world_ptr_;
+        }
+
+        world_ptr_proxy& operator= (const world_ptr_proxy& other)
+        {
+            if (this == &other)
+                return *this;
+            world_ptr_ = other.world_ptr_;
+            return *this;
+        }
+        world_ptr_proxy& operator= (world_map* ptr)
+        {
+            world_ptr_ = ptr;
+            return *this;
+        }
+
+        world_proxy operator[](const std::string& name)
+        {
+            return world_proxy(world_ptr_, name);
+        }
+
+        world_proxy operator[](const char* name)
+        {
+            return world_proxy(world_ptr_, name);
+        }
+
+        world_map* get() const {
+            return world_ptr_;
+        }
+
+        operator world_map*() const
+        {
+            return world_ptr_;
+        }
+
+        operator bool() const
+        {
+            return world_ptr_ != nullptr;
+        }
+
+        bool operator< (const world_ptr_proxy& other)
+        {
+            return world_ptr_ < other.world_ptr_;
+        }
+
+    protected:
+        world_map* world_ptr_;
+    };
+
+    using world_t = world_map;
+    using world_ptr_t = world_ptr_proxy;
+
+    template<typename T>
+    using receiver_t = cytx::Receiver<T>;
 }

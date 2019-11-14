@@ -23,7 +23,7 @@ namespace cytx
             if(auto_register_all_service_)
                 service_mgr_.register_all_service();
 
-            world_ptr_->set("service_mgr", &service_mgr_);
+            world_ptr_["service_mgr"] = &service_mgr_;
 
             return service_mgr_.init_service();
         }
