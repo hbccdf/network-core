@@ -7,20 +7,38 @@ namespace cytx
 {
 
 #define SERVICE_FUNC_IMPL(func) \
-public:                                                             \
-    void func() override                                            \
-    {                                                               \
-        func ## _impl<T>();                                         \
-    }                                                               \
-private:                                                            \
-    template<typename TT>                                           \
-    auto func ## _impl() -> std::enable_if_t<has_##func##_v<TT>>    \
-    {                                                               \
-        val_->func();                                               \
-    }                                                               \
-    template<typename TT>                                           \
-    auto func ## _impl()->std::enable_if_t<!has_##func##_v<TT>>     \
-    {                                                               \
+public:                                                                 \
+    void func() override                                                \
+    {                                                                   \
+        func ## _impl<T>();                                             \
+    }                                                                   \
+private:                                                                \
+    template<typename TT>                                               \
+    auto func ## _impl() -> std::enable_if_t<has_##func##_v<TT>>        \
+    {                                                                   \
+        val_->func();                                                   \
+    }                                                                   \
+    template<typename TT>                                               \
+    auto func ## _impl()->std::enable_if_t<!has_##func##_v<TT>>         \
+    {                                                                   \
+    }
+
+#define SERVICE_FUNC_IMPL_BOOL(func) \
+public:                                                                 \
+    bool func() override                                                \
+    {                                                                   \
+        return func ## _impl<T>();                                      \
+    }                                                                   \
+private:                                                                \
+    template<typename TT>                                               \
+    auto func ## _impl() -> std::enable_if_t<has_##func##_v<TT>, bool>  \
+    {                                                                   \
+        return val_->func();                                            \
+    }                                                                   \
+    template<typename TT>                                               \
+    auto func ## _impl()->std::enable_if_t<!has_##func##_v<TT>, bool>   \
+    {                                                                   \
+        return true;                                                    \
     }
 
     HAS_FUNC(init);
@@ -34,12 +52,13 @@ private:                                                            \
     {
         using this_t = service_helper;
     public:
-        service_helper()
-            : service_helper(new T())
+        service_helper(const std::string& service_name)
+            : service_helper(new T(), service_name)
         {
         }
-        service_helper(T* val)
+        service_helper(T* val, const std::string& service_name)
             : val_(val)
+            , name_(service_name)
         {
         }
         virtual ~service_helper()
@@ -57,19 +76,10 @@ private:                                                            \
         {
             set_world_impl<T>(world_ptr);
         }
-        bool init() override
-        {
-            return init_impl<T>();
-        }
-        bool start() override
-        {
-            return start_impl<T>();
-        }
-        bool reload() override
-        {
-            return reload_impl<T>();
-        }
 
+        SERVICE_FUNC_IMPL_BOOL(init);
+        SERVICE_FUNC_IMPL_BOOL(start);
+        SERVICE_FUNC_IMPL_BOOL(reload);
         SERVICE_FUNC_IMPL(stop)
         SERVICE_FUNC_IMPL(reset)
 
@@ -79,40 +89,17 @@ private:                                                            \
             return TypeId::id<T>();
         }
 
+        std::string get_name() const override
+        {
+            return name_;
+        }
+
+        void* get_ptr() const override
+        {
+            return val_;
+        }
+
     private:
-        template<typename TT>
-        auto init_impl() -> std::enable_if_t<has_init_v<TT>, bool>
-        {
-            return val_->init();
-        }
-        template<typename TT>
-        auto init_impl()->std::enable_if_t<!has_init_v<TT>, bool>
-        {
-            return true;
-        }
-
-        template<typename TT>
-        auto start_impl() -> std::enable_if_t<has_start_v<TT>, bool>
-        {
-            return val_->start();
-        }
-        template<typename TT>
-        auto start_impl()->std::enable_if_t<!has_start_v<TT>, bool>
-        {
-            return true;
-        }
-
-        template<typename TT>
-        auto reload_impl() -> std::enable_if_t<has_reload_v<TT>, bool>
-        {
-            return val_->reload();
-        }
-        template<typename TT>
-        auto reload_impl()->std::enable_if_t<!has_reload_v<TT>, bool>
-        {
-            return true;
-        }
-
         template<typename TT>
         auto set_world_impl(world_ptr_t world_ptr) -> std::enable_if_t<has_set_world_v<TT>>
         {
@@ -124,6 +111,7 @@ private:                                                            \
         }
     private:
         T* val_;
+        std::string name_;
     };
 
 
@@ -156,11 +144,8 @@ private:                                                            \
             if (it != service_map_.end())
                 return 0;
 
-            service_map_.emplace(type_id, new real_type());
-            if (!service_name.empty())
-            {
-                name_map_.emplace(service_name, type_id);
-            }
+            service_map_.emplace(type_id, new real_type(service_name));
+            name_map_.emplace(service_name, type_id);
             return 0;
         }
 
@@ -168,18 +153,14 @@ private:                                                            \
         int register_service(const std::string& service_name)
         {
             using real_type = service_helper<T>;
-            using real_base_type = service_helper<BaseT>;
 
             type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
                 return 0;
 
-            service_map_.emplace(type_id, new real_type());
-            if (!service_name.empty())
-            {
-                name_map_.emplace(service_name, type_id);
-            }
+            service_map_.emplace(type_id, new real_type(service_name));
+            name_map_.emplace(service_name, type_id);
 
             type_id_t base_type_id = TypeId::id<BaseT>();
             auto& type_list = derived_service_map_[base_type_id];
@@ -190,13 +171,11 @@ private:                                                            \
         template<typename T>
         T* get_service() const
         {
-            using real_type = service_helper<T>;
             type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
             {
-                real_type* val = static_cast<real_type*>(it->second);
-                return val->get_val();
+                return static_cast<T*>(it->second->get_ptr());
             }
 
             std::vector<T*> type_list = get_derived_services<T>();
@@ -211,13 +190,11 @@ private:                                                            \
         {
             std::vector<T*> type_list;
 
-            using real_type = service_helper<T>;
             type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
             {
-                real_type* val = static_cast<real_type*>(it->second);
-                type_list.push_back(val->get_val());
+                return static_cast<T*>(it->second->get_ptr());
             }
 
             auto derived_type_list = get_derived_services<T>();
@@ -231,30 +208,17 @@ private:                                                            \
         template<typename T>
         bool find_service() const
         {
-            using real_type = service_helper<T>;
-            type_id_t type_id = TypeId::id<T>();
-            auto it = service_map_.find(type_id);
-            if (it != service_map_.end())
-                return true;
-
-            std::vector<T*> type_list = get_derived_services<T>();
-            return !type_list.empty();
+            return get_service<T>() != nullptr;
         }
 
         bool find_service(const std::string& service_name) const
         {
-            auto name_it = name_map_.find(service_name);
-            if (name_it == name_map_.end())
-                return false;
-
-            auto it = service_map_.find(name_it->second);
-            return it != service_map_.end();
+            return get_service(service_name) != nullptr;
         }
 
         template<typename T>
         iservice* get_iservice() const
         {
-            using real_type = service_helper<T>;
             type_id_t type_id = TypeId::id<T>();
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
@@ -293,7 +257,6 @@ private:                                                            \
         std::vector<type_id_t> get_derived_typeid_list() const
         {
             std::vector<type_id_t> type_list;
-            using real_type = service_helper<T>;
             type_id_t base_type_id = TypeId::id<T>();
 
             auto it = derived_service_map_.find(base_type_id);
@@ -315,12 +278,9 @@ private:                                                            \
             if (it != service_map_.end())
                 return it->second;
 
-            iservice* service_ptr = new real_type(ptr);
+            iservice* service_ptr = new real_type(ptr, service_name);
             service_map_.emplace(type_id, service_ptr);
-            if (!service_name.empty())
-            {
-                name_map_.emplace(service_name, type_id);
-            }
+            name_map_.emplace(service_name, type_id);
             return service_ptr;
         }
 
@@ -334,7 +294,6 @@ private:                                                            \
         std::vector<BaseT*> get_derived_services() const
         {
             std::vector<BaseT*> derived_list;
-            using real_type = service_helper<BaseT>;
             type_id_t base_type_id = TypeId::id<BaseT>();
 
             auto it = derived_service_map_.find(base_type_id);
@@ -348,8 +307,7 @@ private:                                                            \
                 iservice* service_ptr = get_service(type_id);
                 if (service_ptr)
                 {
-                    real_type* val = static_cast<real_type*>(service_ptr);
-                    derived_list.push_back(val->get_val());
+                    derived_list.push_back(static_cast<BaseT*>(it->second->get_ptr()););
                 }
             }
             return derived_list;

@@ -9,7 +9,7 @@ namespace cytx
         void set_world(world_ptr_t world_ptr)
         {
             world_ptr_ = world_ptr;
-            service_mgr_ = world_ptr_->get<service_manager>("service_mgr");
+            service_mgr_ = world_ptr_["service_mgr"];
         }
 
     protected:

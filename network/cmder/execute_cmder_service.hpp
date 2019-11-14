@@ -19,7 +19,7 @@ namespace cytx
     public:
         bool init()
         {
-            cmder_service_ = service_mgr_->get_service<cmder_service>();
+            cmder_service_ = service_mgr_->get();
 
             std::string cmder_config_path = world_ptr_->get_string_or("cmder_config_path", "config/cmd.xml");
             cmder_reader::read_config(config_, cmder_config_path);

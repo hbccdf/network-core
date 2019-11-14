@@ -16,5 +16,7 @@ namespace cytx
         virtual bool reload() = 0;
     public:
         virtual type_id_t get_type_id() const = 0;
+        virtual std::string get_name() const = 0;
+        virtual void* get_ptr() const = 0;
     };
 }

@@ -3,6 +3,25 @@
 
 namespace cytx
 {
+    class service_manager_proxy
+    {
+        friend class service_manager;
+    public:
+        service_manager_proxy(service_manager_proxy&& other)
+            : mgr_(other.mgr_)
+        {}
+
+        template<typename T>
+        operator T*() const;
+
+    protected:
+        service_manager_proxy(const service_manager* mgr)
+            : mgr_(mgr)
+        {}
+
+        const service_manager* mgr_;
+    };
+
     class service_manager
     {
     public:
@@ -53,13 +72,17 @@ namespace cytx
         }
 
     public:
+        service_manager_proxy get() const
+        {
+            return service_manager_proxy(this);
+        }
+
         template<typename T>
         T* get_service() const
         {
             if (service_map_.empty())
                 return nullptr;
 
-            using real_type = service_helper<T>;
             type_id_t type_id = TypeId::id<T>();
 
             T* service_ptr = internal_get_service<T>(type_id);
@@ -85,7 +108,6 @@ namespace cytx
             if (service_map_.empty())
                 return type_list;
 
-            using real_type = service_helper<T>;
             type_id_t type_id = TypeId::id<T>();
 
             T* service_ptr = internal_get_service<T>(type_id);
@@ -155,7 +177,7 @@ namespace cytx
             service_map_ = service_factory::ins().get_all_service_map();
         }
         template<typename T>
-        void reg_inter_service(T* ptr, const std::string& service_name = "")
+        void reg_inter_service(T* ptr, const std::string& service_name)
         {
             iservice* service_ptr = service_factory::ins().reg_inter_service<T>(ptr, service_name);
             if (service_ptr)
@@ -178,16 +200,20 @@ namespace cytx
         template<typename T>
         T* internal_get_service(type_id_t type_id) const
         {
-            using real_type = service_helper<T>;
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
             {
-                real_type* val = static_cast<real_type*>(it->second);
-                return val->get_val();
+                return static_cast<T*>(it->second->get_ptr());
             }
             return nullptr;
         }
     private:
         std::map<type_id_t, iservice*> service_map_;
     };
+
+    template<typename T>
+    service_manager_proxy::operator T*() const
+    {
+        return mgr_->get_service<T>();
+    }
 }
