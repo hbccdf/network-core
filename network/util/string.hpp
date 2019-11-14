@@ -15,6 +15,7 @@ namespace cytx
 
         class string_util
         {
+            using extend_func_t = std::function<bool(const std::string&, std::string&)>;
         public:
             static void split(std::vector<std::string>& strs, const std::string& input, const std::string& chars)
             {
@@ -120,7 +121,7 @@ namespace cytx
                 boost::replace_all(str, search_str, replace_str);
             }
 
-            static bool extend_all(std::string& str, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            static bool extend_all(std::string& str, const std::string& begin_extend, const std::string& end_extend, extend_func_t extend_func)
             {
                 size_t offset = 0;
                 bool result = true;
@@ -132,32 +133,32 @@ namespace cytx
                 return result;
             }
 
-            static bool extend_any(std::string& str, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            static bool extend_any(std::string& str, const std::string& begin_extend, const std::string& end_extend, extend_func_t extend_func)
             {
                 size_t offset = 0;
                 bool result = false;
                 do
                 {
-                    result = internal_extend(str, offset, begin_extend, end_extend, extend_func);
+                    result = result || internal_extend(str, offset, begin_extend, end_extend, extend_func);
                 } while (offset != std::string::npos);
 
                 return result;
             }
 
-            static bool extend(std::string& str, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            static bool extend(std::string& str, const std::string& begin_extend, const std::string& end_extend, extend_func_t extend_func)
             {
                 size_t offset = 0;
                 return internal_extend(str, offset, begin_extend, end_extend, extend_func);
             }
 
         private:
-            static bool internal_extend(std::string& str, size_t& offset, const std::string& begin_extend, const std::string& end_extend, std::function<bool(const std::string&, std::string&)> extend_func)
+            static bool internal_extend(std::string& str, size_t& offset, const std::string& begin_extend, const std::string& end_extend, extend_func_t& extend_func)
             {
                 auto pos = str.find(begin_extend, offset);
                 offset = std::string::npos;
 
                 if (pos == std::string::npos)
-                    return false;
+                    return true;
 
                 auto end_pos = str.find(end_extend, pos);
                 if (end_pos == std::string::npos)
