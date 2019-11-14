@@ -90,9 +90,7 @@ namespace cytx
             {
                 int ret = execute_cmd_string(node->cmdStr);
                 if (ret != 0)
-                {
                     return ret;
-                }
 
                 ++current_times;
                 if (current_times < node->times && node->interval > 0)
@@ -113,9 +111,7 @@ namespace cytx
             {
                 int ret = execute_cmd_one_line(str);
                 if (ret != 0)
-                {
                     return ret;
-                }
             }
 
             return 0;
@@ -138,7 +134,11 @@ namespace cytx
         {
             std::string next_cmd_name;
             next_cmd_name = is_success ? cur_cmd_ptr->nextCmd : cur_cmd_ptr->nextCmdWhenFailed;
-            if (!next_cmd_name.empty())
+            if (next_cmd_name.empty() && is_success)
+            {
+                return ++cur_cmd_index_;
+            }
+            else if (!next_cmd_name.empty())
             {
                 auto it = cmd_map_.find(next_cmd_name);
                 if (it != cmd_map_.end())
@@ -147,7 +147,7 @@ namespace cytx
                 }
             }
 
-            return cur_cmd_index_ + 1;
+            return -1;
         }
 
     private:

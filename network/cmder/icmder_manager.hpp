@@ -87,10 +87,9 @@ namespace cytx
             if (argc <= 0 || cmders_.find(argv[0]) == cmders_.end())
             {
                 std::cout << "invalid command, please retry input" << std::endl;
-                return true;
+                return 1;
             }
-            auto result = cmders_[argv[0]]->handle_input(argc, argv);
-            return result;
+            return cmders_[argv[0]]->handle_input(argc, argv);
         }
 
         void show_help() const
