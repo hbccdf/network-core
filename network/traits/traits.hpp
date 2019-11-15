@@ -18,12 +18,6 @@
 
 namespace cytx {
 
-#define TEMPLATE_VALUE(token) \
-    template<typename T> constexpr bool token ##_v = token<T>::value
-
-#define TEMPLATE_TYPE(token) \
-    template<typename T> using token ##_t = typename token<T>::type;
-
     template <typename ... Args>
     struct variant : boost::variant<boost::blank, Args...>
     {

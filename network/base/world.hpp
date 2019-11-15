@@ -43,6 +43,7 @@ namespace cytx
     class world_map
     {
         using dispatcher_t = msg_dispatcher;
+        using internal_func_t = std::function<boost::any(std::vector<boost::any>&)>;
     public:
         static world_map& global()
         {
@@ -86,10 +87,16 @@ namespace cytx
         }
 
         template<typename T>
-        auto set(const std::string& name, T* obj) -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T>>
+        auto set(const std::string& name, T* obj) -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T> && !is_callable_v<T>>
         {
             set(name, (void*)obj);
             set(obj);
+        }
+
+        template<typename F>
+        auto set(const std::string& name, F&& f) -> std::enable_if_t<is_callable_v<F>>
+        {
+            set_function(name, std::forward<F>(f));
         }
 
         template<typename T>
@@ -116,7 +123,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto get(const std::string& name) const -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T>, T*>
+        auto get(const std::string& name) const -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T> && !is_callable_v<T>, T*>
         {
             auto it = obj_map_.find(name);
             if (it != obj_map_.end())
@@ -125,6 +132,12 @@ namespace cytx
             }
 
             return nullptr;
+        }
+
+        template<typename F>
+        auto get(const std::string& name) -> std::enable_if_t<is_callable_v<F>, F>
+        {
+            return get_function<F>(name);
         }
 
         void set_string(const std::string& name, const std::string& value)
@@ -182,6 +195,35 @@ namespace cytx
             }
 
             return or_value;
+        }
+
+        template<typename F>
+        F get_function(const std::string& name) const
+        {
+            auto it = func_map_.find(name);
+            if (it == func_map_.end())
+                return nullptr;
+
+            auto func = it->second;
+            using args_tuple_t = function_args_t<F>;
+            return internal_get_func<F>(func, indices_t<args_tuple_t>{});
+        }
+
+        template<typename F>
+        auto set_function(const std::string key, F&& func) -> std::enable_if_t<function_has_result_v<F>>
+        {
+            func_map_[key] = [f = std::forward<F>(func)](std::vector<boost::any>& arg_list)->boost::any {
+                return invoke(f, arg_list);
+            };
+        }
+
+        template<typename F>
+        auto set_function(const std::string key, F&& func) -> std::enable_if_t<!function_has_result_v<F>>
+        {
+            func_map_[key] = [f = std::forward<F>(func)](std::vector<boost::any>& arg_list)->boost::any {
+                invoke(f, arg_list);
+                return boost::any{};
+            };
         }
 
     public:
@@ -262,11 +304,41 @@ namespace cytx
         {
         }
 
+        template <typename F, size_t ... Is>
+        F internal_get_func(internal_func_t& func, std::index_sequence<Is...>) const
+        {
+            using Ret = function_result_t<F>;
+            using args_tuple_t = function_args_t<F>;
+            return internal_get_func<F, Ret, std::tuple_element_t<Is, args_tuple_t> ...>(func);
+        }
+
+        template<typename F, typename Ret, typename ... Args>
+        auto internal_get_func(internal_func_t& func) const -> std::enable_if_t<std::is_void<Ret>::value, F>
+        {
+            return [func](Args&& ... args) {
+                std::vector<boost::any> arg_list;
+                to_arg_list(arg_list, std::forward<Args>(args) ...);
+                func(arg_list);
+            };
+        }
+
+        template<typename F, typename Ret, typename ... Args>
+        auto internal_get_func(internal_func_t& func) const -> std::enable_if_t<!std::is_void<Ret>::value, F>
+        {
+            return [func](Args&& ... args) {
+                std::vector<boost::any> arg_list;
+                to_arg_list(arg_list, std::forward<Args>(args) ...);
+                boost::any ret = func(arg_list);
+                return boost::any_cast<Ret>(ret);
+            };
+        }
+
     private:
         std::unordered_map<type_id_t, void*> type_obj_map_;
         std::unordered_map<std::string, void*> obj_map_;
         std::unordered_map<std::string, std::string> str_map_;
         std::unordered_map<std::string, detail::world_basic_type_variant_t> basic_map_;
+        std::unordered_map<std::string, internal_func_t> func_map_;
 
     private:
         dispatcher_t dispatcher_;
