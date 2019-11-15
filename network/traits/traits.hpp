@@ -310,8 +310,7 @@ namespace cytx {
         : std::conditional< std::is_same<std::decay_t<T>, std::decay_t<Arg0>>::value, std::true_type, tuple_contains<T, Args... >> ::type {};
 
     template<typename T>
-    struct tuple_contains<T, std::tuple<>>
-        : std::false_type {};
+    struct tuple_contains<T, std::tuple<>> : std::false_type {};
 
     template < typename T >
     struct tuple_contains<T> : std::false_type {};

@@ -3,6 +3,7 @@
 #include <tuple>
 #include <type_traits>
 #include <boost/bind.hpp>
+#include <boost/any.hpp>
 
 //member function
 #define FUNCTION_TRAITS(...)\
@@ -25,7 +26,20 @@ namespace std
     template<typename T>
     constexpr static bool is_void_v = std::is_void<T>::value;
 }
+
+#define PLACE_HOLDER std::_Placeholder
+#else
+#define PLACE_HOLDER std::_Ph
 #endif
+
+namespace std
+{
+    template <int Size>
+    struct is_placeholder<boost::arg<Size>>
+        : public std::integral_constant<int, Size>
+    {
+    };
+}
 
 namespace cytx
 {
@@ -61,7 +75,7 @@ namespace cytx
             using type = typename std::tuple_element<I, std::tuple<Args...>>::type;
         };
 
-        using tuple_type = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...> ;
+        using tuple_type = std::tuple<std::decay_t<Args>...> ;
         using raw_tuple_type = std::tuple<Args...>;
 
         constexpr static bool is_class_member_func = false;
@@ -103,21 +117,11 @@ namespace cytx
     {
         return static_cast<typename function_traits<Function>::pointer>(lambda);
     }
-}
 
+    template<typename T>
+    using indices_t = std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>;
 
-namespace std
-{
-    template <int Size>
-    struct is_placeholder<boost::arg<Size>>
-        : public std::integral_constant<int, Size>
-    {
-    };
-}
-
-namespace cytx
-{
-    namespace detail
+    namespace func_detail
     {
         template<typename Tuple>
         struct max_arg_index;
@@ -139,19 +143,11 @@ namespace cytx
         template<typename Index_t, typename FuncArgs, int max_index>
         struct cat_impl;
 
-#ifdef LINUX
         template<size_t ... Is, typename FuncArgs, int max_index>
         struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
         {
-            using type = std::tuple<std::_Placeholder<Is + max_index + 1> ...>;
+            using type = std::tuple<PLACE_HOLDER<Is + max_index + 1> ...>;
         };
-#else
-        template<size_t ... Is, typename FuncArgs, int max_index>
-        struct cat_impl<std::index_sequence<Is...>, FuncArgs, max_index>
-        {
-            using type = std::tuple<std::_Ph<Is + max_index + 1> ...>;
-        };
-#endif
 
         template<bool IsMemberFunc, typename TupleArgs, typename FuncArgs>
         struct cat_helper
@@ -198,14 +194,62 @@ namespace cytx
                 return std::bind(std::forward<F>(f), std::forward<Args>(args)...);
             }
         };
+
+
+        template<size_t I, typename T>
+        T get(std::vector<boost::any>& arg_list)
+        {
+            boost::any v = arg_list[I];
+            return boost::any_cast<T>(v);
+        }
+
+        template<size_t I, typename T, typename Tuple>
+        T get(Tuple&& t)
+        {
+            return std::get<I>(std::forward<Tuple>(t));
+        }
+
+        template <typename Func, typename ArgsTuple, typename ArgList, size_t ... Is>
+        inline auto invoke_impl(Func&& f, ArgList&& arg_list, std::index_sequence<Is...>)
+        {
+            using args_tuple_t = std::remove_reference_t<ArgsTuple>;
+            return f(std::forward<std::tuple_element_t<Is, args_tuple_t>>(get<Is, std::tuple_element_t<Is, args_tuple_t>>(arg_list))...);
+        }
+
+        template <typename Func, typename ArgsTuple, size_t ... Is>
+        inline auto invoke_impl(Func&& f, ArgsTuple&& args_tuple, std::index_sequence<Is...>)
+        {
+            using args_tuple_t = std::remove_reference_t<ArgsTuple>;
+            return f(std::forward<std::tuple_element_t<Is, args_tuple_t>>(get<Is>(args_tuple))...);
+        }
     }
 
     template <typename F, typename ... Args>
     auto bind(F&& f, Args&& ... args)
     {
-        using args_tuple_t = typename cytx::detail::cat<F, std::tuple<Args...>>::type;
-        using help_t = cytx::detail::bind_help<args_tuple_t>;
+        using args_tuple_t = typename func_detail::cat<F, std::tuple<Args...>>::type;
+        using help_t = func_detail::bind_help<args_tuple_t>;
         using func_t = typename function_traits<F>::stl_function_type;
         return static_cast<func_t>(help_t::template bind_impl<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    }
+
+    template <typename Func, typename ArgsTuple>
+    inline auto invoke(Func&& f, ArgsTuple&& args_tuple)
+    {
+        return func_detail::invoke_impl(std::forward<Func>(f), std::forward<ArgsTuple>(args_tuple), indices_t<ArgsTuple>{});
+    }
+
+    template<typename Func, typename ... Args>
+    inline auto invoke(Func&& f, Args&& ... args)
+    {
+        auto args_tuple = std::make_tuple(std::forward<Args>(args)...);
+        return invoke(std::forward<Func>(f), args_tuple);
+    }
+
+    template <typename Func>
+    inline auto invoke(Func&& f, std::vector<boost::any>& arg_list)
+    {
+        using args_tuple_t = typename function_traits<Func>::raw_tuple_type;
+        return func_detail::invoke_impl<Func, args_tuple_t>(std::forward<Func>(f), arg_list, indices_t<args_tuple_t>{});
     }
 }

@@ -11,59 +11,15 @@ namespace cytx {
         struct handler_traits
         {
         private:
-            using function_traits_type = function_traits<std::remove_reference_t<Handler>>;
+            using function_traits_type = function_traits<std::decay_t<Handler>>;
         public:
-            using return_tag = std::conditional_t<std::is_void<typename function_traits_type::result_type>::value,
+            using return_tag = std::conditional_t<std::is_void_v<typename function_traits_type::result_type>,
                 handler_return_void, handler_return_result>;
             using tuple_type = typename function_traits_type::tuple_type;
         };
 
-        template <typename Handler, typename ArgsTuple, size_t ... Is>
-        inline auto invoker_call_handler_impl(Handler&& h, ArgsTuple&& args_tuple, std::index_sequence<Is...>)
-        {
-            using args_tuple_type = std::remove_reference_t<ArgsTuple>;
-            return h(std::forward<std::tuple_element_t<Is, args_tuple_type>>(std::get<Is>(args_tuple))...);
-        }
-
-        template <typename Handler, typename ArgsTuple>
-        inline auto invoker_call_handler(Handler&& h, ArgsTuple&& args_tuple)
-        {
-            using indices_type = std::make_index_sequence<std::tuple_size<std::remove_reference_t<ArgsTuple>>::value>;
-            return invoker_call_handler_impl(std::forward<Handler>(h), std::forward<ArgsTuple>(args_tuple), indices_type{});
-        }
-
         template <typename ReturnTag>
         struct invoker_traits;
-
-        template<typename other_tuple, typename args_tuple>
-        struct get_args_tuple_type;
-
-        template<typename other_tuple, typename Arg, class = std::void_t<>>
-        struct get_arg_type;
-
-        template<typename other_tuple, typename Arg>
-        struct get_arg_type<other_tuple, Arg, std::void_t<std::enable_if_t<tuple_contains<Arg, other_tuple>::value>>>
-        {
-            using type = std::tuple_element_t <tuple_index<Arg, other_tuple>::value, other_tuple>;
-        };
-
-        template<typename other_tuple, typename Arg>
-        struct get_arg_type<other_tuple, Arg, std::void_t<std::enable_if_t<!tuple_contains<Arg, other_tuple>::value>>>
-        {
-            using type = Arg;
-        };
-
-        template<typename other_tuple, typename Arg>
-        using get_arg_type_t = typename get_arg_type<other_tuple, Arg>::type;
-
-        template<typename other_tuple, typename ... Args>
-        struct get_args_tuple_type<other_tuple, std::tuple<Args ...>>
-        {
-            using type = std::tuple < get_arg_type_t<other_tuple, Args> ...>;
-        };
-
-        template<typename other_tuple, typename args_tuple>
-        using get_args_tuple_type_t = typename get_args_tuple_type<other_tuple, args_tuple>::type;
 
         // The return type of the handler is void;
         template <>
@@ -76,17 +32,16 @@ namespace cytx {
                 using connection_ptr = std::shared_ptr<connection_t>;
                 using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
+                using args_tuple_t = typename handler_traits<Handler>::tuple_type;
+                using tuple_type = std::tuple<connection_ptr, header_type&>;
 
-                using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler)]
                 (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto recv_proto = header.proto();
-                    using tuple_type = std::tuple<connection_ptr, header_type&>;
-                    using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
-                    invoker_call_handler(h, args_tuple);
+                    invoke(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
                     if (recv_proto == header.proto())
@@ -109,17 +64,16 @@ namespace cytx {
                 using connection_ptr = std::shared_ptr<connection_t>;
                 using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
+                using args_tuple_t = typename handler_traits<Handler>::tuple_type;
+                using tuple_type = std::tuple<connection_ptr, header_type&>;
 
-                using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler), p = std::forward<PostFunc>(post_func)]
                 (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto recv_proto = header.proto();
-                    using tuple_type = std::tuple<connection_ptr, header_type&>;
-                    using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
-                    invoker_call_handler(h, args_tuple);
+                    invoke(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
                     if (recv_proto == header.proto())
@@ -148,17 +102,16 @@ namespace cytx {
                 using connection_ptr = std::shared_ptr<connection_t>;
                 using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
+                using args_tuple_t = typename handler_traits<Handler>::tuple_type;
+                using tuple_type = std::tuple<connection_ptr, header_type&>;
 
-                using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler)]
                 (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto recv_proto = header.proto();
-                    using tuple_type = std::tuple<connection_ptr, header_type&>;
-                    using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
-                    auto result = invoker_call_handler(h, args_tuple);
+                    auto result = invoke(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
                     if (recv_proto == header.proto())
@@ -182,17 +135,16 @@ namespace cytx {
                 using connection_ptr = std::shared_ptr<connection_t>;
                 using invoker_t = std::function<void(connection_ptr, header_type&, const char*)>;
                 using context_t = typename connection_t::context_t;
+                using args_tuple_t = typename handler_traits<Handler>::tuple_type;
+                using tuple_type = std::tuple<connection_ptr, header_type&>;
 
-                using args_tuple_type = typename handler_traits<Handler>::tuple_type;
                 invoker_t invoker = [h = std::forward<Handler>(handler), p = std::forward<PostFunc>(post_func)]
                 (connection_ptr conn, header_type& header, const char* data)
                 {
                     CodecPolicy cp{ header_type::big_endian() };
                     auto recv_proto = header.proto();
-                    using tuple_type = std::tuple<connection_ptr, header_type&>;
-                    using args_tuple_t = get_args_tuple_type_t<tuple_type, args_tuple_type>;
                     auto args_tuple = cp.template unpack<args_tuple_t, tuple_type>(data, header.length(), tuple_type{ conn, header });
-                    auto result = invoker_call_handler(h, args_tuple);
+                    auto result = invoke(h, args_tuple);
                     if (header.result() == (uint16_t)result_code::not_reply)
                         return;
                     if (recv_proto == header.proto())
