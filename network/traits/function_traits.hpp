@@ -104,6 +104,9 @@ namespace cytx
         template<typename Callable>
         struct function_traits_impl : function_traits_impl<decltype(&Callable::operator())> {};
 
+        template<typename T>
+        struct function_traits : function_traits_impl<std::decay_t<T>> {};
+
         template<typename Tuple>
         struct max_arg_index;
 
@@ -142,8 +145,8 @@ namespace cytx
         template<typename F, typename TupleArgs>
         struct cat
         {
-            using type = typename cat_helper<function_traits_impl<F>::is_class_member_func, TupleArgs,
-                typename function_traits_impl<F>::raw_tuple_type >::type;
+            using type = typename cat_helper<function_traits<F>::is_class_member_func, TupleArgs,
+                typename function_traits<F>::raw_tuple_type >::type;
         };
 
         template<typename T>
@@ -206,8 +209,7 @@ namespace cytx
     }
 
     template<typename T>
-    struct function_traits : func_detail::function_traits_impl<std::decay_t<T>>
-    {};
+    using function_traits = typename func_detail::function_traits<T>;
 
     template<typename T>
     using indices_t = std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>;

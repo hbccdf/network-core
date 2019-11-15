@@ -194,7 +194,7 @@ private:                                                                \
             auto it = service_map_.find(type_id);
             if (it != service_map_.end())
             {
-                return static_cast<T*>(it->second->get_ptr());
+                type_list.push_back(static_cast<T*>(it->second->get_ptr()));
             }
 
             auto derived_type_list = get_derived_services<T>();
@@ -307,7 +307,7 @@ private:                                                                \
                 iservice* service_ptr = get_service(type_id);
                 if (service_ptr)
                 {
-                    derived_list.push_back(static_cast<BaseT*>(it->second->get_ptr()););
+                    derived_list.push_back(static_cast<BaseT*>(service_ptr->get_ptr()));
                 }
             }
             return derived_list;
