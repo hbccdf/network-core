@@ -123,26 +123,36 @@ namespace cytx
 
             static bool extend_all(std::string& str, const std::string& begin_extend, const std::string& end_extend, extend_func_t extend_func)
             {
-                size_t offset = 0;
-                bool result = true;
-                do
-                {
-                    result = internal_extend(str, offset, begin_extend, end_extend, extend_func);
-                } while (result && offset != std::string::npos);
-
-                return result;
-            }
-
-            static bool extend_any(std::string& str, const std::string& begin_extend, const std::string& end_extend, extend_func_t extend_func)
-            {
+                int count = 0;
                 size_t offset = 0;
                 bool result = false;
                 do
                 {
-                    result = result || internal_extend(str, offset, begin_extend, end_extend, extend_func);
+                    result = internal_extend(str, offset, begin_extend, end_extend, extend_func);
+                    if (result && offset != std::string::npos)
+                        ++count;
+                    else if (count > 0 && (!result && offset == std::string::npos))
+                        result = true;
+
+                } while (result && offset != std::string::npos);
+
+                return count > 0 && result;
+            }
+
+            static bool extend_any(std::string& str, const std::string& begin_extend, const std::string& end_extend, extend_func_t extend_func)
+            {
+                int count = 0;
+                size_t offset = 0;
+                bool result = false;
+                do
+                {
+                    result = internal_extend(str, offset, begin_extend, end_extend, extend_func);
+                    if (result && offset != std::string::npos)
+                        ++count;
+
                 } while (offset != std::string::npos);
 
-                return result;
+                return count > 0;
             }
 
             static bool extend(std::string& str, const std::string& begin_extend, const std::string& end_extend, extend_func_t extend_func)
@@ -158,7 +168,7 @@ namespace cytx
                 offset = std::string::npos;
 
                 if (pos == std::string::npos)
-                    return true;
+                    return false;
 
                 auto end_pos = str.find(end_extend, pos);
                 if (end_pos == std::string::npos)

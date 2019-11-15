@@ -360,8 +360,8 @@ namespace cytx
                     return true;
                 };
 
-                string_util::extend_all(str, "$(", ")", extend_func);
-                t = util::cast<T1>(str);
+                bool is_extend = string_util::extend_all(str, "$(", ")", extend_func);
+                t = is_extend ? util::cast<T1>(str) : val.get_value<T1>();
             }
 
             bool is_null(value_t& val)
