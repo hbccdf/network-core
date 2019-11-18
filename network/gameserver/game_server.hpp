@@ -145,7 +145,7 @@ namespace cytx
                     server_unique_id unique_id = data.info.unique_id;
                     if (data.event == EServerConnected)
                     {
-                        LOG_INFO("server {} connected", to_unique_str(unique_id));
+                        LOG_INFO("server {} connected", unique_id);
                         if (unique_id == server_unique_id::db_server)
                         {
                             on_get_db_info(data.info);
@@ -153,11 +153,11 @@ namespace cytx
                     }
                     else if (data.event == EServerDisconnected)
                     {
-                        LOG_INFO("server {} disconnected", to_unique_str(unique_id));
+                        LOG_INFO("server {} disconnected", unique_id);
                     }
                     else
                     {
-                        LOG_DEBUG("server {} event {}", to_unique_str(unique_id), (uint32_t)data.event);
+                        LOG_DEBUG("server {} event {}", unique_id, (uint32_t)data.event);
                     }
                 }
 

@@ -663,4 +663,10 @@ namespace fmt
             f.writer().write("{}", (under_type)val);
         }
     }
+
+    template<typename T>
+    auto format(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<cytx::is_enum_type_v<T>>
+    {
+        format_arg(f, format_str, val);
+    }
 }

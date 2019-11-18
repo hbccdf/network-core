@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "network/util/net.hpp"
 #include "network/util/cast.hpp"
+#include "network/meta/meta.hpp"
 #include "tcp_server.hpp"
 #include "server_config.hpp"
 #include "msg_pack.hpp"
@@ -32,11 +33,6 @@ namespace cytx
     {
         namespace detail
         {
-            inline std::string to_unique_str(server_unique_id unique_id)
-            {
-                return cytx::util::to_str(unique_id, false);
-            }
-
             using namespace cytx;
             using namespace cytx::gameserver;
 
@@ -212,7 +208,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
                     {
-                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
+                        LOG_WARN("server {} is not connected", unique_id);
                         return 0;
                     }
 
@@ -265,7 +261,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
                     {
-                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
+                        LOG_WARN("server {} is not connected", unique_id);
                         return 0;
                     }
 
@@ -318,7 +314,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
                     {
-                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
+                        LOG_WARN("server {} is not connected", unique_id);
                         return ret;
                     }
 
@@ -335,7 +331,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(unique_id);
                     if (!conn_ptr)
                     {
-                        LOG_WARN("server {} is not connected", to_unique_str(unique_id));
+                        LOG_WARN("server {} is not connected", unique_id);
                         return 0;
                     }
 
@@ -410,7 +406,7 @@ namespace cytx
                         }
                         else
                         {
-                            LOG_INFO("connect register, server is {}", to_unique_str(unique_id));
+                            LOG_INFO("connect register, server is {}", unique_id);
                         }
                     }
                     else if(!handle_msg(conn_ptr, msgp))
