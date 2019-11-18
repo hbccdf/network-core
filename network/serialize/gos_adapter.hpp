@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <fmt/format.h>
-#include "network/base/GameObjectStream.h"
+#include "network/base/memory_stream.hpp"
 #include "network/util/net.hpp"
 #include "deserializer.hpp"
 #include "network/base/date_time.hpp"
@@ -10,7 +10,7 @@ namespace cytx
     class gos_serialize_adapter
     {
     public:
-        gos_serialize_adapter(GameObjectStream& gos, bool is_big_endian = false)
+        gos_serialize_adapter(memory_stream& gos, bool is_big_endian = false)
             : gos_(gos)
             , is_big_endian_(is_big_endian) {}
         enum { use_field_separator = 0, use_begin_map = 1 };
@@ -19,12 +19,11 @@ namespace cytx
         void end_serialize() {}
         void begin_object() {  }
         void end_object() {  }
-        void begin_array(size_t array_size) { gos_.pushInt(gos_hton((int)array_size)); }
+        void begin_array(size_t array_size) { gos_.write_int(gos_hton((int)array_size)); }
         void end_array() {  }
         void begin_fixed_array(size_t array_size) {}
         void end_fixed_array() {}
 
-        void write(const std::string& str) { gos_.pushString(str); }
         void write_is_null(bool is_null)
         {
             write(is_null);
@@ -43,49 +42,12 @@ namespace cytx
             write<int64_t>(t.utc_milliseconds());
         }
 
-        template<typename T> std::enable_if_t<std::is_same<T, bool>::value> write(T t)
+        void write(const std::string& str) { gos_.write_string(str); }
+
+        template<typename T>
+        auto write(T t) -> std::enable_if_t<is_number_type_v<T>>
         {
-            gos_.pushBool(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, char>::value> write(T t)
-        {
-            gos_.pushChar(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, unsigned char>::value> write(T t)
-        {
-            gos_.pushUChar(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, short>::value> write(T t)
-        {
-            gos_.pushShort(gos_hton(t));
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, unsigned short>::value> write(T t)
-        {
-            gos_.pushUShort(gos_hton(t));
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, int>::value> write(T t)
-        {
-            gos_.pushInt(gos_hton(t));
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, unsigned int>::value> write(T t)
-        {
-            gos_.pushUInt(gos_hton(t));
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, boost::uint32_t>::value && !std::is_same<unsigned int, boost::uint32_t>::value> write(T t)
-        {
-            gos_.pushUint32(gos_hton(t));
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, float>::value> write(T t)
-        {
-            gos_.pushFloat(gos_hton(t));
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, double>::value> write(T t)
-        {
-            gos_.pushDouble(gos_hton(t));
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, int64_t>::value> write(T t)
-        {
-            gos_.pushInt64(gos_hton(t));
+            gos_.write_value<T>(t);
         }
 
     private:
@@ -95,14 +57,14 @@ namespace cytx
             return is_big_endian_ ? cytx::util::hton(t) : t;
         }
     private:
-        GameObjectStream& gos_;
+        memory_stream& gos_;
         bool is_big_endian_;
     };
 
     class gos_deserialize_adapter
     {
     public:
-        gos_deserialize_adapter(GameObjectStream& gos, bool is_big_endian = false)
+        gos_deserialize_adapter(memory_stream& gos, bool is_big_endian = false)
             : gos_(gos)
             , is_big_endian_(is_big_endian) {}
     public:
@@ -113,7 +75,7 @@ namespace cytx
         void begin_array(size_t& array_size)
         {
             int length = 0;
-            gos_.getInt(length);
+            gos_.read_int(length);
             length = gos_ntoh(length);
             array_size = length;
         }
@@ -122,7 +84,6 @@ namespace cytx
         void begin_fixed_array(size_t array_size) {}
         void end_fixed_array() {}
 
-        void read(std::string& str) { gos_.getString(str); }
         void read_null() {  }
 
         void read_field_name(const std::string& str) {  }
@@ -133,54 +94,20 @@ namespace cytx
             read(std::forward<T>(t));
         }
 
-        template<typename T> std::enable_if_t<std::is_same<T, bool>::value> read(T& t)
+        void read(date_time& t)
         {
-            gos_.getBool(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, char>::value> read(T& t)
-        {
-            gos_.getChar(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, unsigned char>::value> read(T& t)
-        {
-            gos_.getUChar(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, short>::value> read(T& t)
-        {
-            gos_.getShort(t);
-            t = gos_ntoh(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, unsigned short>::value> read(T& t)
-        {
-            gos_.getUShort(t);
-            t = gos_ntoh(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, int>::value> read(T& t)
-        {
-            gos_.getInt(t);
-            t = gos_ntoh(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, unsigned int>::value> read(T& t)
-        {
-            gos_.getUInt(t);
-            t = gos_ntoh(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, float>::value> read(T& t)
-        {
-            gos_.getFloat(t);
-            t = gos_ntoh(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, double>::value> read(T& t)
-        {
-            gos_.getDouble(t);
-            t = gos_ntoh(t);
-        }
-        template<typename T> std::enable_if_t<std::is_same<T, int64_t>::value> read(T& t)
-        {
-            gos_.getInt64(t);
-            t = gos_ntoh(t);
+            int64_t v = 0;
+            read(v);
+            t = date_time::from_utc_milliseconds(v);
         }
 
+        void read(std::string& str) { gos_.read_string(str); }
+
+        template<typename T>
+        auto read(T& t) -> std::enable_if_t<is_number_type_v<T>>
+        {
+            gos_.read_value(t);
+        }
     private:
         template<typename T>
         T gos_ntoh(T t)
@@ -188,7 +115,7 @@ namespace cytx
             return is_big_endian_ ? cytx::util::ntoh(t) : t;
         }
     private:
-        GameObjectStream& gos_;
+        memory_stream& gos_;
         bool is_big_endian_;
     };
 

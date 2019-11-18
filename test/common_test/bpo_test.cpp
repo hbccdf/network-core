@@ -82,7 +82,7 @@ public:
     }
 
     template<typename T>
-    auto get_de(const bpo::options_description& op, const char* cmd_line) -> std::enable_if_t<is_user_class_v<T>, T>
+    auto get_de(bpo::options_description& op, const char* cmd_line) -> std::enable_if_t<is_user_class_v<T>, T>
     {
         using value_t = std::decay_t<T>;
         value_t dv;

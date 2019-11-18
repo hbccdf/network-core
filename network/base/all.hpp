@@ -3,7 +3,7 @@
 #include "exception.hpp"
 #include "log.hpp"
 
-#include "MemoryPoolMgr.h"
-#include "GameObjectStream.h"
+#include "memory_pool.hpp"
+#include "memory_stream.hpp"
 #include "scope_guard.hpp"
 #include "thread_pool.hpp"

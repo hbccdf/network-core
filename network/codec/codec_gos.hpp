@@ -18,7 +18,7 @@ namespace cytx {
             {
                 try
                 {
-                    GameObjectStream gos(const_cast<char*>(data), (int)length, 0);
+                    memory_stream gos(const_cast<char*>(data), (int)length, 0);
                     DeSerializer<gos_deserialize_adapter> dr(gos, is_big_endian_);
 
                     T t{};
@@ -36,7 +36,7 @@ namespace cytx {
             {
                 try
                 {
-                    GameObjectStream gos(const_cast<char*>(data), (int)length, 0);
+                    memory_stream gos(const_cast<char*>(data), (int)length, 0);
                     DeSerializer<gos_deserialize_adapter, Tuple> dr(std::forward<Tuple>(tuple), gos, is_big_endian_);
 
                     return dr.template GetTuple<T>();
@@ -48,7 +48,7 @@ namespace cytx {
             }
 
             template<typename T>
-            T unpack(GameObjectStream& gos)
+            T unpack(memory_stream& gos)
             {
                 try
                 {
@@ -65,7 +65,7 @@ namespace cytx {
             }
 
             template<typename T, typename Tuple>
-            T unpack(GameObjectStream& gos, Tuple&& tuple)
+            T unpack(memory_stream& gos, Tuple&& tuple)
             {
                 try
                 {
@@ -99,9 +99,9 @@ namespace cytx {
                     }
                     if (total_size < 0)
                     {
-                        total_size = GameObjectStream::defualt_size();
+                        total_size = memory_stream::defualt_size();
                     }
-                    GameObjectStream gos(total_size);
+                    memory_stream gos(total_size);
                     Serializer<gos_serialize_adapter> sr(gos, is_big_endian_);
                     sr.Serialize(std::forward<T>(t));
                     gos_buffer buffer(gos);
@@ -114,14 +114,14 @@ namespace cytx {
             }
 
             template <typename ... Args>
-            void pack_args(GameObjectStream& gos, Args&& ... args) const
+            void pack_args(memory_stream& gos, Args&& ... args) const
             {
                 auto args_tuple = std::make_tuple(std::forward<Args>(args)...);
                 pack(gos, std::move(args_tuple));
             }
 
             template <typename T>
-            void pack(GameObjectStream& gos, T&& t) const
+            void pack(memory_stream& gos, T&& t) const
             {
                 try
                 {

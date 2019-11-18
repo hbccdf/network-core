@@ -10,7 +10,7 @@ namespace cytx
     {
         namespace detail
         {
-            using gos_t = cytx::GameObjectStream;
+            using gos_t = cytx::memory_stream;
             using thrift_base_t = ::apache::thrift::TBase;
             using buffer_t = cytx::codec::gos_buffer;
 
@@ -75,7 +75,7 @@ namespace cytx
 
             inline void pack_msg_impl(gos_t& gos, const msg_ptr& msgp, bool is_big_endian)
             {
-                gos.pushBinary(msgp->data(), msgp->length());
+                gos.write_binary(msgp->data(), msgp->length());
             }
 
             template<typename T>

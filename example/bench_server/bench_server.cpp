@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     using namespace cytx;
     using namespace cytx::rpc;
     using server_t = cytx::rpc::server<cytx::codec::gos_codec>;
-    MemoryPoolManager::get_mutable_instance().init();
+    memory_pool::ins().init();
     config c;
     DeSerializer<xml_deserialize_adapter> de;
     de.enum_with_str(true);

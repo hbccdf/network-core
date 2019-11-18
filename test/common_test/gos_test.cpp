@@ -6,12 +6,12 @@
 using namespace cytx;
 using namespace std;
 
-int ______init = ([]()->int { MemoryPoolManager::get_mutable_instance().init(); return 1; })();
+int ______init = ([]()->int { memory_pool::ins().init(); return 1; })();
 
 class gos_type : public ::testing::Test
 {
 public:
-    GameObjectStream gos;
+    memory_stream gos;
     Serializer<gos_serialize_adapter> se{ gos };
     DeSerializer<gos_deserialize_adapter> de{ gos };
 

@@ -73,7 +73,7 @@ namespace cytx
                     world_["svc_manager"] = &service_mgr_;
 
                     //初始化内存池
-                    MemoryPoolManager::get_mutable_instance().init();
+                    memory_pool::ins().init();
 
                     //读取配置文件
                     config_mgr_.init(config_file_name);

@@ -1,13 +1,13 @@
 ﻿#pragma once
 #include "network/base/common.h"
 #include "network/util/net.hpp"
-#include "network/base/GameObjectStream.h"
+#include "network/base/memory_stream.hpp"
 #include <boost/asio/buffer.hpp>
 
 namespace cytx {
     namespace gameserver {
 
-        using stream_t = cytx::GameObjectStream;
+        using stream_t = cytx::memory_stream;
 
         struct msg_header
         {
@@ -140,7 +140,7 @@ namespace cytx {
             {
                 if (data_)
                 {
-                    DELETE_ARRAY_MP(char, data_, length_);
+                    FREE_MP(data_);
                 }
             }
 
@@ -148,14 +148,14 @@ namespace cytx {
             {
                 length_ = data_size;
                 offset_ = 0;
-                data_ = NEW_ARRAY_MP(char, length_);
+                data_ = MALLOC_MP(char, length_);
             }
 
             void reset(char* data_ptr, int data_size)
             {
                 if (data_)
                 {
-                    DELETE_ARRAY_MP(char, data_, length_);
+                    FREE_MP(data_);
                 }
                 data_ = data_ptr;
                 length_ = data_size;

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "network/base/GameObjectStream.h"
+#include "network/base/memory_stream.hpp"
 namespace cytx
 {
     namespace codec
@@ -24,10 +24,10 @@ namespace cytx
             gos_buffer(const char* const begin, size_t size)
             {
                 size_ = size;
-                data_ = NEW_ARRAY_MP(char, (int)size_);
+                data_ = MALLOC_MP(char, size_);
                 memcpy(data_, begin, size_);
             }
-            gos_buffer(GameObjectStream& gos)
+            gos_buffer(memory_stream& gos)
             {
                 data_ = gos.data();
                 size_ = gos.length();
@@ -37,7 +37,7 @@ namespace cytx
             {
                 if (data_)
                 {
-                    DELETE_ARRAY_MP(char, data_, (int)size_);
+                    FREE_MP(data_);
                 }
             }
 
@@ -51,7 +51,7 @@ namespace cytx
             {
                 if (release_memory && data_)
                 {
-                    DELETE_ARRAY_MP(char, data_, (int)size_);
+                    FREE_MP(data_);
                 }
                 data_ = nullptr;
                 size_ = 0;

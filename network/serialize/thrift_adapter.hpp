@@ -1,6 +1,6 @@
 #pragma once
 #include <fmt/format.h>
-#include "network/base/GameObjectStream.h"
+#include "network/base/memory_stream.hpp"
 #include "network/util/net.hpp"
 #include "serializer.hpp"
 #include "deserializer.hpp"
@@ -24,7 +24,7 @@ namespace cytx
     template<>
     class Serializer<thrift_serialize_adapter>
     {
-        using adapter_t = GameObjectStream;
+        using adapter_t = memory_stream;
     public:
         Serializer()
         {
@@ -35,7 +35,7 @@ namespace cytx
         }
 
         template<typename T>
-        auto Serialize(T& t) -> std::enable_if_t<is_tuple_v<T>, GameObjectStream>
+        auto Serialize(T& t) -> std::enable_if_t<is_tuple_v<T>, memory_stream>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -45,13 +45,13 @@ namespace cytx
             uint8_t* body_buf_ptr = nullptr;
             mem_buf->getBuffer(&body_buf_ptr, &length);
 
-            GameObjectStream gos(length);
-            gos.pushBinary((char*)body_buf_ptr, length);
+            memory_stream gos(length);
+            gos.write_binary((char*)body_buf_ptr, length);
             return gos;
         }
 
         template<typename T>
-        auto Serialize(T& t) -> std::enable_if_t<!is_tuple_v<T>, GameObjectStream>
+        auto Serialize(T& t) -> std::enable_if_t<!is_tuple_v<T>, memory_stream>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -61,13 +61,13 @@ namespace cytx
             uint8_t* body_buf_ptr = nullptr;
             mem_buf->getBuffer(&body_buf_ptr, &length);
 
-            GameObjectStream gos(length);
-            gos.pushBinary((char*)body_buf_ptr, length);
+            memory_stream gos(length);
+            gos.write_binary((char*)body_buf_ptr, length);
             return gos;
         }
 
         template<typename T>
-        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<is_tuple_v<T>>
+        auto Serialize(memory_stream& gos, T& t) -> std::enable_if_t<is_tuple_v<T>>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -77,11 +77,11 @@ namespace cytx
             uint8_t* body_buf_ptr = nullptr;
             mem_buf->getBuffer(&body_buf_ptr, &length);
 
-            gos.pushBinary((char*)body_buf_ptr, length);
+            gos.write_binary((char*)body_buf_ptr, length);
         }
 
         template<typename T>
-        auto Serialize(GameObjectStream& gos, T& t) -> std::enable_if_t<!is_tuple_v<T>>
+        auto Serialize(memory_stream& gos, T& t) -> std::enable_if_t<!is_tuple_v<T>>
         {
             auto mem_buf = boost::make_shared<TMemoryBuffer>();
             auto compct_proto = boost::make_shared<TCompactProtocol>(mem_buf);
@@ -91,7 +91,7 @@ namespace cytx
             uint8_t* body_buf_ptr = nullptr;
             mem_buf->getBuffer(&body_buf_ptr, &length);
 
-            gos.pushBinary((char*)body_buf_ptr, length);
+            gos.write_binary((char*)body_buf_ptr, length);
         }
     };
 
@@ -99,7 +99,7 @@ namespace cytx
     class DeSerializer<thrift_deserialize_adapter, OtherTuple> : public BaseDeSerializer<thrift_deserialize_adapter, OtherTuple>
     {
         using base_t = BaseDeSerializer<thrift_deserialize_adapter, OtherTuple>;
-        using gos_t = GameObjectStream;
+        using gos_t = memory_stream;
     public:
         DeSerializer(gos_t& gos)
             : base_t()
@@ -176,6 +176,6 @@ namespace cytx
             t.read(protocol.get());
         }
     private:
-        GameObjectStream& gos_;
+        memory_stream& gos_;
     };
 }
