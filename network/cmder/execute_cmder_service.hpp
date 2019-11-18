@@ -82,7 +82,7 @@ namespace cytx
         {
             if (node->delay > 0)
             {
-                sleep(node->delay);
+                util::sleep(node->delay);
             }
 
             int current_times = 0;
@@ -95,7 +95,7 @@ namespace cytx
                 ++current_times;
                 if (current_times < node->times && node->interval > 0)
                 {
-                    sleep(node->interval);
+                    util::sleep(node->interval);
                 }
             }
 
@@ -148,12 +148,6 @@ namespace cytx
             }
 
             return -1;
-        }
-
-    private:
-        void sleep(int milliseconds)
-        {
-            util::sleep(milliseconds);
         }
 
     private:

@@ -20,19 +20,6 @@ namespace cytx
             retryTimes = 1;
         }
 
-        virtual void set_options() override
-        {
-            base_waitable_cmder::set_options();
-
-            op_->add_options()
-                ("delay", "")
-                ("interval", "")
-                ("times", "")
-                ("retryWhenFailed", "")
-                ("retryInterval", "")
-                ("retryTimes", "");
-        }
-
         virtual int execute() override
         {
             if (need_help())
@@ -48,7 +35,7 @@ namespace cytx
         {
             if (delay > 0)
             {
-                sleep(delay);
+                util::sleep(delay);
             }
 
             int current_times = 0;
@@ -63,7 +50,7 @@ namespace cytx
                 current_times++;
                 if (current_times < times && interval > 0)
                 {
-                    sleep(interval);
+                    util::sleep(interval);
                 }
             }
 
@@ -78,7 +65,7 @@ namespace cytx
             {
                 if (retryInterval > 0)
                 {
-                    sleep(retryInterval);
+                    util::sleep(retryInterval);
                 }
 
                 ret = process();
@@ -86,11 +73,6 @@ namespace cytx
             }
 
             return ret;
-        }
-
-        void sleep(int milliseconds)
-        {
-            util::sleep(milliseconds);
         }
 
     public:

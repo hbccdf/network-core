@@ -13,13 +13,6 @@ namespace cytx
             waitTime = -1;
         }
 
-        virtual void set_options() override
-        {
-            op_->add_options()
-                ("isWait", "isWait")
-                ("waitTime", "waitTime");
-        }
-
     public:
         int wait()
         {

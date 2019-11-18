@@ -55,8 +55,8 @@ namespace cytx
     private:
         bool init_module(std::string module_name)
         {
-            auto it = reg_modules.find(module_name);
-            if (it != reg_modules.end())
+            auto it = reg_modules_.find(module_name);
+            if (it != reg_modules_.end())
             {
                 base_module* module_ptr = it->second(&world_);
                 modules_[module_name] = module_ptr;
@@ -69,7 +69,7 @@ namespace cytx
         template<typename T>
         auto register_module(const std::string& name) -> std::enable_if_t<std::is_base_of<base_module, T>::value>
         {
-            reg_modules[name] = [](world_ptr_t world_ptr) -> base_module* {
+            reg_modules_[name] = [](world_ptr_t world_ptr) -> base_module* {
                 T* module = world_ptr->factory().get<T>();
                 module->set_world(world_ptr);
                 return module;
@@ -77,7 +77,7 @@ namespace cytx
         }
     private:
         world_t world_;
-        std::unordered_map<std::string, new_module_func_t> reg_modules;
+        std::unordered_map<std::string, new_module_func_t> reg_modules_;
         std::unordered_map<std::string, base_module*> modules_;
     };
 }

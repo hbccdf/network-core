@@ -111,8 +111,8 @@ namespace cytx
         }
 
     public:
-        std::string desc() { return desc_; }
-        std::string name() { return name_; }
+        std::string desc() const { return desc_; }
+        std::string name() const { return name_; }
     protected:
         std::string name_;
         std::string desc_;
