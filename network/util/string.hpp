@@ -186,6 +186,8 @@ namespace cytx
 
                 str.replace(pos, end_pos - pos + end_extend_length, str_prop);
 
+                offset = pos + str_prop.length();
+
                 return true;
             }
         };
