@@ -92,7 +92,7 @@ endif()
 # are used for other targets, to ensure that gtest can be compiled by a user
 # aggressive about warnings.
 cxx_library(gtest "${cxx_strict}" src/gtest-all.cc)
-set_target_properties(gtest PROPERTIES FOLDER "test")
+set_target_properties(gtest PROPERTIES FOLDER "dep")
 
 # If the CMake version supports it, attach header directory information
 # to the targets for when we are part of a parent build (ie being pulled
