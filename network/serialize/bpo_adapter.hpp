@@ -377,8 +377,7 @@ namespace cytx
         auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<!is_bool_type_v<T> &&
             (is_basic_type_v<T> || is_enum_type_v<T>), bpo_option_ptr_t>
         {
-            bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<T>(), option_ptr->description().c_str()));
-            return d;
+            return get_option_ptr(get_option_name(option_ptr), value<T>(), option_ptr->description());
         }
 
         template<typename T>
@@ -386,45 +385,44 @@ namespace cytx
         {
             auto_set_type_keys_.insert(option_ptr->long_name());
 
-            bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<std::vector<std::string>>(), option_ptr->description().c_str()));
-            return d;
+            return get_option_ptr(get_option_name(option_ptr), value<std::vector<std::string>>(), option_ptr->description());
         }
 
         template<typename T>
         auto get_option_ptr(bpo_option_ptr_t option_ptr) const -> std::enable_if_t<is_pair_v<T> || is_date_time_type_v<T>, bpo_option_ptr_t>
         {
-            bpo_option_ptr_t d(new bpo_option_t(get_option_name(option_ptr).c_str(), value<std::string>(), option_ptr->description().c_str()));
-            return d;
+            return get_option_ptr(get_option_name(option_ptr), value<std::string>(), option_ptr->description());
         }
 
         template<typename T>
         auto get_option_ptr_by_name(const std::string& option_name) const -> std::enable_if_t<is_bool_type_v<T>, bpo_option_ptr_t>
         {
-            bpo_option_ptr_t d(new bpo_option_t(option_name.c_str(), value<bool>(), ""));
-            return d;
+            return get_option_ptr(option_name, new bpo::untyped_value(true), "");
         }
 
         template<typename T>
         auto get_option_ptr_by_name(const std::string& option_name) const -> std::enable_if_t<!is_bool_type_v<T> &&
             (is_basic_type_v<T> || is_enum_type_v<T>), bpo_option_ptr_t>
         {
-            bpo_option_ptr_t d(new bpo_option_t(option_name.c_str(), value<T>(), ""));
-            return d;
+            return get_option_ptr(option_name, value<T>(), "");
         }
 
         template<typename T>
         auto get_option_ptr_by_name(const std::string& option_name) -> std::enable_if_t<is_container_v<T>, bpo_option_ptr_t>
         {
             auto_set_type_keys_.insert(option_name);
-
-            bpo_option_ptr_t d(new bpo_option_t(option_name.c_str(), value<std::vector<std::string>>(), ""));
-            return d;
+            return get_option_ptr(option_name, value<std::vector<std::string>>(), "");
         }
 
         template<typename T>
         auto get_option_ptr_by_name(const std::string& option_name) const -> std::enable_if_t<is_pair_v<T> || is_date_time_type_v<T>, bpo_option_ptr_t>
         {
-            bpo_option_ptr_t d(new bpo_option_t(option_name.c_str(), value<std::string>(), ""));
+            return get_option_ptr(option_name, value<std::string>(), "");
+        }
+
+        bpo_option_ptr_t get_option_ptr(const std::string& option_name, const bpo::value_semantic* s, const std::string& desc) const
+        {
+            bpo_option_ptr_t d(new bpo_option_t(option_name.c_str(), s, desc.c_str()));
             return d;
         }
 
