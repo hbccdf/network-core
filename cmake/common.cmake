@@ -40,6 +40,60 @@ if(NOT INCLUDED_COMMON)
     set(INCLUDE_DIRS 
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR})
+		
+	set(GIT_BRANCH "unknown")
+    set(GIT_COMMIT_HASH "unknown")
+    set(GIT_COMMIT_COUNT ${SUBVERSION})
+    set(GIT_MODIFY "")
+	
+	set(STR_BUILD_TIME "2018-01-18 18:18")
+    set(STR_VERSION "1.0.${SUBVERSION}")
+	
+	if(GAME_VERSION)
+        if(EXISTS "${ROOT}/.git")
+            execute_process(
+                COMMAND git rev-parse --abbrev-ref HEAD
+                WORKING_DIRECTORY ${ROOT}
+                OUTPUT_VARIABLE GIT_BRANCH
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+
+            execute_process(
+                COMMAND git log -1 --format=%h
+                WORKING_DIRECTORY ${ROOT}
+                OUTPUT_VARIABLE GIT_COMMIT_HASH
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            
+            execute_process(
+                COMMAND git rev-list --all --count
+                WORKING_DIRECTORY ${ROOT}
+                OUTPUT_VARIABLE GIT_COMMIT_COUNT
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            
+            execute_process(
+                COMMAND git status
+                WORKING_DIRECTORY ${ROOT}
+                OUTPUT_VARIABLE GIT_STATUS
+            )
+            
+            #message("${GIT_STATUS}")
+            
+            string(FIND ${GIT_STATUS} "modified:" GIT_MODIFY_STATUS)
+            if(GIT_MODIFY_STATUS)
+                set(GIT_MODIFY "M")
+            else()
+                set(GIT_MODIFY "")
+            endif()
+            
+            set(SUBVERSION ${GIT_COMMIT_COUNT})
+        endif()
+        
+        string(TIMESTAMP STR_BUILD_TIME "%Y-%m-%d %H:%M")
+        set(STR_VERSION "1.0.${SUBVERSION}")
+        
+    endif()
 
     include(boost)
     if(MSVC)

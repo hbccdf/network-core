@@ -1,3 +1,5 @@
+include(CMakeParseArguments)
+
 function(set_target_workdir)
     if(MSVC)
         #message("${ARGC}")
@@ -117,4 +119,111 @@ endmacro()
 macro(append_files var includePath path)
     internal_append_files(${var} ${includePath} ${path} "include" "header")
     internal_append_files(${var} ${includePath} ${path} "src" "source")
+endmacro()
+
+
+macro(copy_files)
+	cmake_parse_arguments(
+		PARSED_ARGS
+		"IS_DIR"
+		"DEST"
+		"FILES"
+		"WORK_DIR"
+		${ARGN}
+	)
+
+	set(IS_DIR 0)
+	set(COPY_COMMAND "copy")  
+
+	if(NOT PARSED_ARGS_DEST)
+		message(FATAL_ERROR "you must provide a dest name")
+	endif(NOT PARSED_ARGS_DEST)
+
+	#message("copy files : ${PARSED_ARGS_DEST}")
+	#message("copy files files : ${PARSED_ARGS_FILES}")
+
+	set(dest ${PARSED_ARGS_DEST})
+
+	if(PARSED_ARGS_IS_DIR)
+		set(IS_DIR ${PARSED_ARGS_IS_DIR})
+		set(COPY_COMMAND "copy_directory")
+	endif()
+
+	foreach(file_path ${PARSED_ARGS_FILES})
+		#message("copy files : ${file_path}")
+		#message("copy files_ file_name : ${file_name}")
+
+		get_filename_component(file_name ${file_path} NAME)
+
+		set(dest_file ${dest}/${file_name})
+
+		if(IS_DIR)
+			set(dest ${dest_file})
+		endif()
+
+		add_custom_command(
+			OUTPUT ${dest_file}
+			COMMAND cmake -E ${COPY_COMMAND} ${file_path} ${dest}
+
+			WORKING_DIRECTORY ${PARSED_ARGS_WORK_DIR}
+
+			DEPENDS ${file_path}
+		)
+	endforeach()
+endmacro()
+
+macro(mkdirs)
+	cmake_parse_arguments(
+		PARSED_ARGS
+		"DIRS"
+		"WORK_DIR"
+		${ARGN}
+	)
+	
+	foreach(dir ${PARSED_ARGS_DIRS})
+		add_custom_command(
+        OUTPUT ${dir}
+        COMMAND echo "mkdir ${dir}"
+
+        COMMAND cmake -E make_directory ${dir}
+
+        WORKING_DIRECTORY ${PARSED_ARGS_WORK_DIR}
+    )
+	endforeach()
+	
+endmacro()
+
+macro(generate_version)
+	cmake_parse_arguments(
+		PARSED_ARGS
+		"DEST_DIR"
+		"DEST_NAME"
+		${ARGN}
+	)
+	
+	set(VERSION_FILE ${PARSED_ARGS_DEST_DIR}/version.txt)
+	set(VERSION_CONTENT ${PARSED_ARGS_DEST_NAME} ${GIT_BRANCH} ${GIT_COMMIT_HASH} ${GIT_COMMIT_COUNT}${GIT_MODIFY})
+	add_custom_command(
+		OUTPUT ${VERSION_FILE}
+		COMMAND echo ${VERSION_CONTENT}> version.txt
+		WORKING_DIRECTORY ${DEST_DIR}
+	)
+endmacro()
+
+macro(zip_package)
+	cmake_parse_arguments(
+		PARSED_ARGS
+		"DEST_DIR"
+		"WORK_DIR"
+		"DEPENDS"
+		${ARGN}
+	)
+	
+	set(zip_file ${PARSED_ARGS_DEST_DIR}.zip)
+	add_custom_command(
+		OUTPUT ${zip_file}
+		COMMAND cmake -E tar cvf ${zip_file} --format=zip -- ${PARSED_ARGS_DEST_DIR} 
+		WORKING_DIRECTORY ${PARSED_ARGS_WORK_DIR}
+		DEPENDS ${PARSED_ARGS_DEPENDS}
+	)
 endmacro()
