@@ -51,7 +51,7 @@ namespace cytx {
 
                         header.reply(true);
                     }
-                    auto ctx = context_t::make_message(conn->get_io_service(), header, typename context_t::buffer_t{});
+                    auto ctx = context_t::make_message(header, typename context_t::buffer_t{});
                     conn->response(ctx);
                 };
                 return invoker;
@@ -83,7 +83,7 @@ namespace cytx {
 
                         header.reply(true);
                     }
-                    auto ctx = context_t::make_message(conn->get_io_service(), header, typename context_t::buffer_t{}, [conn, &p] { p(conn); });
+                    auto ctx = context_t::make_message(header, typename context_t::buffer_t{}, [conn, &p] { p(conn); });
                     conn->response(ctx);
                 };
                 return invoker;
@@ -122,7 +122,7 @@ namespace cytx {
                         header.reply(true);
                     }
                     auto message = cp.pack(result);
-                    auto ctx = context_t::make_message(conn->get_io_service(), header, std::move(message));
+                    auto ctx = context_t::make_message(header, std::move(message));
                     conn->response(ctx);
                 };
                 return invoker;
@@ -155,7 +155,7 @@ namespace cytx {
                         header.reply(true);
                     }
                     auto message = cp.pack(result);
-                    auto ctx = context_t::make_message(conn->get_io_service(), header, std::move(message),
+                    auto ctx = context_t::make_message(header, std::move(message),
                         [conn, r = std::move(result), &p] { p(conn, r); });
                     conn->response(ctx);
                 };

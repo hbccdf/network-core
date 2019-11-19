@@ -5,9 +5,9 @@
 #include <boost/asio.hpp>
 #include <boost/make_unique.hpp>
 #include "network/base/exception.hpp"
+#include "network/base/waitable_object.hpp"
 #include "network/timer/schedule_timer.hpp"
 #include "msg_header.hpp"
-#include "wait_barrier.hpp"
 
 namespace cytx {
     namespace rpc
@@ -24,18 +24,16 @@ namespace cytx {
             using asio_buffers = std::vector<boost::asio::const_buffer>;
             using post_func_t = std::function<void()>;
             using message_t = std::vector<char>;
-            using result_barrier_t = ios_result_barrier;
+            using result_barrier_t = waitable_object;
             using context_t = typename get_context<buffer_type, header_type>::type;
             using header_t = header_type;
-            using ios_t = ios_wrapper;
             using timer_t = schedule_timer;
             using duration_t = typename timer_t::duration_t;
             using timer_ptr = std::shared_ptr<timer_t>;
 
         public:
-            base_rpc_context(ios_t& ios, header_t const& h, buffer_t&& msg)
-                : ios_(ios)
-                , send_msg(std::move(msg))
+            base_rpc_context(header_t const& h, buffer_t&& msg)
+                : send_msg(std::move(msg))
                 , head(h)
                 , send_buffer({
                 boost::asio::buffer(&head, sizeof(head)),
@@ -43,9 +41,8 @@ namespace cytx {
             {
             }
 
-            base_rpc_context(ios_t& ios, uint32_t protocol, buffer_t&& msg)
-                : ios_(ios)
-                , send_msg(std::move(msg))
+            base_rpc_context(uint32_t protocol, buffer_t&& msg)
+                : send_msg(std::move(msg))
                 , head(0, protocol, static_cast<uint32_t>(send_msg.size()))
                 , send_buffer({
                 boost::asio::buffer(&head, sizeof(head)),
@@ -54,9 +51,8 @@ namespace cytx {
             }
 
             // for reponse
-            base_rpc_context(ios_t& ios, header_t const& h, buffer_t&& msg, post_func_t postf)
-                : ios_(ios)
-                , head(h)
+            base_rpc_context(header_t const& h, buffer_t&& msg, post_func_t postf)
+                : head(h)
                 , send_msg(std::move(msg))
                 , post_func(std::move(postf))
                 , send_buffer({
@@ -66,9 +62,8 @@ namespace cytx {
                 head.length(static_cast<uint32_t>(send_msg.size()));
             }
 
-            base_rpc_context(ios_t& ios, buffer_t&& msg, post_func_t postf)
-                : ios_(ios)
-                , send_msg(std::move(msg))
+            base_rpc_context(buffer_t&& msg, post_func_t postf)
+                : send_msg(std::move(msg))
                 , post_func(std::move(postf))
                 , send_buffer({
                 boost::asio::buffer(&head, sizeof(head)),
@@ -164,7 +159,7 @@ namespace cytx {
             void create_barrier()
             {
                 if (nullptr == barrier_ptr)
-                    barrier_ptr.reset(new ios_result_barrier(ios_));
+                    barrier_ptr.reset(new result_barrier_t());
             }
 
             void wait()
@@ -188,23 +183,22 @@ namespace cytx {
             }
 
             // for response
-            static auto make_error_message(ios_t& ios, header_t& h, error_code code)
+            static auto make_error_message(header_t& h, error_code code)
             {
                 h.result((uint16_t)code);
-                return make_message(ios, h, buffer_t{}, nullptr);
+                return make_message(h, buffer_t{}, nullptr);
             }
 
-            static auto make_message(ios_t& ios, header_t const& h, buffer_t&& msg, post_func_t postf = nullptr)
+            static auto make_message(header_t const& h, buffer_t&& msg, post_func_t postf = nullptr)
             {
-                return std::make_shared<context_t>(ios, h, std::forward<buffer_t>(msg), std::move(postf));
+                return std::make_shared<context_t>(h, std::forward<buffer_t>(msg), std::move(postf));
             }
 
-            static auto make_message(ios_t& ios, buffer_t&& msg, post_func_t postf = nullptr)
+            static auto make_message(buffer_t&& msg, post_func_t postf = nullptr)
             {
-                return std::make_shared<context_t>(ios, std::forward<buffer_t>(msg), std::move(postf));
+                return std::make_shared<context_t>(std::forward<buffer_t>(msg), std::move(postf));
             }
 
-            ios_t& ios_;
             buffer_t send_msg;
             header_t head;
             std::vector<char> recv_msg;
@@ -233,15 +227,14 @@ namespace cytx {
             using asio_buffers = std::vector<boost::asio::const_buffer>;
             using post_func_t = std::function<void()>;
             using message_t = std::vector<char>;
-            using result_barrier_t = ios_result_barrier;
+            using result_barrier_t = waitable_object;
             using context_t = server_rpc_context<buffer_t>;
             using header_t = msg_header;
-            using ios_t = ios_wrapper;
 
             using base_t::base_t;
             // for call
-            server_rpc_context(ios_t& ios, msg_way way, uint64_t hash, buffer_t&& msg)
-                : base_t(ios, header_t{ 0,{ false, way == msg_way::one_way }, 0, (uint32_t)(msg.size()), hash },
+            server_rpc_context(msg_way way, uint64_t hash, buffer_t&& msg)
+                : base_t(header_t{ 0,{ false, way == msg_way::one_way }, 0, (uint32_t)(msg.size()), hash },
                     std::move(msg))
             {
             }

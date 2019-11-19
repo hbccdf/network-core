@@ -1,7 +1,7 @@
 #pragma once
 #include "async_connection.hpp"
-#include "wait_barrier.hpp"
 #include "async_rpc_context.hpp"
+#include "ios_wrapper.hpp"
 #include "router.hpp"
 #include "irouter.hpp"
 #include "protocol.hpp"
@@ -12,38 +12,38 @@ namespace cytx {
         using ios_t = ios_wrapper;
 
         template <typename context_type>
-        inline auto make_rpc_context(ios_t& ios, uint64_t name, bool inter_proto, typename context_type::buffer_t&& buffer)
+        inline auto make_rpc_context(uint64_t name, bool inter_proto, typename context_type::buffer_t&& buffer)
             -> std::enable_if_t<!std::is_same<typename context_type::header_t, client_msg_header>::value, std::shared_ptr<context_type>>
         {
             using context_t = context_type;
             if(!inter_proto)
-                return std::make_shared<context_t>(ios, msg_way::two_way, name, std::move(buffer));
+                return std::make_shared<context_t>(msg_way::two_way, name, std::move(buffer));
             else
-                return std::make_shared<context_t>(ios, (uint32_t)name, std::move(buffer));
+                return std::make_shared<context_t>((uint32_t)name, std::move(buffer));
         }
 
         template <typename context_type>
-        inline auto make_rpc_context(ios_t& ios, uint64_t name, bool inter_proto, typename context_type::buffer_t&& buffer)
+        inline auto make_rpc_context(uint64_t name, bool inter_proto, typename context_type::buffer_t&& buffer)
             -> std::enable_if_t<std::is_same<typename context_type::header_t, client_msg_header>::value, std::shared_ptr<context_type>>
         {
             using context_t = context_type;
-            return std::make_shared<context_t>(ios, (uint32_t)name, std::move(buffer));
+            return std::make_shared<context_t>((uint32_t)name, std::move(buffer));
         }
 
         template <typename header_type, typename CodecPolicy, typename Protocol, typename ... Args>
-        inline auto make_rpc_context(ios_t& ios, CodecPolicy const& cp, Protocol const& protocol, Args&& ... args)
+        inline auto make_rpc_context(CodecPolicy const& cp, Protocol const& protocol, Args&& ... args)
         {
             using context_t = get_context_t<typename CodecPolicy::buffer_type, header_type>;
             auto buffer = protocol.pack_args(cp, std::forward<Args>(args)...);
-            return make_rpc_context<context_t>(ios, protocol.proto(), protocol.inter_protocol(), std::move(buffer));
+            return make_rpc_context<context_t>(protocol.proto(), protocol.inter_protocol(), std::move(buffer));
         }
 
         template <typename header_type, typename CodecPolicy, typename ... Args>
-        inline auto make_rpc_context(ios_t& ios, CodecPolicy const& cp, uint64_t proto, bool is_inter_protocol, Args&& ... args)
+        inline auto make_rpc_context(CodecPolicy const& cp, uint64_t proto, bool is_inter_protocol, Args&& ... args)
         {
             using context_t = get_context_t<typename CodecPolicy::buffer_type, header_type>;
             auto buffer = cp.pack_args(std::forward<Args>(args)...);
-            return make_rpc_context<context_t>(ios, proto, is_inter_protocol, std::move(buffer));
+            return make_rpc_context<context_t>(proto, is_inter_protocol, std::move(buffer));
         }
 
         template<typename CodecPolicy, typename ConnectPolicy, typename header_type, typename Ret>
@@ -359,7 +359,7 @@ namespace cytx {
                 using result_type = typename Protocol::result_type;
                 using rpc_task_t = typed_rpc_task<CallCodecPolicy, codec_policy, header_t, result_type>;
                 CallCodecPolicy cp{ header_t::big_endian() };
-                auto ctx = rpc::make_rpc_context<header_t>(ios_, cp, protocol, std::forward<Args>(args)...);
+                auto ctx = rpc::make_rpc_context<header_t>(cp, protocol, std::forward<Args>(args)...);
                 ctx->reply_protocol_id = protocol.reply_protocol();
                 return rpc_task_t{ this->shared_from_this(), ctx };
             }
@@ -369,7 +369,7 @@ namespace cytx {
             {
                 using rpc_task_t = typed_rpc_task<CallCodecPolicy, codec_policy, header_t, result_type>;
                 CallCodecPolicy cp{ header_t::big_endian() };
-                auto ctx = rpc::make_rpc_context<header_t>(ios_, cp, proto, is_inter_proto, std::forward<Args>(args)...);
+                auto ctx = rpc::make_rpc_context<header_t>(cp, proto, is_inter_proto, std::forward<Args>(args)...);
                 return rpc_task_t{ this->shared_from_this(), ctx };
             }
 
@@ -378,7 +378,7 @@ namespace cytx {
             {
                 using rpc_task_t = typed_rpc_task<CallCodecPolicy, codec_policy, header_t, void>;
                 CallCodecPolicy cp{ header_t::big_endian() };
-                auto ctx = rpc::make_rpc_context<header_t>(ios_, cp, proto, is_inter_proto, std::forward<Args>(args)...);
+                auto ctx = rpc::make_rpc_context<header_t>(cp, proto, is_inter_proto, std::forward<Args>(args)...);
                 ctx->get_head().set_conn_id(conn_id);
                 call_context(ctx);
             }
@@ -423,7 +423,7 @@ namespace cytx {
             void send(header_t& header, const char* const data)
             {
                 using buffer_t = typename context_t::buffer_t;
-                auto ctx = std::make_shared<context_t>(ios_, header, buffer_t{ data, data + header.length() });
+                auto ctx = std::make_shared<context_t>(header, buffer_t{ data, data + header.length() });
                 call_context(ctx);
             }
 

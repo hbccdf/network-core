@@ -152,7 +152,7 @@ namespace cytx
                     }
                     else if (header.need_reply())
                     {
-                        auto ctx = context_t::make_error_message(conn->get_io_service(), header, error_code::no_handler);
+                        auto ctx = context_t::make_error_message(header, error_code::no_handler);
                         conn->response(ctx);
                     }
                 }
@@ -163,7 +163,7 @@ namespace cytx
                     {
                         if (!header.need_reply())
                             return;
-                        auto ctx = context_t::make_error_message(conn->get_io_service(), header, error_code::no_handler);
+                        auto ctx = context_t::make_error_message(header, error_code::no_handler);
                         conn->response(ctx);
                         return;
                     }
@@ -176,7 +176,7 @@ namespace cytx
                 if (!header.need_reply())
                     return;
                 // response serialized exception to client
-                auto ctx = context_t::make_error_message(conn->get_io_service(), header, error.code());
+                auto ctx = context_t::make_error_message(header, error.code());
                 conn->response(ctx);
             }
         }

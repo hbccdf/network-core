@@ -579,7 +579,7 @@ namespace cytx
             void create_barrier()
             {
                 if (!barrier_ptr_)
-                    barrier_ptr_ = std::make_shared<ios_result_barrier>(client_->get_io_service());
+                    barrier_ptr_ = std::make_shared<waitable_object>();
             }
 
             void barrier_wait()
@@ -592,7 +592,7 @@ namespace cytx
             bool dismiss_;
             on_ok_func_t on_ok_;
             on_error_func_t on_error_;
-            std::shared_ptr<ios_result_barrier> barrier_ptr_;
+            std::shared_ptr<waitable_object> barrier_ptr_;
             std::shared_ptr<net_result> result_;
             timer_ptr timer_ptr_;
             duration_t duration_;
