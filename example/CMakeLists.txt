@@ -9,3 +9,6 @@ add_subdirectory(common)
 add_subdirectory(room_server)
 add_subdirectory(center_server)
 add_subdirectory(battle_server)
+
+add_subdirectory(thrift_client)
+add_subdirectory(thrift_server)
