@@ -83,6 +83,65 @@ namespace cytx
     using server_ptr = std::unique_ptr<server_t>;
     using connection_t = server_t::connection_t;
     using connection_ptr = server_t::connection_ptr;
+    using msg_ptr = server_t::msg_ptr;
+    using gos_t = memory_stream;
+    using processer_ptr = boost::shared_ptr<TProcessor>;
+
+    class thrift_transport : public TTransport
+    {
+
+    private:
+        connection_ptr ptr_;
+        msg_ptr current_msg_ptr_;
+        gos_t reader_{ 0 };
+        gos_t writer_{ 10240 };
+    public:
+        uint32_t read_virt(uint8_t* buffer, uint32_t length) override
+        {
+            reader_.read_binary((char*)buffer, length);
+            return length;
+        }
+
+        uint32_t readAll_virt(uint8_t* buf, uint32_t len) override
+        {
+            return read_virt(buf, len);
+        }
+
+        void write_virt(const uint8_t* buffer, uint32_t length) override
+        {
+            writer_.write_binary((const char*)const_cast<uint8_t*>(buffer), length);
+        }
+
+        const uint8_t* borrow_virt(uint8_t*, uint32_t*) override
+        {
+            throw std::logic_error("The method or operation is not implemented.");
+        }
+
+        void consume_virt(uint32_t length) override
+        {
+            reader_.rd_ptr(length);
+        }
+
+        uint32_t readEnd() override
+        {
+            current_msg_ptr_ = nullptr;
+        }
+
+        uint32_t writeEnd() override
+        {
+            msg_ptr msg;
+            ptr_->write(msg);
+        }
+
+        void set_current_msg(msg_ptr msg)
+        {
+            current_msg_ptr_ = msg;
+            reader_ = msg->get_stream();
+        }
+
+    };
+
+    using protocol_ptr = boost::shared_ptr<TCompactProtocolT<thrift_transport>>;
 
     class thrift_server : public gameserver::irouter<connection_t>
     {
@@ -101,27 +160,34 @@ namespace cytx
             server_->start();
         }
 
-        virtual void on_connect(connection_ptr& conn_ptr, const cytx::net_result& err) override
+        void on_connect(connection_ptr& conn_ptr, const cytx::net_result& err) override
         {
             if (err)
                 return;
+
+            //create thrift_transport
+            //create protocol
         }
 
 
-        virtual void on_disconnect(connection_ptr& conn_ptr, const cytx::net_result& err) override
+        void on_disconnect(connection_ptr& conn_ptr, const cytx::net_result& err) override
         {
             //log error
             //clear conn resource
         }
 
 
-        virtual void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
+        void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
         {
+            //find protocol;
             //process message
+            processer_->process(protocol_, nullptr);
         }
 
     private:
         server_ptr server_;
+        processer_ptr processer_;
+        protocol_ptr protocol_;
     };
 }
 
