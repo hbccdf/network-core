@@ -53,7 +53,7 @@ namespace cytx
             }
         }
 
-        template<typename MSG = server_msg<msg_header>>
+        template<typename MSG = server_msg<msg_body>>
         class tcp_server
         {
         public:
@@ -122,9 +122,10 @@ namespace cytx
                     if (!err)
                     {
                         NET_DEBUG("tcp server accepted on connection {}", new_connection->get_conn_id());
-                        new_connection->start();
                         if (router_ptr_)
                             router_ptr_->on_connect(new_connection, err);
+
+                        new_connection->start();
                     }
                     else
                     {

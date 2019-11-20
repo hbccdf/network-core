@@ -181,23 +181,20 @@ namespace cytx {
             }
         };
 
-        template<typename T>
-        struct basic_server_msg;
-
-        template<>
-        struct basic_server_msg<msg_body>
+        template<typename HEADER, typename BODY>
+        struct basic_msg
         {
-            using header_t = msg_header;
-            using body_t = msg_body;
+            using header_t = HEADER;
+            using body_t = BODY;
 
             header_t header_;
             body_t body_;
 
-            basic_server_msg()
+            basic_msg()
                 : header_(), body_()
             {}
 
-            basic_server_msg(const header_t& h)
+            basic_msg(const header_t& h)
                 : header_(h), body_()
             {
                 if (h.length > 0)
@@ -268,6 +265,15 @@ namespace cytx {
                 stream_t gos(data(), (int)length(), 0);
                 return gos;
             }
+        };
+
+        template<typename T>
+        struct basic_server_msg;
+
+        template<>
+        struct basic_server_msg<msg_body> : basic_msg<msg_header, msg_body>
+        {
+            using basic_msg<msg_header, msg_body>::basic_msg;
         };
 
         template<typename T>

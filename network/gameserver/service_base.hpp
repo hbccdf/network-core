@@ -12,7 +12,7 @@ namespace cytx
         public:
             void set_world(world_ptr_t world_ptr)
             {
-                server_ = world_ptr->get<game_server>("game_server");
+                server_ = world_ptr["game_server"];
             }
         protected:
             game_server_t* server_ = nullptr;
