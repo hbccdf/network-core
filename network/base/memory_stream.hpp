@@ -57,10 +57,25 @@ namespace cytx
 
         ~memory_stream()
         {
-            if (alloc_type_ == 0)
-                return;
-            FREE_MP(data_);
+            if (alloc_type_ != 0 && data_ != nullptr)
+            {
+                FREE_MP(data_);
+            }
         }
+
+        memory_stream& operator =(const memory_stream&& other)
+        {
+            if (alloc_type_ != 0 && data_ != nullptr)
+            {
+                FREE_MP(data_);
+            }
+            data_ = other.data_;
+            data_size_ = other.data_size_;
+            alloc_type_ = other.alloc_type_;
+            wr_pos_ = other.wr_pos_;
+            rd_pos_ = other.rd_pos_;
+        }
+
         void reset()
         {
             rd_pos_ = wr_pos_ = 0;
@@ -127,7 +142,8 @@ namespace cytx
                 return nullptr;
 
             rd_pos_ = offset;
-            return data_ + rd_pos_; }
+            return data_ + rd_pos_;
+        }
         void rd_ptr(char* ptr)
         {
             int new_pos = int(ptr - data_);
