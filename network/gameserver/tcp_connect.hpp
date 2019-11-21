@@ -261,8 +261,9 @@ namespace cytx
                 }
 
                 CONN_DEBUG("connection {} sync connect tcp://{}:{}", conn_id_, host_, port_);
-                ec_t ec = socket_.connect(cytx::util::get_tcp_endpoint(host_, port_));
-                if (ec)
+                ec_t ec;
+                ec = socket_.connect(cytx::util::get_tcp_endpoint(host_, port_), ec);
+                if (!ec)
                 {
                     start();
                 }
@@ -277,15 +278,13 @@ namespace cytx
                 host_ = host;
                 port_ = port;
 
+                if (host_ == "0.0.0.0")
+                    host_ = "127.0.0.1";
+
                 if (socket_.is_open())
                 {
                     ec_t ec;
                     socket_.close(ec);
-                }
-
-                if (host_ == "0.0.0.0")
-                {
-                    host_ = "127.0.0.1";
                 }
 
                 CONN_DEBUG("connection {} connect tcp://{}:{}", conn_id_, host_, port_);

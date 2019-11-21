@@ -74,6 +74,8 @@ namespace cytx
             alloc_type_ = other.alloc_type_;
             wr_pos_ = other.wr_pos_;
             rd_pos_ = other.rd_pos_;
+
+            return *this;
         }
 
         void reset()
