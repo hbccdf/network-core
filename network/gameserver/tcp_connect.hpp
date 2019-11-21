@@ -6,6 +6,7 @@
 #include <boost/asio.hpp>
 #include <fmt/format.h>
 #include "network/base/log.hpp"
+#include "network/base/world.hpp"
 #include "network/util/net.hpp"
 #include "network/timer/timer_manager.hpp"
 #include "raw_msg.hpp"
@@ -32,6 +33,8 @@ if(log_)                                    \
 {                                           \
     log_->trace(str, __VA_ARGS__);          \
 }
+
+HAS_FIELD(call_id);
 
 namespace cytx
 {
@@ -243,6 +246,29 @@ namespace cytx
                 CONN_DEBUG("connection {} destroy", conn_id_);
             }
 
+            net_result connect(const std::string& host, uint32_t port)
+            {
+                host_ = host;
+                port_ = port;
+
+                if (host_ == "0.0.0.0")
+                    host_ = "127.0.0.1";
+
+                if (socket_.is_open())
+                {
+                    ec_t ec;
+                    socket_.close(ec);
+                }
+
+                CONN_DEBUG("connection {} sync connect tcp://{}:{}", conn_id_, host_, port_);
+                ec_t ec = socket_.connect(cytx::util::get_tcp_endpoint(host_, port_));
+                if (ec)
+                {
+                    start();
+                }
+                return net_result(ec);
+            }
+
             void async_connect(const std::string& host, uint32_t port)
             {
                 if (is_running_)
@@ -251,8 +277,6 @@ namespace cytx
                 host_ = host;
                 port_ = port;
 
-                using namespace boost::asio;
-                using namespace boost::asio::ip;
                 if (socket_.is_open())
                 {
                     ec_t ec;
@@ -330,6 +354,16 @@ namespace cytx
 
             int32_t get_conn_id() const { return conn_id_; }
 
+            world_map& world()
+            {
+                return world_;
+            }
+
+            world_map& world() const
+            {
+                return world_;
+            }
+
         private:
             void reset_state()
             {
@@ -406,6 +440,7 @@ namespace cytx
             void handle_connect(const ec_t& err)
             {
                 CONN_DEBUG("connection {} connect tcp://{}:{}, result {}", conn_id_, host_, port_, err.message());
+                start();
                 auto conn = this->shared_from_this();
                 router_ptr_->on_connect(conn, err);
             }
@@ -522,7 +557,7 @@ namespace cytx
                 bool has_msg = reader_.parse(bytes_transfered);
                 if (has_msg)
                 {
-                    on_receive_msgs(reader_.get_msgs());
+                    on_receive_msgs<header_t>(reader_.get_msgs());
                 }
                 else
                 {
@@ -564,7 +599,8 @@ namespace cytx
                 on_error(net_result(err, ec));
             }
 
-            void on_receive_msgs(const std::vector<msg_ptr>& msg_list)
+            template<typename T>
+            auto on_receive_msgs(const std::vector<msg_ptr>& msg_list) -> std::enable_if_t<has_call_id_v<T>>
             {
                 size_t msg_list_size = msg_list.size();
                 size_t new_list_size = 0;
@@ -602,6 +638,22 @@ namespace cytx
 
                 CONN_DEBUG("connection {} end batch process msg, call count {}, msg count {}", conn_id_, msg_list_size - new_list_size, new_list_size);
             }
+
+            template<typename T>
+            auto on_receive_msgs(const std::vector<msg_ptr>& msg_list) -> std::enable_if_t<!has_call_id_v<T>>
+            {
+                size_t msg_list_size = msg_list.size();
+                CONN_DEBUG("connection {} start batch process msg, count {}", conn_id_, msg_list_size);
+
+                if (!msg_list.empty())
+                {
+                    auto conn_ptr = this->shared_from_this();
+                    received_msg_ = true;
+                    router_ptr_->on_receive_msgs(conn_ptr, msg_list);
+                }
+
+                CONN_DEBUG("connection {} end batch process msg, msg count {}", conn_id_, msg_list_size);
+            }
         private:
             io_service_t& ios_;
             int32_t conn_id_ = 0;
@@ -627,6 +679,8 @@ namespace cytx
             std::map<uint32_t, handler_t> calls_;
 
             connection_info conn_info_;
+
+            world_map world_;
         };
     }
 }

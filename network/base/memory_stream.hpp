@@ -109,7 +109,7 @@ namespace cytx
             data_size_ = data_size;
             data_ = p;
         }
-        void reallocate_data(int len)
+        void reallocate(int len)
         {
             if (len > 0)
             {

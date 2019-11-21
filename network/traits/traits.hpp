@@ -255,6 +255,22 @@ namespace cytx {
     template<typename T> \
     constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
 
+#define HAS_FIELD(token, ...) \
+    template <typename T> \
+    struct has_##token \
+    {   \
+    private:    \
+        template <typename P, typename = decltype(std::declval<P>().token)> \
+        static std::true_type test(int); \
+        template <typename P> \
+        static std::false_type test(...); \
+        using result_type = decltype(test<T>(0)); \
+    public: \
+        constexpr static const bool value = result_type::value; \
+    }; \
+    template<typename T> \
+    constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
+
     template <typename T>
     struct has_meta_macro
     {

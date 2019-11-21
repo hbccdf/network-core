@@ -203,6 +203,15 @@ namespace cytx {
                 }
             }
 
+            basic_msg(stream_t& gos)
+                : basic_msg()
+            {
+                if (gos.length() > 0)
+                {
+                    reset(gos);
+                }
+            }
+
             void reset(char* data_ptr, int data_size)
             {
                 header_.length = (uint32_t)data_size;
