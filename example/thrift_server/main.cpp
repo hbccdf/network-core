@@ -5,6 +5,8 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <network/gameserver/tcp_connect.hpp>
 #include <network/gameserver/tcp_server.hpp>
+#include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/processor/TMultiplexedProcessor.h>
 
 
 using namespace ::apache::thrift;
@@ -83,19 +85,23 @@ namespace cytx
     using server_ptr = std::unique_ptr<server_t>;
     using connection_t = server_t::connection_t;
     using connection_ptr = server_t::connection_ptr;
+    using msg_t = server_t::msg_t;
     using msg_ptr = server_t::msg_ptr;
     using gos_t = memory_stream;
     using processer_ptr = boost::shared_ptr<TProcessor>;
 
     class thrift_transport : public TTransport
     {
-
     private:
         connection_ptr ptr_;
         msg_ptr current_msg_ptr_;
         gos_t reader_{ 0 };
         gos_t writer_{ 10240 };
     public:
+        thrift_transport(connection_ptr conn_ptr)
+            : ptr_(conn_ptr)
+        {}
+
         uint32_t read_virt(uint8_t* buffer, uint32_t length) override
         {
             reader_.read_binary((char*)buffer, length);
@@ -125,12 +131,16 @@ namespace cytx
         uint32_t readEnd() override
         {
             current_msg_ptr_ = nullptr;
+            return 0;
         }
 
         uint32_t writeEnd() override
         {
-            msg_ptr msg;
+            msg_ptr msg = std::make_shared<msg_t>(writer_);
             ptr_->write(msg);
+
+            writer_.reallocate(10240);
+            return 0;
         }
 
         void set_current_msg(msg_ptr msg)
@@ -139,13 +149,34 @@ namespace cytx
             reader_ = msg->get_stream();
         }
 
+        bool isOpen() override
+        {
+            return ptr_->socket().is_open();
+        }
+
+        void open() override
+        {
+            //ptr_->connect();
+        }
+
+
+        void close() override
+        {
+            ptr_->close();
+        }
+
     };
 
-    using protocol_ptr = boost::shared_ptr<TCompactProtocolT<thrift_transport>>;
+    using protocol_t = TCompactProtocolT<thrift_transport>;
+    using protocol_ptr = boost::shared_ptr<protocol_t>;
 
     class thrift_server : public gameserver::irouter<connection_t>
     {
     public:
+        thrift_server(processer_ptr processer)
+            : processer_(processer)
+        {}
+
         void init()
         {
             gameserver::server_options options;
@@ -165,29 +196,39 @@ namespace cytx
             if (err)
                 return;
 
-            //create thrift_transport
-            //create protocol
+            auto transport = boost::make_shared<thrift_transport>(conn_ptr);
+            protocol_t* proto_ptr = new protocol_t(transport);
+            conn_ptr->world()["proto"] = proto_ptr;
         }
-
 
         void on_disconnect(connection_ptr& conn_ptr, const cytx::net_result& err) override
         {
             //log error
-            //clear conn resource
+            protocol_t* proto_ptr = conn_ptr->world()["proto"];
+            if (proto_ptr != nullptr)
+            {
+                delete proto_ptr;
+                proto_ptr = nullptr;
+                conn_ptr->world()["proto"] = proto_ptr;
+            }
         }
-
 
         void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
         {
-            //find protocol;
-            //process message
-            processer_->process(protocol_, nullptr);
+            protocol_t* proto_ptr = conn_ptr->world()["proto"];
+            if (proto_ptr == nullptr)
+            {
+                //log
+            }
+
+            protocol_ptr proto(proto_ptr);
+
+            processer_->process(proto, proto, nullptr);
         }
 
     private:
         server_ptr server_;
         processer_ptr processer_;
-        protocol_ptr protocol_;
     };
 }
 
@@ -210,11 +251,18 @@ int main(int argc, char **argv) {
     int port = 9090;
     shared_ptr<RpcHelloServiceHandler> handler(new RpcHelloServiceHandler());
     shared_ptr<TProcessor> processor(new RpcHelloServiceProcessor(handler));
-    shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+    /*shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
     shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
     TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
-    server.serve();
+    server.serve();*/
+
+    cytx::log::init_log(cytx::log_level_t::debug, "net");
+
+    cytx::thrift_server server(processor);
+    server.init();
+    server.start();
+
     return 0;
 }
