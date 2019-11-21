@@ -1,64 +1,114 @@
-﻿#include <iostream>
-#include <network/service/service_meta.hpp>
-#include <network/service/service_manager.hpp>
+﻿#include "thrift_common.hpp"
+#include "network/base/waitable_object.hpp"
+#include "network/rpc/net/ios_wrapper.hpp"
 
-using namespace cytx;
-
-class base_service
+namespace cytx
 {
-public:
-    virtual void show()
-    {
-        std::cout << "base" << std::endl;
-    }
-};
+    using ios_t = boost::asio::io_service;
 
-class derived_service : public base_service
-{
-public:
-    void show() override
+    class thrift_client_transport : public thrift_transport, public irouter_t
     {
-        std::cout << "derived" << std::endl;
-    }
-};
-REG_SERVICE(derived_service, base_service);
+        using base_t = thrift_transport;
+    private:
+        waitable_object waiter_;
+        std::string host_;
+        uint32_t port_;
 
-class derived_test_service : public base_service
-{
-public:
-    void show() override
+    public:
+        thrift_client_transport(ios_t& ios, const std::string& host, uint32_t port)
+            : base_t(std::make_shared<connection_t>(ios, this, 0, gameserver::connection_options{30, true}))
+            , host_(host)
+            , port_(port)
+        {
+            ptr_->world()["client"] = this;
+        }
+
+        uint32_t read_virt(uint8_t* buffer, uint32_t length) override
+        {
+            if (current_msg_ptr_ == nullptr)
+            {
+                waiter_.wait();
+            }
+
+            if (current_msg_ptr_ == nullptr)
+                return -1;
+
+            return base_t::read_virt(buffer, length);
+        }
+
+        void set_current_msg(msg_ptr msg) override
+        {
+            base_t::set_current_msg(msg);
+            waiter_.notify();
+        }
+
+        void open() override
+        {
+            ptr_->connect(host_, port_);
+        }
+
+        void on_connect(connection_ptr& conn_ptr, const cytx::net_result& err) override
+        {
+        }
+
+        void on_disconnect(connection_ptr& conn_ptr, const cytx::net_result& err) override
+        {
+        }
+
+        void on_receive(connection_ptr& conn_ptr, const msg_ptr& msgp) override
+        {
+            set_current_msg(msgp);
+        }
+
+        uint32_t writeEnd() override
+        {
+            if (!isOpen())
+            {
+                open();
+            }
+
+            if (!isOpen())
+                return -1;
+
+            return base_t::writeEnd();
+        }
+
+    };
+
+    class thrift_manager
     {
-        std::cout << "derived test" << std::endl;
-    }
-};
-REG_SERVICE(derived_test_service, base_service);
+    private:
+        rpc::ios_wrapper ios_;
+    public:
+        void start()
+        {
+            ios_.start();
+        }
+
+        ios_t& get_ios()
+        {
+            return ios_.service();
+        }
+    };
+}
 
 int main(int argc, char* argv[])
 {
-    std::vector<base_service*> list = service_factory::ins().get_all_service<base_service>();
-    for (base_service* base : list)
-    {
-        base->show();
-    }
+    cytx::log::init_log(cytx::log_level_t::debug, "net");
+    cytx::log::init_log(cytx::log_level_t::debug, "conn");
 
+    cytx::thrift_manager manager;
 
-    base_service* base = service_factory::ins().get_service<base_service>();
-    base->show();
+    auto transport_ptr = boost::make_shared<cytx::thrift_client_transport>(manager.get_ios(), "127.0.0.1", 6327);
 
+    auto proto = boost::make_shared<cytx::protocol_t>(transport_ptr);
 
-    std::cout << std::endl;
-    service_manager smgr;
-    base_service* base1 = smgr.get_service<base_service>();
-    smgr.register_service("derived_service");
-    smgr.register_service("base_service");
-    smgr.register_service("derived_test_service");
-    base1 = smgr.get_service<base_service>();
-    base1->show();
+    RpcHelloServiceClient client(proto);
 
-    std::vector<base_service*> list1 = smgr.get_all_service<base_service>();
-    for (base_service* base : list1)
-    {
-        base->show();
-    }
-    int i = 0;
+    manager.start();
+    int result = client.show("test");
+
+    std::cout << result << std::endl;
+
+    return 0;
 }
