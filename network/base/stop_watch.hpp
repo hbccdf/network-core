@@ -31,17 +31,17 @@ namespace cytx
             start();
         }
         //Œ¢√Î
-        double elapsed()
+        double elapsed() const
         {
             return static_cast<double>(elapsed_);
         }
         //∫¡√Î
-        double elapsed_ms()
+        double elapsed_ms() const
         {
             return elapsed_ / 1000.0;
         }
         //√Î
-        double elapsed_second()
+        double elapsed_second() const
         {
             return elapsed_ / 1000000.0;
         }
