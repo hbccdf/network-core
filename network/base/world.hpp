@@ -87,7 +87,14 @@ namespace cytx
         }
 
         template<typename T>
-        auto set(const std::string& name, T* obj) -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T> && !is_callable_v<T>>
+        auto set(const std::string& name, T value) -> std::enable_if_t<is_enum_type_v<T>>
+        {
+            using under_type = std::underlying_type_t<T>;
+            set_basic(name, (under_type)value);
+        }
+
+        template<typename T>
+        auto set(const std::string& name, T* obj) -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T> && !is_enum_type_v<T> && !is_callable_v<T>>
         {
             set(name, (void*)obj);
             set(obj);
@@ -119,11 +126,18 @@ namespace cytx
         template<typename T>
         auto get(const std::string& name) const -> std::enable_if_t<is_number_type_v<T>, T>
         {
-            return get_basic(name);
+            return get_basic<T>(name);
         }
 
         template<typename T>
-        auto get(const std::string& name) const -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T> && !is_callable_v<T>, T*>
+        auto get(const std::string& name) const -> std::enable_if_t<is_enum_type_v<T>, T>
+        {
+            using under_type = std::underlying_type_t<T>;
+            return (T)get_basic<under_type>(name);
+        }
+
+        template<typename T>
+        auto get(const std::string& name) const -> std::enable_if_t<!is_string_v<T> && !is_number_type_v<T> && !is_enum_type_v<T> && !is_callable_v<T>, T*>
         {
             auto it = obj_map_.find(name);
             if (it != obj_map_.end())
