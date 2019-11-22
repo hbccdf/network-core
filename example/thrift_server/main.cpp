@@ -2,7 +2,7 @@
 
 namespace cytx
 {
-    class thrift_server : public gameserver::irouter<connection_t>
+    class thrift_server : public net::irouter<connection_t>
     {
     public:
         thrift_server(processer_ptr processer)
@@ -11,10 +11,10 @@ namespace cytx
 
         void init()
         {
-            gameserver::server_options options;
+            net::server_options options;
             options.batch_send_msg = true;
             options.disconnect_interval = 0;
-            options.thread_mode = gameserver::server_thread_mode::no_io_thread;
+            options.thread_mode = net::server_thread_mode::no_io_thread;
             server_ = std::make_unique<server_t>("127.0.0.1", 6327, options, this);
         }
 

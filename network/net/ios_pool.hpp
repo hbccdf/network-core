@@ -6,7 +6,7 @@
 #include <boost/thread/tss.hpp>
 namespace cytx
 {
-    namespace gameserver
+    namespace net
     {
         namespace detail
         {
@@ -57,7 +57,7 @@ namespace cytx
             }
 
         public:
-            void run()
+            void start()
             {
                 for (auto& ios : ios_ptrs_)
                 {
@@ -102,7 +102,7 @@ namespace cytx
                 return *(ios_ptrs_[index]);
             }
 
-            size_t io_service_size() const { return ios_ptrs_.size(); }
+            size_t size() const { return ios_ptrs_.size(); }
             int32_t get_cur_ios_index() const { return ios_ptrs_.empty() ? -1 : cur_ios_index_; }
 
         private:

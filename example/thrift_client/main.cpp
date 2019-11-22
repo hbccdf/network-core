@@ -16,7 +16,7 @@ namespace cytx
 
     public:
         thrift_client_transport(ios_t& ios, const std::string& host, uint32_t port)
-            : base_t(std::make_shared<connection_t>(ios, this, 0, gameserver::connection_options{30, true}))
+            : base_t(std::make_shared<connection_t>(ios, this, 0, net::connection_options{30, true}))
             , host_(host)
             , port_(port)
         {

@@ -2,11 +2,11 @@
 #include "network/util/net.hpp"
 #include "network/util/cast.hpp"
 #include "network/meta/meta.hpp"
-#include "tcp_server.hpp"
+#include "network/net/tcp_server.hpp"
+#include "network/service/service_manager.hpp"
 #include "server_config.hpp"
 #include "msg_pack.hpp"
 #include "protocol.hpp"
-#include "network/service/service_manager.hpp"
 #include "config_service.hpp"
 
 #define SERVER_LOG(level, str, ...)             \
@@ -36,9 +36,9 @@ namespace cytx
             using namespace cytx;
             using namespace cytx::gameserver;
 
-            using msg_t = server_msg<msg_body>;
+            using msg_t = net::server_msg<net::msg_body>;
             using header_t = typename msg_t::header_t;
-            using server_t = tcp_server<msg_t>;
+            using server_t = net::tcp_server<msg_t>;
             using server_ptr = std::unique_ptr<server_t>;
             using connection_t = typename server_t::connection_t;
             using connection_ptr = typename server_t::connection_ptr;
@@ -89,8 +89,8 @@ namespace cytx
 
                     SERVER_DEBUG("init server");
                     //初始化server和timer
-                    server_options options;
-                    options.thread_mode = (cytx::gameserver::server_thread_mode)info.thread_mode;
+                    net::server_options options;
+                    options.thread_mode = (net::server_thread_mode)info.thread_mode;
                     options.disconnect_interval = info.disconnect_heartbeat;
                     options.batch_send_msg = info.batch_send_msg;
 
@@ -401,7 +401,7 @@ namespace cytx
                         if (unique_id == server_unique_id::gateway_server)
                         {
                             gate_conn_ptr_ = conn_ptr;
-                            gate_conn_ptr_->set_conn_info(connection_info{ unique_id });
+                            gate_conn_ptr_->world()["unique_id"] = unique_id;
                             LOG_INFO("gate way connected");
                         }
                         else
@@ -450,7 +450,7 @@ namespace cytx
                         return 0;
                     }
 
-                    server_unique_id unique_id = conn_ptr->get_conn_info().unique_id;
+                    server_unique_id unique_id = conn_ptr->world()["unique_id"];
                     msg_ptr msgp = server_pack_msg(msg_id, unique_id, t);
                     if (request_msgp)
                     {

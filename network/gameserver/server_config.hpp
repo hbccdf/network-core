@@ -2,8 +2,8 @@
 
 #include "network/serialize/deserializer.hpp"
 #include "network/serialize/xml_adapter.hpp"
+#include "network/net/raw_msg.hpp"
 #include "common.hpp"
-#include "raw_msg.hpp"
 
 namespace cytx
 {
@@ -35,7 +35,7 @@ namespace cytx
             }
             if (modify_endian)
             {
-                gameserver::msg_header::big_endian(config_.common.server_big_endian);
+                net::msg_header::big_endian(config_.common.server_big_endian);
             }
         }
 

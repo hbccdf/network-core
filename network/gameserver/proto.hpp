@@ -1,5 +1,5 @@
 #pragma once
-#include "tcp_connect.hpp"
+#include "network/net/tcp_connect.hpp"
 #include "msg_pack.hpp"
 
 namespace cytx
@@ -15,9 +15,9 @@ namespace cytx
             class game_server;
             using game_server_t = game_server;
 
-            using msg_t = server_msg<msg_body>;
+            using msg_t = net::server_msg<net::msg_body>;
             using header_t = typename msg_t::header_t;
-            using connection_t = tcp_connection<msg_t>;
+            using connection_t = net::tcp_connection<msg_t>;
             using connection_ptr = std::shared_ptr<connection_t>;
             using context_t = typename connection_t::context_t;
             using msg_ptr = typename connection_t::msg_ptr;
@@ -69,7 +69,7 @@ namespace cytx
                     }
                     else
                     {
-                        ios_t& ios = get_current_ios();
+                        auto& ios = net::get_current_ios();
                         boost::asio::spawn(ios, [&] (context_t ctx)
                         {
                             this->process(msgp, conn_ptr, server, ctx);
@@ -149,9 +149,9 @@ namespace cytx
         using Proto = detail::Proto;
         using proto_t = Proto;
         using proto_ptr_t = std::shared_ptr<proto_t>;
-        using msg_t = server_msg<msg_body>;
+        using msg_t = net::server_msg<net::msg_body>;
         using header_t = typename msg_t::header_t;
-        using connection_t = tcp_connection<msg_t>;
+        using connection_t = net::tcp_connection<msg_t>;
         using context_t = typename connection_t::context_t;
         using connection_ptr = std::shared_ptr<connection_t>;
         using msg_ptr = typename connection_t::msg_ptr;

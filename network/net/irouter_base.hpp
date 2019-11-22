@@ -2,7 +2,7 @@
 #include "network/base/exception.hpp"
 namespace cytx
 {
-    namespace gameserver
+    namespace net
     {
         template<typename CONN_T>
         class irouter_base

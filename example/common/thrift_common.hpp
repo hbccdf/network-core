@@ -1,7 +1,7 @@
 #pragma once
 #include "RpcHelloService.h"
-#include <network/gameserver/tcp_server.hpp>
-#include <network/gameserver/tcp_connect.hpp>
+#include <network/net/tcp_server.hpp>
+#include <network/net/tcp_connect.hpp>
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/processor/TMultiplexedProcessor.h>
@@ -75,9 +75,9 @@ namespace cytx
         }
     };
 
-    using thrift_msg = gameserver::basic_msg<thrift_header, gameserver::msg_body>;
+    using thrift_msg = net::basic_msg<thrift_header, net::msg_body>;
 
-    using server_t = gameserver::tcp_server<thrift_msg>;
+    using server_t = net::tcp_server<thrift_msg>;
     using server_ptr = std::unique_ptr<server_t>;
     using connection_t = server_t::connection_t;
     using connection_ptr = server_t::connection_ptr;

@@ -1,6 +1,5 @@
 ﻿#pragma once
-
-#include "raw_msg.hpp"
+#include "network/net/raw_msg.hpp"
 #include "network/codec/codec_gos.hpp"
 #include "network/codec/codec_thrift.hpp"
 
@@ -14,7 +13,7 @@ namespace cytx
             using thrift_base_t = ::apache::thrift::TBase;
             using buffer_t = cytx::codec::gos_buffer;
 
-            using msg_t = cytx::gameserver::server_msg<cytx::gameserver::msg_body>;
+            using msg_t = net::server_msg<net::msg_body>;
             using msg_ptr = std::shared_ptr<msg_t>;
             using header_t = typename msg_t::header_t;
 

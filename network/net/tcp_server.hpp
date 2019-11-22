@@ -22,7 +22,7 @@ if(log_)                                        \
 
 namespace cytx
 {
-    namespace gameserver
+    namespace net
     {
         enum class server_thread_mode : uint8_t
         {
@@ -75,14 +75,14 @@ namespace cytx
                 , cur_conn_id_(0)
                 , log_(cytx::log::get_log("net"))
             {
-                NET_DEBUG("create server tcp://{}:{}, thread_mode {}, io thread count {}", ip, port, (int32_t)options.thread_mode, ios_pool_.io_service_size());
+                NET_DEBUG("create server tcp://{}:{}, thread_mode {}, io thread count {}", ip, port, (int32_t)options.thread_mode, ios_pool_.size());
             }
 
             void start()
             {
                 NET_DEBUG("tcp server start");
                 do_accept();
-                ios_pool_.run();
+                ios_pool_.start();
             }
 
             void stop()

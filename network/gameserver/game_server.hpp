@@ -281,5 +281,6 @@ namespace cytx
             };
         }
         using game_server = detail::game_server;
+        using stream_t = cytx::memory_stream;
     }
 }

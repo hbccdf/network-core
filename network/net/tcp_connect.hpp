@@ -12,7 +12,6 @@
 #include "raw_msg.hpp"
 #include "irouter_base.hpp"
 #include "async_func.hpp"
-#include "common.hpp"
 
 #define CLIENT_MSG_BUFF_MAX 1024 * 100 //100K
 
@@ -38,7 +37,7 @@ HAS_FIELD(call_id);
 
 namespace cytx
 {
-    namespace gameserver
+    namespace net
     {
         namespace detail
         {
@@ -198,11 +197,6 @@ namespace cytx
             bool batch_send_msg;
         };
 
-        struct connection_info
-        {
-            cytx::server_unique_id unique_id;
-        };
-
         template<typename MSG>
         class tcp_connection : public std::enable_shared_from_this<tcp_connection<MSG>>
         {
@@ -222,9 +216,9 @@ namespace cytx
             using ec_t = boost::system::error_code;
             using batch_msg_t = batch_msg<msg_t>;
             using batch_msg_ptr = std::shared_ptr<batch_msg_t>;
-            using handler_t = detail::handler_t<msg_ptr>;
-            using context_t = detail::context_t;
-            using completion_t = detail::completion_t<msg_ptr>;
+            using handler_t = handler_t<msg_ptr>;
+            using context_t = context_t;
+            using completion_t = completion_t<msg_ptr>;
 
         public:
             tcp_connection(io_service_t& ios, irouter_ptr router, int32_t conn_id, const connection_options& options)
@@ -340,16 +334,6 @@ namespace cytx
             socket_t& socket() { return socket_; }
 
             bool is_running() const { return is_running_; }
-
-            void set_conn_info(const connection_info& conn_info)
-            {
-                conn_info_ = conn_info;
-            }
-
-            const connection_info& get_conn_info() const
-            {
-                return conn_info_;
-            }
 
             int32_t get_conn_id() const { return conn_id_; }
 
@@ -574,21 +558,10 @@ namespace cytx
                 if (!is_running_)
                     return;
 
-                //CONN_DEBUG("connection {} on error {}, cur call id {}, calls {}", conn_id_, err.message(), cur_call_id_, calls_.size());
                 CONN_DEBUG("connection {} on error {}", conn_id_, err.message());
 
                 is_running_ = false;
                 timer_mgr_.stop_all_timer();
-
-                /*cur_call_id_ = 0;
-                for (auto& p : calls_)
-                {
-                    handler_t& handler = p.second;
-
-                    using boost::asio::asio_handler_invoke;
-                    asio_handler_invoke(std::bind(handler, nullptr), &handler);
-                }
-                calls_.clear();*/
 
                 auto conn = this->shared_from_this();
                 router_ptr_->on_disconnect(conn, err);
@@ -676,8 +649,6 @@ namespace cytx
             timer_manager timer_mgr_;
             uint32_t cur_call_id_ = 0;
             std::map<uint32_t, handler_t> calls_;
-
-            connection_info conn_info_;
 
             world_map world_;
         };

@@ -5,7 +5,7 @@
 #include <boost/asio/buffer.hpp>
 
 namespace cytx {
-    namespace gameserver {
+    namespace net {
 
         using stream_t = cytx::memory_stream;
 

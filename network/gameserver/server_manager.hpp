@@ -60,7 +60,7 @@ namespace cytx
                     info.connect_interval = 5000;
                     servers_[data.unique_id].emplace_back(server_info);
 
-                    conn_ptr->set_conn_info(connection_info{ data.unique_id });
+                    conn_ptr->world()["unique_id"] = data.unique_id;
                     LOG_INFO("server {} register", data.unique_id);
 
                     send_server_msg(conn_ptr, SC_RegisterServer, SCRegisterServer{ (uint16_t)data.unique_id });
@@ -111,7 +111,7 @@ namespace cytx
             protected:
                 void on_disconnect(connection_ptr& conn_ptr, const net_result& err) override
                 {
-                    server_unique_id unique_id = conn_ptr->get_conn_info().unique_id;
+                    server_unique_id unique_id = conn_ptr->world()["unique_id"];
 
                     auto it = servers_.find(unique_id);
                     if (it == servers_.end() || it->second.empty())
