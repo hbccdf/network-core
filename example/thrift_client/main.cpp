@@ -13,6 +13,7 @@ namespace cytx
         waitable_object waiter_;
         std::string host_;
         uint32_t port_;
+        protocol_ptr proto_;
 
     public:
         thrift_client_transport(ios_t& ios, const std::string& host, uint32_t port)
@@ -21,6 +22,8 @@ namespace cytx
             , port_(port)
         {
             ptr_->world()["client"] = this;
+            auto transport_ptr = boost::shared_ptr<thrift_client_transport>(this, [](auto ptr) {});
+            proto_ = boost::make_shared<protocol_t>(transport_ptr);
         }
 
         uint32_t read_virt(uint8_t* buffer, uint32_t length) override
@@ -73,6 +76,11 @@ namespace cytx
             return base_t::writeEnd();
         }
 
+        protocol_ptr get_proto() const
+        {
+            return proto_;
+        }
+
     };
 
     class thrift_manager
@@ -101,9 +109,7 @@ int main(int argc, char* argv[])
 
     auto transport_ptr = boost::make_shared<cytx::thrift_client_transport>(manager.get_ios(), "127.0.0.1", 6327);
 
-    auto proto = boost::make_shared<cytx::protocol_t>(transport_ptr);
-
-    RpcHelloServiceClient client(proto);
+    RpcHelloServiceClient client(transport_ptr->get_proto());
 
     manager.start();
     int result = client.show("test");

@@ -70,7 +70,7 @@ namespace cytx
 }
 
 
-class RpcHelloServiceHandler : virtual public RpcHelloServiceIf {
+class RpcHelloServiceHandler : public RpcHelloServiceIf {
 public:
     RpcHelloServiceHandler() {
         // Your initialization goes here
