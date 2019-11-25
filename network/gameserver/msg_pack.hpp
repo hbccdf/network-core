@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "network/traits/traits.hpp"
 #include "network/net/raw_msg.hpp"
 #include "network/codec/codec_gos.hpp"
 #include "network/codec/codec_thrift.hpp"
@@ -19,38 +20,27 @@ namespace cytx
 
             class custom_msg{};
 
-            template <typename T, class = std::void_t<>>
-            struct is_custom_msg : std::false_type
+            template <typename T>
+            struct is_custom_msg : std::integral_constant<bool, std::is_base_of<custom_msg, T>::value>
             {
             };
+
+            TEMPLATE_TYPE(is_custom_msg);
+
+            template <typename T>
+            struct is_thrift_msg : std::integral_constant<bool, std::is_base_of<thrift_base_t, T>::value>
+            {
+            };
+
+            TEMPLATE_TYPE(is_thrift_msg);
 
             template<typename T>
-            struct is_custom_msg<T, std::void_t<std::enable_if_t<std::is_base_of<custom_msg, T>::value>>> : std::true_type
+            struct is_gos_msg : std::integral_constant<bool, !is_thrift_msg<T>::value && !is_custom_msg<T>::value>
             {
 
             };
 
-            template <typename T, class = std::void_t<>>
-            struct is_thrift_msg : std::false_type
-            {
-            };
-
-            template<typename T>
-            struct is_thrift_msg<T, std::void_t<std::enable_if_t<std::is_base_of<thrift_base_t, T>::value>>> : std::true_type
-            {
-
-            };
-
-            template <typename T, class = std::void_t<>>
-            struct is_gos_msg : std::false_type
-            {
-            };
-
-            template<typename T>
-            struct is_gos_msg<T, std::void_t<std::enable_if_t<!is_thrift_msg<T>::value && !is_custom_msg<T>::value>>> : std::true_type
-            {
-
-            };
+            TEMPLATE_TYPE(is_gos_msg);
 
             template<typename T>
             auto pack_msg_impl(gos_t& gos, const T& t, bool is_big_endian) -> std::enable_if_t<is_thrift_msg<T>::value>
