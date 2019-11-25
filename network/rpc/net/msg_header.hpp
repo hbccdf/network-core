@@ -465,6 +465,16 @@ namespace cytx {
             char const* ptr_ = nullptr;
             size_t size_ = 0;
         };
+
+        inline int get_header_length(const msg_header& h)
+        {
+            return h.length();
+        }
+
+        inline void set_header_length(msg_header& h, int len)
+        {
+            h.length(len);
+        }
     }
 }
 

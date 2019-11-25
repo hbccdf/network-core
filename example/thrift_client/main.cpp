@@ -1,6 +1,6 @@
 ﻿#include "thrift_common.hpp"
 #include "network/base/waitable_object.hpp"
-#include "network/rpc/net/ios_wrapper.hpp"
+#include "network/net/ios_wrapper.hpp"
 
 namespace cytx
 {
@@ -78,7 +78,7 @@ namespace cytx
     class thrift_manager
     {
     private:
-        rpc::ios_wrapper ios_;
+        net::ios_wrapper ios_;
     public:
         void start()
         {

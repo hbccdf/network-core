@@ -256,7 +256,7 @@ namespace cytx
 
                 CONN_DEBUG("connection {} sync connect tcp://{}:{}", conn_id_, host_, port_);
                 ec_t ec;
-                ec = socket_.connect(cytx::util::get_tcp_endpoint(host_, port_), ec);
+                ec = socket_.connect(cytx::util::to_tcp_endpoint(host_, port_), ec);
                 if (!ec)
                 {
                     start();
@@ -282,7 +282,7 @@ namespace cytx
                 }
 
                 CONN_DEBUG("connection {} connect tcp://{}:{}", conn_id_, host_, port_);
-                socket_.async_connect(cytx::util::get_tcp_endpoint(host_, port_), cytx::bind(&this_t::handle_connect, this->shared_from_this()));
+                socket_.async_connect(cytx::util::to_tcp_endpoint(host_, port_), cytx::bind(&this_t::handle_connect, this->shared_from_this()));
             }
 
             bool start()

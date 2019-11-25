@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "network/rpc/net/router_register.hpp"
 #include "network/rpc/net/rpc_task.hpp"
-#include "network/rpc/net/ios_wrapper.hpp"
+#include "network/net/ios_wrapper.hpp"
 
 namespace cytx {
     namespace rpc
@@ -16,7 +16,7 @@ namespace cytx {
             using connection_ptr = std::shared_ptr<connection_t>;
             using router_t = typename base_t::router_t;
             using header_t = header_type;
-            using ios_t = ios_wrapper;
+            using ios_t = net::ios_wrapper;
             using io_service_t = typename ios_t::io_service_t;
             using irouter_t = typename connection_t::irouter_t;
             using irouter_ptr = typename connection_t::irouter_ptr;

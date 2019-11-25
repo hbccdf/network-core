@@ -1,13 +1,12 @@
 #pragma once
 #include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <thread>
 #include <mutex>
 #include <functional>
 #include <boost/bind.hpp>
 
 namespace cytx {
-    namespace rpc
+    namespace net
     {
         class ios_wrapper
         {

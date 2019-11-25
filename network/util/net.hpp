@@ -28,7 +28,7 @@ namespace cytx
 {
     namespace util
     {
-        inline static std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string)
+        inline std::vector<boost::asio::ip::tcp::endpoint> get_tcp_endpoints(std::string const& address_port_string)
         {
             auto address_port_list = string_util::split(address_port_string, " ,|;");
             std::vector<boost::asio::ip::tcp::endpoint> tcp_endpoints;
@@ -47,12 +47,17 @@ namespace cytx
             return tcp_endpoints;
         }
 
-        inline static boost::asio::ip::tcp::endpoint get_tcp_endpoint(std::string const& address, uint16_t port)
+        inline boost::asio::ip::tcp::endpoint to_tcp_endpoint(std::string const& address, uint16_t port)
         {
             return { boost::asio::ip::address::from_string(address), port };
         }
 
-        inline static std::string domain2ip(const std::string& ip, uint16_t port)
+        inline boost::asio::ip::tcp::endpoint to_tcp_endpoint(uint16_t port)
+        {
+            return boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4(), port };
+        }
+
+        inline std::string domain2ip(const std::string& ip, uint16_t port)
         {
             boost::asio::io_service ios;
             boost::asio::ip::tcp::resolver slv(ios);

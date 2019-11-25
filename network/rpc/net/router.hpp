@@ -16,11 +16,13 @@ namespace cytx {
             using connection_t = ConnectType;
             using connection_ptr = std::shared_ptr<ConnectType>;
             using header_t = typename connection_t::header_t;
+            using msg_t = typename connection_t::msg_t;
+            using msg_ptr = typename connection_t::msg_ptr;
             using invoker_t = std::function<void(connection_ptr, header_t&, const char*)>;
             using invoker_container = std::unordered_map<uint64_t, invoker_t>;
             using on_read_func = std::function<void(connection_ptr, header_t&)>;
             using on_error_func = std::function<void(connection_ptr, net_result const& error)>;
-            using before_invoke_func = std::function<bool(connection_ptr, const header_t&, const char*, size_t)>;
+            using before_invoke_func = std::function<bool(connection_ptr, msg_ptr)>;
             using before_send_func = std::function<bool(connection_ptr, const header_t&)>;
             using after_send_func = std::function<void(connection_ptr, const header_t&)>;
             using proto_func = std::function<bool(const header_t&)>;
@@ -116,7 +118,7 @@ namespace cytx {
 
             inline bool has_invoker(std::string const& name) const;
 
-            inline void apply_invoker(connection_ptr conn, header_t& header, char const* data, size_t size) const;
+            inline void apply_invoker(connection_ptr conn, msg_ptr msg) const;
 
         private:
             template <typename CallCodecPolicy, typename Handler, typename ... Handlers>

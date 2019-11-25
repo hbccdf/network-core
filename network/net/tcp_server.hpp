@@ -1,4 +1,5 @@
 #pragma once
+#include "net_common.hpp"
 #include "tcp_connect.hpp"
 #include "ios_pool.hpp"
 
@@ -24,34 +25,12 @@ namespace cytx
 {
     namespace net
     {
-        enum class server_thread_mode : uint8_t
-        {
-            no_io_thread,
-            one_io_thread,
-            more_io_thread,
-        };
-
         struct server_options
         {
             server_thread_mode thread_mode;
             int32_t disconnect_interval;
             bool batch_send_msg;
         };
-
-        inline uint32_t get_thread_count(server_thread_mode thread_mode)
-        {
-            switch (thread_mode)
-            {
-            case server_thread_mode::no_io_thread:
-                return 0;
-            case server_thread_mode::one_io_thread:
-                return 1;
-            case server_thread_mode::more_io_thread:
-                return std::thread::hardware_concurrency();
-            default:
-                return 0;
-            }
-        }
 
         template<typename MSG = server_msg<msg_body>>
         class tcp_server
@@ -69,7 +48,7 @@ namespace cytx
 
             tcp_server(const std::string& ip, uint16_t port, const server_options& options, irouter_ptr router_ptr = nullptr)
                 : ios_pool_(get_thread_count(options.thread_mode))
-                , acceptor_(ios_pool_.get_main_service(), boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4(), port }, true)
+                , acceptor_(ios_pool_.get_main_service(), util::to_tcp_endpoint(port), true)
                 , router_ptr_(router_ptr)
                 , options_(options)
                 , cur_conn_id_(0)

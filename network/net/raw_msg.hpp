@@ -181,6 +181,18 @@ namespace cytx {
             }
         };
 
+        template<typename T>
+        inline int get_header_length(const T& h)
+        {
+            return h.length;
+        }
+
+        template<typename T>
+        inline void set_header_length(T& h, int len)
+        {
+            h.length = (uint32_t)len;
+        }
+
         template<typename HEADER, typename BODY>
         struct basic_msg
         {
@@ -197,9 +209,10 @@ namespace cytx {
             basic_msg(const header_t& h)
                 : header_(h), body_()
             {
-                if (h.length > 0)
+                int len = get_header_length(h);
+                if (len > 0)
                 {
-                    body_.alloc((int32_t)h.length);
+                    body_.alloc(len);
                 }
             }
 
@@ -212,15 +225,26 @@ namespace cytx {
                 }
             }
 
+            basic_msg(const header_t& h, stream_t& gos)
+                : header_(h)
+                , body_()
+            {
+                if (gos.length() > 0)
+                {
+                    body_.reset(gos.data(), gos.length());
+                    gos.set_alloc_type(0);
+                }
+            }
+
             void reset(char* data_ptr, int data_size)
             {
-                header_.length = (uint32_t)data_size;
+                set_header_length(header_, data_size);
                 body_.reset(data_ptr, data_size);
             }
 
             void reset(stream_t& gos)
             {
-                header_.length = (uint32_t)gos.length();
+                set_header_length(header_, gos.length());
                 body_.reset(gos.data(), gos.length());
                 gos.set_alloc_type(0);
             }
@@ -240,6 +264,9 @@ namespace cytx {
 
             const header_t& header() const { return header_; }
             header_t& header() { return header_; }
+
+            const body_t& body() const { return body_; }
+            body_t body() { return body_; }
 
             void hton()
             {

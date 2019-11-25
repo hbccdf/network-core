@@ -3,7 +3,6 @@
 #include <vector>
 #include <queue>
 #include <boost/asio.hpp>
-#include <boost/make_unique.hpp>
 #include "network/base/exception.hpp"
 #include "network/base/waitable_object.hpp"
 #include "network/timer/schedule_timer.hpp"

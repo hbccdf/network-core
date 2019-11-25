@@ -55,17 +55,17 @@ namespace cytx
                         {
                             if (c->get_irouter())
                             {
-                                c->get_irouter()->connection_incoming(net_result(), c);
+                                c->get_irouter()->on_connect(c, net_result());
                             }
                             c->call_context(ctx);
                         };
 
-                        auto on_error_func = [c = client_, ctx = ctx_](auto& ec)
+                        auto on_error_func = [c = client_, ctx = ctx_](auto& ec) mutable
                         {
                             if (ctx->on_ok || ctx->on_error || ctx->barrier_ptr)
                                 ctx->error(ec);
                             else if (c->get_irouter())
-                                c->get_irouter()->connection_incoming(ec, c);
+                                c->get_irouter()->on_connect(c, net_result(ec));
                         };
 
                         client_->connect().on_ok(on_ok_func).on_error(on_error_func).delay(duration_);

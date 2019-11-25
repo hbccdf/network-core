@@ -15,7 +15,9 @@ namespace cytx {
             using connection_ptr = std::shared_ptr<connection_t>;
             using router_t = router<codec_policy, header_type>;
             using header_t = header_type;
-            using ios_t = ios_wrapper;
+            using msg_t = net::basic_msg<header_t, net::msg_body>;
+            using msg_ptr = std::shared_ptr<msg_t>;
+            using ios_t = net::ios_wrapper;
             using before_invoke_func = typename router_t::before_invoke_func;
             using before_send_func = typename router_t::before_send_func;
             using after_send_func = typename router_t::after_send_func;
@@ -151,11 +153,12 @@ namespace cytx {
                 router_.set_on_read([this](connection_ptr conn_ptr, header_t& header)
                 {
                     auto read_buffer = conn_ptr->get_read_buffer();
-                    auto gos_ptr = std::make_shared<cytx::codec::gos_buffer>(read_buffer.data(), read_buffer.data() + read_buffer.size());
+                    auto msg = std::make_shared<msg_t>(header);
+                    msg->body().reset(const_cast<char*>(read_buffer.data()), (int)read_buffer.size());
 
-                    msg_ios_.service().post([conn_ptr, header, this, gos_ptr] () mutable
+                    msg_ios_.service().post([conn_ptr, this, msg] () mutable
                     {
-                        router_.apply_invoker(conn_ptr, header, gos_ptr->data(), gos_ptr->size());
+                        router_.apply_invoker(conn_ptr, msg);
                     });
                 });
             }

@@ -1,16 +1,15 @@
 #pragma once
+#include "network/net/ios_wrapper.hpp"
+#include "network/net/irouter_base.hpp"
+#include "network/net/raw_msg.hpp"
 #include "async_connection.hpp"
 #include "async_rpc_context.hpp"
-#include "ios_wrapper.hpp"
 #include "router.hpp"
-#include "irouter.hpp"
 #include "protocol.hpp"
 
 namespace cytx {
     namespace rpc
     {
-        using ios_t = ios_wrapper;
-
         template <typename context_type>
         inline auto make_rpc_context(uint64_t name, bool inter_proto, typename context_type::buffer_t&& buffer)
             -> std::enable_if_t<!std::is_same<typename context_type::header_t, client_msg_header>::value, std::shared_ptr<context_type>>
@@ -161,10 +160,12 @@ namespace cytx {
             using this_t = async_rpc_channel<CodecPolicy, header_type>;
         public:
             using base_t = rpc_call<CodecPolicy, header_type>;
-            using ios_t = ios_wrapper;
+            using ios_t = net::ios_wrapper;
             using io_service_t = boost::asio::io_service;
             using codec_policy = CodecPolicy;
             using header_t = header_type;
+            using msg_t = net::basic_msg<header_t, net::msg_body>;
+            using msg_ptr = std::shared_ptr<msg_t>;
             using connect_t = async_rpc_channel<codec_policy, header_t>;
             using rpc_call_t = rpc_call<codec_policy, header_t>;
             using rpc_call_container_t = base_call_container<codec_policy, header_type>;
@@ -173,7 +174,7 @@ namespace cytx {
             using call_list_t = typename rpc_call_container_t::call_list_t;
             using call_map_t = typename rpc_call_container_t::call_map_t;
             using router_t = router<codec_policy, header_t>;
-            using irouter_t = irouter<connect_t>;
+            using irouter_t = net::irouter<connect_t>;
             using irouter_ptr = irouter_t*;
             using on_error_func_t = std::function<void(const net_result&)>;
             using on_success_func_t = std::function<void()>;
@@ -285,7 +286,7 @@ namespace cytx {
                         on_error_func(net_result(error_code::repeat_connect));
                     else if (irptr_)
                     {
-                        irptr_->connection_incoming(net_result(error_code::repeat_connect), this->shared_from_this());
+                        irptr_->on_connect(this->shared_from_this(), net_result(error_code::repeat_connect));
                     }
                     return;
                 }
@@ -298,7 +299,7 @@ namespace cytx {
                         on_succ();
                     else if(irptr_)
                     {
-                        irptr_->connection_incoming(net_result(), this->shared_from_this());
+                        irptr_->on_connect(this->shared_from_this(), net_result());
                     }
                 };
 
@@ -308,7 +309,7 @@ namespace cytx {
                         return;
                     if (irptr_)
                     {
-                        irptr_->connection_incoming(r, this->shared_from_this());
+                        irptr_->on_connect(this->shared_from_this(), r);
                     }
                 };
 
@@ -343,7 +344,7 @@ namespace cytx {
                 if (!is_client_)
                     router_.on_error(this->shared_from_this(), err);
                 if (irptr_)
-                    irptr_->connection_terminated(err, this->shared_from_this());
+                    irptr_->on_disconnect(this->shared_from_this(), err);
             }
 
             void on_error(const boost::system::error_code& ec, error_code err = error_code::badconnect)

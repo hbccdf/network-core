@@ -127,18 +127,19 @@ namespace cytx
         }
 
         template<typename T, typename H>
-        void router<T, H>::apply_invoker(connection_ptr conn, header_t& header, char const* data, size_t size) const
+        void router<T, H>::apply_invoker(connection_ptr conn, msg_ptr msg) const
         {
             try
             {
-                if (this->before_invoker_ && !this->before_invoker_(conn, header, data, size))
+                auto& header = msg->header();
+                if (this->before_invoker_ && !this->before_invoker_(conn, msg))
                     return;
 
                 for (auto& invoker : this->proto_invokers_)
                 {
                     if (invoker.func(header))
                     {
-                        invoker.invoker(conn, header, data);
+                        invoker.invoker(conn, msg->header(), msg->data());
                         return;
                     }
                 }
@@ -148,7 +149,7 @@ namespace cytx
                 {
                     if (conn->get_irouter())
                     {
-                        conn->get_irouter()->message_received(conn, header, const_cast<char*>(data), size);
+                        conn->get_irouter()->on_receive(conn, msg);
                     }
                     else if (header.need_reply())
                     {
@@ -168,15 +169,15 @@ namespace cytx
                         return;
                     }
 
-                    invoker(conn, header, data);
+                    invoker(conn, msg->header(), msg->data());
                 }
             }
             catch (net_exception const& error)
             {
-                if (!header.need_reply())
+                if (!msg->header().need_reply())
                     return;
                 // response serialized exception to client
-                auto ctx = context_t::make_error_message(header, error.code());
+                auto ctx = context_t::make_error_message(msg->header(), error.code());
                 conn->response(ctx);
             }
         }

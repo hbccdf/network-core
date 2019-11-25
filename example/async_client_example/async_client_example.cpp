@@ -22,15 +22,15 @@ using irouter_ptr = typename async_client_t::irouter_ptr;
 class client_router : public irouter_t
 {
 public:
-    void connection_incoming(const cytx::net_result& err, connection_ptr conn_ptr) override
+    void on_connect(connection_ptr& conn_ptr, const cytx::net_result& err) override
     {
         std::cout << "on connect" << std::endl;
     }
-    void message_received(connection_ptr& ptr, header_t& header, char* data, size_t size) override
+    void on_receive(connection_ptr& ptr, const msg_ptr& msg) override
     {
         std::cout << "on msg" << std::endl;
     }
-    void connection_terminated(const cytx::net_result& err, connection_ptr conn_ptr) override
+    void on_disconnect(connection_ptr& conn_ptr, const cytx::net_result& err) override
     {
         std::cout << "on disconnect" << std::endl;
     }
@@ -39,7 +39,7 @@ public:
 client_router _router;
 
 // create the client
-async_client_t asy_client(cytx::util::get_tcp_endpoint("127.0.0.1", 9000), &_router);
+async_client_t asy_client(cytx::util::to_tcp_endpoint("127.0.0.1", 9000), &_router);
 
 void async_client_rpc_example()
 {

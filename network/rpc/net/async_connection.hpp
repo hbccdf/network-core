@@ -14,16 +14,13 @@ namespace cytx {
             using tcp = boost::asio::ip::tcp;
             using io_service_t = boost::asio::io_service;
         public:
-            async_connection(
-                io_service_t& ios,
-                tcp::endpoint const& endpoint)
+            async_connection(io_service_t& ios, tcp::endpoint const& endpoint)
                 : socket_(ios)
                 , endpoint_(endpoint)
             {
             }
 
-            async_connection(
-                io_service_t& ios)
+            async_connection(io_service_t& ios)
                 : socket_(ios)
             {
             }
@@ -59,18 +56,14 @@ namespace cytx {
                 {
                     if (on_success_)
                         on_success_();
-
-                    on_error_ = nullptr;
-                    on_success_ = nullptr;
                 }
                 else
                 {
                     if (on_error_)
                         on_error_(error);
-
-                    on_error_ = nullptr;
-                    on_success_ = nullptr;
                 }
+                on_error_ = nullptr;
+                on_success_ = nullptr;
             }
 
         private:
