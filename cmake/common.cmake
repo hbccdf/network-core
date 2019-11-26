@@ -12,8 +12,10 @@ if(NOT IN_BATCH)
     set(CMAKE_SKIP_BUILD_RPATH TRUE)
     get_filename_component(THIS_ROOT ${CMAKE_CURRENT_LIST_FILE} PATH)
     set(ROOT ${THIS_ROOT}/..)
+	set(GIT_ROOT ${ROOT})
     SET(CMAKE_MODULE_PATH ${ROOT}/cmake)
 endif()
+
 if(NOT INCLUDED_COMMON)
     message("include common")
     if(MSVC)
@@ -50,31 +52,31 @@ if(NOT INCLUDED_COMMON)
     set(STR_VERSION "1.0.${SUBVERSION}")
 	
 	if(GAME_VERSION)
-        if(EXISTS "${ROOT}/.git")
+        if(EXISTS "${GIT_ROOT}/.git")
             execute_process(
                 COMMAND git rev-parse --abbrev-ref HEAD
-                WORKING_DIRECTORY ${ROOT}
+                WORKING_DIRECTORY ${GIT_ROOT}
                 OUTPUT_VARIABLE GIT_BRANCH
                 OUTPUT_STRIP_TRAILING_WHITESPACE
             )
 
             execute_process(
                 COMMAND git log -1 --format=%h
-                WORKING_DIRECTORY ${ROOT}
+                WORKING_DIRECTORY ${GIT_ROOT}
                 OUTPUT_VARIABLE GIT_COMMIT_HASH
                 OUTPUT_STRIP_TRAILING_WHITESPACE
             )
             
             execute_process(
                 COMMAND git rev-list --all --count
-                WORKING_DIRECTORY ${ROOT}
+                WORKING_DIRECTORY ${GIT_ROOT}
                 OUTPUT_VARIABLE GIT_COMMIT_COUNT
                 OUTPUT_STRIP_TRAILING_WHITESPACE
             )
             
             execute_process(
                 COMMAND git status
-                WORKING_DIRECTORY ${ROOT}
+                WORKING_DIRECTORY ${GIT_ROOT}
                 OUTPUT_VARIABLE GIT_STATUS
             )
             

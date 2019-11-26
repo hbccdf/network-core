@@ -123,17 +123,19 @@ endmacro()
 
 
 macro(copy_files)
+	set(options IS_DIR)
+    set(oneValueArgs DEST WORK_DIR)
+    set(multiValueArgs FILES)
+	
 	cmake_parse_arguments(
 		PARSED_ARGS
-		"IS_DIR"
-		"DEST"
-		"FILES"
-		"WORK_DIR"
+		"${options}" 
+		"${oneValueArgs}"
+		"${multiValueArgs}"
 		${ARGN}
 	)
 
-	set(IS_DIR 0)
-	set(COPY_COMMAND "copy")  
+	set(COPY_COMMAND "copy")
 
 	if(NOT PARSED_ARGS_DEST)
 		message(FATAL_ERROR "you must provide a dest name")
@@ -141,23 +143,21 @@ macro(copy_files)
 
 	#message("copy files : ${PARSED_ARGS_DEST}")
 	#message("copy files files : ${PARSED_ARGS_FILES}")
-
-	set(dest ${PARSED_ARGS_DEST})
-
+	
 	if(PARSED_ARGS_IS_DIR)
-		set(IS_DIR ${PARSED_ARGS_IS_DIR})
 		set(COPY_COMMAND "copy_directory")
 	endif()
 
 	foreach(file_path ${PARSED_ARGS_FILES})
-		#message("copy files : ${file_path}")
-		#message("copy files_ file_name : ${file_name}")
-
 		get_filename_component(file_name ${file_path} NAME)
+		
+		#message("copy files : ${file_path}")
+		#message("copy files file_name : ${file_name}")
 
+		set(dest ${PARSED_ARGS_DEST})
 		set(dest_file ${dest}/${file_name})
 
-		if(IS_DIR)
+		if(PARSED_ARGS_IS_DIR)
 			set(dest ${dest_file})
 		endif()
 
@@ -169,14 +169,21 @@ macro(copy_files)
 
 			DEPENDS ${file_path}
 		)
+		
+		list(APPEND output_files ${dest_file})
 	endforeach()
 endmacro()
 
 macro(mkdirs)
+	set(options)
+    set(oneValueArgs WORK_DIR)
+    set(multiValueArgs DIRS)
+	
 	cmake_parse_arguments(
 		PARSED_ARGS
-		"DIRS"
-		"WORK_DIR"
+		"${options}" 
+		"${oneValueArgs}"
+		"${multiValueArgs}"
 		${ARGN}
 	)
 	
@@ -191,13 +198,20 @@ macro(mkdirs)
     )
 	endforeach()
 	
+	list(APPEND output_files ${PARSED_ARGS_DIRS})
+	
 endmacro()
 
 macro(generate_version)
+	set(options)
+    set(oneValueArgs DEST_DIR DEST_NAME)
+    set(multiValueArgs)
+	
 	cmake_parse_arguments(
 		PARSED_ARGS
-		"DEST_DIR"
-		"DEST_NAME"
+		"${options}" 
+		"${oneValueArgs}"
+		"${multiValueArgs}"
 		${ARGN}
 	)
 	
@@ -208,14 +222,20 @@ macro(generate_version)
 		COMMAND echo ${VERSION_CONTENT}> version.txt
 		WORKING_DIRECTORY ${DEST_DIR}
 	)
+	
+	list(APPEND output_files ${VERSION_FILE})
 endmacro()
 
 macro(zip_package)
+	set(options)
+    set(oneValueArgs DEST_DIR WORK_DIR)
+    set(multiValueArgs DEPENDS)
+	
 	cmake_parse_arguments(
 		PARSED_ARGS
-		"DEST_DIR"
-		"WORK_DIR"
-		"DEPENDS"
+		"${options}" 
+		"${oneValueArgs}"
+		"${multiValueArgs}"
 		${ARGN}
 	)
 	
