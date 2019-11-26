@@ -4,7 +4,7 @@
 #include <string>
 
 #define REG_TYPE(name) \
-namespace ___reg_type_helper_value___ ## name ## __LINE__ { static int val = (cytx::type_meta_type::ins().set<name>(#name), 0); }
+namespace ___reg_type_helper_value___ ## name ## __LINE__ { static int val = (cytx::type_meta_map::ins().set<name>(#name), 0); }
 
 namespace cytx
 {

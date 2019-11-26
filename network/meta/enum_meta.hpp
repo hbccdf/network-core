@@ -7,6 +7,7 @@
 #include <boost/optional.hpp>
 
 #include "meta_common.hpp"
+#include "type_meta.hpp"
 
 #define PAIR_ENUM(name, t) std::make_pair(#t, name::t)
 #define MAKE_ENUM_TUPLE(enum_name, ...) \
@@ -17,6 +18,7 @@ struct enum_meta_##enum_name { \
 
 
 #define EMMBED_ENUM_TUPLE(name, N, ...) \
+REG_TYPE(name); \
 MAKE_ENUM_TUPLE(name, MAKE_ARG_LIST(name, N, PAIR_ENUM, COMMA_DELIMITER, __VA_ARGS__))
 
 #define REG_ENUM(name, ...) EMMBED_ENUM_TUPLE(name, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__) \

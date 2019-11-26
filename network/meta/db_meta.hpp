@@ -1,5 +1,6 @@
 #pragma once
 #include "meta_common.hpp"
+#include "type_meta.hpp"
 
 #define RAW_DB_ADD_REFERENCE(t)         std::reference_wrapper<decltype(t)>(t)
 #define RAW_DB_PAIR_OBJECT(name, t)     std::make_pair(#t, RAW_DB_ADD_REFERENCE(t))
@@ -29,6 +30,7 @@ __VA_ARGS__; \
     }
 
 #define EMMBED_DB_TUPLE(name, N, ...) \
+REG_TYPE(name); \
 struct db_meta_##name : public cytx::base_db_meta { \
 private: \
     name st_; \

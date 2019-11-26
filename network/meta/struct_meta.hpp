@@ -1,5 +1,6 @@
 #pragma once
 #include "meta_common.hpp"
+#include "type_meta.hpp"
 
 #define ST_PAIR_OBJECT(name, t)                 std::make_pair(#t, std::reference_wrapper<decltype(val.t)>(val.t))
 #define ST_PAIR_CONST_OBJECT(name, t)           std::make_pair(#t, std::reference_wrapper<std::add_const_t<decltype(val.t)>>(val.t))
@@ -13,6 +14,7 @@
 #define MAKE_ST_CONST_TUPLE(name, ...)          static auto Meta(const name& val) { return std::make_tuple(__VA_ARGS__); }
 
 #define EMBED_ST_TUPLE(name, N, ...)                                                                                \
+REG_TYPE(name);                                                                                                     \
 inline auto to_st_extend(const name*) {                                                                             \
     struct st_meta_##name{                                                                                          \
         static const char* meta_name() { return #name; }                                                            \
@@ -33,6 +35,7 @@ inline auto to_st_extend(const name*) {                                         
 #define MAKEB_ST_CONST_TUPLE(name, ...)         static auto Meta(const name& val) { return std::tuple_cat(cytx::get_meta((const base_t&)val), std::make_tuple(__VA_ARGS__)); }
 
 #define EMBEDB_ST_TUPLE(name, base_name, N, ...)                                                                    \
+REG_TYPE(name);                                                                                                     \
 inline auto to_st_extend(const name*) {                                                                             \
     struct st_meta_##name{                                                                                          \
         using base_t = base_name;                                                                                   \
