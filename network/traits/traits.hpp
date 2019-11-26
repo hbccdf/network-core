@@ -16,6 +16,60 @@
 #include <boost/mpl/remove.hpp>
 #include "function_traits.hpp"
 
+#define IS_TEMPLATE_CLASS(token) \
+    template<typename T> struct is_##token : is_specialization_of<std::decay_t<T>, std::token>{}; \
+    template<typename T> constexpr bool is_##token ##_v = is_##token<T>::value
+
+#define IS_SAME_TYPE(token) \
+    template<typename T> struct is_##token ##_type : std::integral_constant<bool, std::is_same<token, std::decay_t<T>>::value> {}; \
+    template<typename T> constexpr bool is_##token ##_type_v = is_##token ##_type<T>::value
+
+#define HAS_TYPE(token) \
+    template <typename T>struct has_##token{ \
+    private: \
+    template<typename C> static std::true_type Check(typename C::token##*); \
+        template<typename C> static std::false_type  Check(...); \
+    public: \
+        enum \
+        { \
+            value = std::is_same<decltype(Check<T>(0)), std::true_type>::value \
+        }; \
+    };  \
+    template<typename T> \
+    constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
+
+#define HAS_FUNC(token, ...) \
+    template <typename T> \
+    struct has_##token \
+    {   \
+    private:    \
+        template <typename P, typename = decltype(std::declval<P>().token(__VA_ARGS__))> \
+        static std::true_type test(int); \
+        template <typename P> \
+        static std::false_type test(...); \
+        using result_type = decltype(test<T>(0)); \
+    public: \
+        constexpr static const bool value = result_type::value; \
+    }; \
+    template<typename T> \
+    constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
+
+#define HAS_FIELD(token, ...) \
+    template <typename T> \
+    struct has_##token \
+    {   \
+    private:    \
+        template <typename P, typename = decltype(std::declval<P>().token)> \
+        static std::true_type test(int); \
+        template <typename P> \
+        static std::false_type test(...); \
+        using result_type = decltype(test<T>(0)); \
+    public: \
+        constexpr static const bool value = result_type::value; \
+    }; \
+    template<typename T> \
+    constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
+
 namespace cytx {
 
     template <typename ... Args>
@@ -129,14 +183,6 @@ namespace cytx {
     template <template <typename...> class Template, typename... Args>
     struct is_specialization_of<Template<Args...>, Template> : std::true_type {};
 
-#define IS_TEMPLATE_CLASS(token) \
-    template<typename T> struct is_##token : is_specialization_of<std::decay_t<T>, std::token>{}; \
-    template<typename T> constexpr bool is_##token ##_v = is_##token<T>::value
-
-#define IS_SAME_TYPE(token) \
-    template<typename T> struct is_##token ##_type : std::integral_constant<bool, std::is_same<token, std::decay_t<T>>::value> {}; \
-    template<typename T> constexpr bool is_##token ##_type_v = is_##token ##_type<T>::value
-
 
     IS_TEMPLATE_CLASS(vector);
     IS_TEMPLATE_CLASS(tuple);
@@ -223,53 +269,6 @@ namespace cytx {
     struct is_pointer_ext : std::integral_constant<bool, std::is_pointer<std::decay_t<T>>::value || is_smart_pointer_v<std::decay_t<T>>> {};
 
     TEMPLATE_VALUE(is_pointer_ext);
-
-
-#define HAS_TYPE(token) \
-    template <typename T>struct has_##token{ \
-    private: \
-    template<typename C> static std::true_type Check(typename C::token##*); \
-        template<typename C> static std::false_type  Check(...); \
-    public: \
-        enum \
-        { \
-            value = std::is_same<decltype(Check<T>(0)), std::true_type>::value \
-        }; \
-    };  \
-    template<typename T> \
-    constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
-
-#define HAS_FUNC(token, ...) \
-    template <typename T> \
-    struct has_##token \
-    {   \
-    private:    \
-        template <typename P, typename = decltype(std::declval<P>().token(__VA_ARGS__))> \
-        static std::true_type test(int); \
-        template <typename P> \
-        static std::false_type test(...); \
-        using result_type = decltype(test<T>(0)); \
-    public: \
-        constexpr static const bool value = result_type::value; \
-    }; \
-    template<typename T> \
-    constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
-
-#define HAS_FIELD(token, ...) \
-    template <typename T> \
-    struct has_##token \
-    {   \
-    private:    \
-        template <typename P, typename = decltype(std::declval<P>().token)> \
-        static std::true_type test(int); \
-        template <typename P> \
-        static std::false_type test(...); \
-        using result_type = decltype(test<T>(0)); \
-    public: \
-        constexpr static const bool value = result_type::value; \
-    }; \
-    template<typename T> \
-    constexpr bool has_##token##_v = has_##token<std::decay_t<T>>::value;
 
     template <typename T>
     struct has_meta_macro
@@ -385,7 +384,8 @@ namespace cytx {
             enum { value = first_value < 0 || other_value < 0 ? -1 : first_value + other_value };
         };
 
-        template<typename T> struct tuple_total_size<T, std::void_t<std::enable_if_t<std::is_enum<std::decay_t<T>>::value>>>
+        template<typename T>
+        struct tuple_total_size<T, std::void_t<std::enable_if_t<std::is_enum<std::decay_t<T>>::value>>>
         {
             enum { value = tuple_total_size<std::underlying_type_t<std::decay_t<T>>>::value };
         };
@@ -395,6 +395,8 @@ namespace cytx {
         {
             enum { value = tuple_total_size<std::tuple<K, V>>::value };
         };
+
+        TEMPLATE_VALUE(tuple_total_size);
     }
 
     template<typename ... Args>

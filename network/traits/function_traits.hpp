@@ -278,7 +278,6 @@ namespace cytx
 
     TEMPLATE_VALUE(is_callable);
 
-
     template <typename Func>
     auto to_function(const Func& lambda)
     {

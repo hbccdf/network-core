@@ -1,4 +1,7 @@
 #pragma once
+#include "network/base/type_id.hpp"
+#include "network/traits/traits.hpp"
+#include "network/util/string.hpp"
 
 #define MARCO_EXPAND(...)                 __VA_ARGS__
 #define APPLY_VARIADIC_MACRO(macro, ...)  MARCO_EXPAND(macro(__VA_ARGS__))
@@ -139,3 +142,29 @@
 
 #define GET_ARG_COUNT_INNER(...)    MARCO_EXPAND(ARG_N(__VA_ARGS__))
 #define GET_ARG_COUNT(...)          GET_ARG_COUNT_INNER(__VA_ARGS__, RSEQ_N())
+
+
+namespace cytx
+{
+    namespace detail
+    {
+        template<typename T, class = std::void_t<>>
+        struct get_meta_impl;
+
+        template<typename T, class = std::void_t<>>
+        struct get_meta_elem_impl;
+
+        template<typename T>
+        struct get_meta_elem_impl<T, std::void_t<std::enable_if_t<is_tuple<T>::value>>>
+        {
+            template<size_t I>
+            static auto get(T&& t)
+            {
+                return std::get<I>(std::forward<T>(t));
+            }
+        };
+
+        template<typename T, class = std::void_t<>>
+        struct is_reflection : std::false_type {};
+    }
+}
