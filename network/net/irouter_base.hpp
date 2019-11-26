@@ -1,5 +1,5 @@
 #pragma once
-#include "network/base/exception.hpp"
+#include "exception.hpp"
 namespace cytx
 {
     namespace net

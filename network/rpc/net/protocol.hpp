@@ -1,5 +1,4 @@
 #pragma once
-
 #include <boost/type_traits.hpp>
 
 #define DEFINE_STR_PROTOCOL(handler, ...) static const ::cytx::rpc::rpc_protocol<__VA_ARGS__> handler{ #handler }

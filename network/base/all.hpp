@@ -1,6 +1,4 @@
 #pragma once
-#include "common.h"
-#include "exception.hpp"
 #include "log.hpp"
 
 #include "memory_pool.hpp"

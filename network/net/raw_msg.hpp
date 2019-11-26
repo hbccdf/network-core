@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "network/base/common.h"
+#include "common.hpp"
 #include "network/util/net.hpp"
 #include "network/base/memory_stream.hpp"
 #include <boost/asio/buffer.hpp>

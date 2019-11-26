@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "network/base/common.h"
+#include "network/net/common.hpp"
 #include "network/base/log.hpp"
 
 namespace cytx

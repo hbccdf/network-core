@@ -1,5 +1,5 @@
 #pragma once
-#include "network/base/exception.hpp"
+#include "network/net/exception.hpp"
 #include "network/serialize/thrift_adapter.hpp"
 #include "codec_common.hpp"
 

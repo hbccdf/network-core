@@ -2,7 +2,7 @@
 #include "network/serialize/serializer.hpp"
 #include "network/serialize/deserializer.hpp"
 #include "network/serialize/gos_adapter.hpp"
-#include "network/base/exception.hpp"
+#include "network/net/exception.hpp"
 #include "codec_common.hpp"
 
 namespace cytx {

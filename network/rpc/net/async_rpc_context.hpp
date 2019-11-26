@@ -3,7 +3,7 @@
 #include <vector>
 #include <queue>
 #include <boost/asio.hpp>
-#include "network/base/exception.hpp"
+#include "network/net/exception.hpp"
 #include "network/base/waitable_object.hpp"
 #include "network/timer/schedule_timer.hpp"
 #include "msg_header.hpp"
