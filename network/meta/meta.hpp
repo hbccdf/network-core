@@ -10,6 +10,7 @@
 #include "enum_meta.hpp"
 #include "db_meta.hpp"
 #include "struct_meta.hpp"
+#include "type_meta.hpp"
 
 namespace cytx
 {
