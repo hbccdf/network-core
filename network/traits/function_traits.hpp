@@ -230,7 +230,6 @@ namespace cytx
 
     TEMPLATE_TYPE(function_args);
 
-
     template<typename F>
     struct function_decay_args
     {
@@ -238,6 +237,15 @@ namespace cytx
     };
 
     TEMPLATE_TYPE(function_decay_args);
+
+    template<typename F>
+    struct function_stl_func
+    {
+        using type = typename function_traits<F>::stl_function_type;
+    };
+
+    TEMPLATE_TYPE(function_stl_func);
+
 
     template<typename F>
     struct function_has_result
