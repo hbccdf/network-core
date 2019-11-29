@@ -37,17 +37,17 @@ namespace cytx
                         depend_center_ = it != info.depends.end();
                     }
 
-                    SERVER_DEBUG("server depend_db {}, depend_center {}", depend_db_, depend_center_);
+                    log_->debug("server depend_db {}, depend_center {}", depend_db_, depend_center_);
 
                     auto connect_func = [this]
                     {
-                        SERVER_DEBUG("connect center server");
+                        log_->debug("connect center server");
                         const server_info& info = config_mgr_[server_unique_id::center_server];
                         center_conn_ptr_->async_connect(info.ip, info.port);
                     };
                     auto connect_db_func = [this]
                     {
-                        SERVER_DEBUG("connect db server");
+                        log_->debug("connect db server");
                         db_conn_ptr_->async_connect(db_info_.ip, db_info_.port);
                     };
                     auto get_db_info_func = [this]
@@ -55,7 +55,7 @@ namespace cytx
                         if (db_conn_ptr_->is_running())
                             return;
 
-                        SERVER_DEBUG("get server info");
+                        log_->debug("get server info");
                         connect_db_timer_.stop();
 
                         get_server_info();
@@ -78,7 +78,7 @@ namespace cytx
                     }
 
                     //初始化所有的service
-                    SERVER_DEBUG("init service");
+                    log_->debug("init service");
                     service_mgr_.init_service();
                 }
 
@@ -88,7 +88,7 @@ namespace cytx
                     connection_ptr conn_ptr = get_connection_ptr(server_unique_id::center_server);
                     if (!conn_ptr)
                     {
-                        LOG_WARN("center server is not connected");
+                        log_->warn("center server is not connected");
                         return 0;
                     }
 
@@ -102,7 +102,7 @@ namespace cytx
                 {
                     const server_info& info = config_mgr_[unique_id_];
 
-                    SERVER_DEBUG("register to center server");
+                    log_->debug("register to center server");
                     CSRegisterServer send_data{ unique_id_, info.ip, info.port };
                     send_server_msg(server_unique_id::center_server, CS_RegisterServer, send_data);
                 }
@@ -110,7 +110,7 @@ namespace cytx
                 {
                     if (depend_db_)
                     {
-                        LOG_DEBUG("try get db info");
+                        log_->debug("try get db info");
                         CSGetServerInfo send_data;
                         send_data.servers.push_back(server_unique_id::db_server);
                         send_server_msg(server_unique_id::center_server, CS_GetServerInfo, send_data);
@@ -119,7 +119,7 @@ namespace cytx
                 void on_sc_register_server(const msg_ptr& msgp)
                 {
                     SCRegisterServer data = unpack_msg<SCRegisterServer>(msgp);
-                    LOG_INFO("current server uid {}", data.server_uid);
+                    log_->info("current server uid {}", data.server_uid);
 
                     reconnect_db();
                 }
@@ -135,7 +135,7 @@ namespace cytx
                         }
                         else
                         {
-                            LOG_DEBUG("on sc_get_server_info, don't have db info");
+                            log_->debug("on sc_get_server_info, don't have db info");
                         }
                     }
                 }
@@ -166,12 +166,12 @@ namespace cytx
                     if (!depend_db_)
                         return;
 
-                    SERVER_DEBUG("reconnect db");
+                    log_->debug("reconnect db");
                     get_db_info_timer_.start(true);
                 }
                 void on_get_db_info(const ServerInfo& db_info)
                 {
-                    LOG_DEBUG("geted db info, {}:{}", db_info.ip, db_info.port);
+                    log_->debug("geted db info, {}:{}", db_info.ip, db_info.port);
                     db_info_ = db_info;
                     connect_db_timer_.start(true);
                 }

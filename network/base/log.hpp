@@ -210,7 +210,7 @@ namespace cytx
             if (!ptr)
             {
                 ptr = spdlog::stdout_logger_mt(log_name);
-                ptr->set_level(log_level_t::off);
+                ptr->set_level(log_level_t::err);
             }
             return ptr;
         }

@@ -52,6 +52,16 @@ namespace cytx
             static instance_factory factory;
             return factory;
         }
+
+        ~instance_factory()
+        {
+            for (auto& p : type_to_objs_)
+            {
+                delete p.second;
+            }
+
+            type_to_objs_.clear();
+        }
     public:
         template<typename T>
         auto get()

@@ -4,8 +4,7 @@
 #include "network/traits/traits.hpp"
 #include "network/base/date_time.hpp"
 #include "network/base/log.hpp"
-namespace cytx
-{
+
 #define TIMER_LOG(level, str, ...)              \
 if(log_)                                        \
 {                                               \
@@ -24,6 +23,8 @@ if(log_)                                        \
     log_->trace(str, ## __VA_ARGS__);           \
 }
 
+namespace cytx
+{
     class timer_manager;
 
     class timer_proxy

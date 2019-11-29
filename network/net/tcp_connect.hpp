@@ -15,24 +15,6 @@
 
 #define CLIENT_MSG_BUFF_MAX 1024 * 100 //100K
 
-#define CONN_LOG(level, str, ...)           \
-if(log_)                                    \
-{                                           \
-    log_->level(str, __VA_ARGS__);   \
-}
-
-#define CONN_DEBUG(str, ...)                \
-if(log_)                                    \
-{                                           \
-    log_->debug(str, __VA_ARGS__);          \
-}
-
-#define CONN_TRACE(str, ...)                \
-if(log_)                                    \
-{                                           \
-    log_->trace(str, __VA_ARGS__);          \
-}
-
 HAS_FIELD(call_id);
 
 namespace cytx
@@ -70,7 +52,7 @@ namespace cytx
                         return 0;
 
                     size_t data_len = remain_len_ + bytes_transfered;
-                    CONN_TRACE("connection {} completion condition, bytes {}, total len {}", conn_id_, bytes_transfered, data_len);
+                    log_->trace("connection {} completion condition, bytes {}, total len {}", conn_id_, bytes_transfered, data_len);
 
                     assert(data_len <= CLIENT_MSG_BUFF_MAX);
 
@@ -142,7 +124,7 @@ namespace cytx
                         memcpy(buff_.begin(), pnext, remain_len_);
                     }
 
-                    CONN_TRACE("connection {}, parse msg, bytes {}, total {}, msg count {}, remain_len {}", conn_id_, bytes_transfered, total_len, msg_count, remain_len_);
+                    log_->trace("connection {}, parse msg, bytes {}, total {}, msg count {}, remain_len {}", conn_id_, bytes_transfered, total_len, msg_count, remain_len_);
 
                     return parse_ok;
                 }
@@ -171,7 +153,7 @@ namespace cytx
                     if (cur_len_ > CLIENT_MSG_BUFF_MAX || cur_len_ < header_length_)
                     {
                         is_valid_ = false;
-                        LOG_WARN("connection {}, completion_condition: {}", conn_id_, cur_len_);
+                        log_->error("connection {}, completion_condition: {}", conn_id_, cur_len_);
                         return false;
                     }
                     return true;
@@ -223,7 +205,7 @@ namespace cytx
         public:
             tcp_connection(io_service_t& ios, irouter_ptr router, int32_t conn_id, const connection_options& options)
                 : ios_(ios)
-                , log_(cytx::log::get_log("conn"))
+                , log_(cytx::log::force_get_log("conn"))
                 , router_ptr_(router)
                 , conn_id_(conn_id)
                 , options_(options)
@@ -231,13 +213,14 @@ namespace cytx
                 , reader_(log_, conn_id_)
                 , timer_mgr_(ios_)
             {
-                CONN_LOG(debug, "connection {} created", conn_id_);
+                log_->debug("connection {} created", conn_id_);
             }
 
             ~tcp_connection()
             {
                 stop_timer();
-                CONN_DEBUG("connection {} destroy", conn_id_);
+                close();
+                log_->debug("connection {} destroy", conn_id_);
             }
 
             net_result connect(const std::string& host, uint32_t port)
@@ -254,7 +237,7 @@ namespace cytx
                     socket_.close(ec);
                 }
 
-                CONN_DEBUG("connection {} sync connect tcp://{}:{}", conn_id_, host_, port_);
+                log_->debug("connection {} sync connect tcp://{}:{}", conn_id_, host_, port_);
                 ec_t ec;
                 ec = socket_.connect(cytx::util::to_tcp_endpoint(host_, port_), ec);
                 if (!ec)
@@ -281,7 +264,7 @@ namespace cytx
                     socket_.close(ec);
                 }
 
-                CONN_DEBUG("connection {} connect tcp://{}:{}", conn_id_, host_, port_);
+                log_->debug("connection {} connect tcp://{}:{}", conn_id_, host_, port_);
                 socket_.async_connect(cytx::util::to_tcp_endpoint(host_, port_), cytx::bind(&this_t::handle_connect, this->shared_from_this()));
             }
 
@@ -291,7 +274,7 @@ namespace cytx
                 remote_ = socket_.remote_endpoint(ec);
                 if (ec)
                 {
-                    LOG_ERROR("connection {} start failed, {}", conn_id_, ec.message());
+                    log_->error("connection {} start failed, {}", conn_id_, ec.message());
                     return false;
                 }
 
@@ -390,7 +373,7 @@ namespace cytx
                 force_close_error_ = true;
                 is_running_ = false;
 
-                CONN_DEBUG("connection {} close", conn_id_);
+                log_->debug("connection {} close", conn_id_);
             }
             void do_write(msg_ptr msgp)
             {
@@ -422,7 +405,7 @@ namespace cytx
 
             void handle_connect(const ec_t& err)
             {
-                CONN_DEBUG("connection {} connect tcp://{}:{}, result {}", conn_id_, host_, port_, err.message());
+                log_->debug("connection {} connect tcp://{}:{}, result {}", conn_id_, host_, port_, err.message());
                 start();
                 auto conn = this->shared_from_this();
                 router_ptr_->on_connect(conn, err);
@@ -460,7 +443,7 @@ namespace cytx
             }
             void handle_timer()
             {
-                CONN_TRACE("connection {} handle timer, received msg {}", conn_id_, received_msg_);
+                log_->trace("connection {} handle timer, received msg {}", conn_id_, received_msg_);
                 if (!received_msg_)
                 {
                     on_error(cytx::error_code::timeout);
@@ -476,7 +459,7 @@ namespace cytx
 
                 if (!options_.batch_send_msg || write_msg_queue_.size() == 1)
                 {
-                    CONN_TRACE("connection {} write msg, queue size {}", conn_id_, write_msg_queue_.size());
+                    log_->trace("connection {} write msg, queue size {}", conn_id_, write_msg_queue_.size());
                     msg_ptr msgp = write_msg_queue_.front();
                     msgp->hton();
                     async_write(socket_, msgp->to_buffers(), boost::bind(&this_t::handle_write, this->shared_from_this(), boost::asio::placeholders::error, msgp));
@@ -503,7 +486,7 @@ namespace cytx
                         return;
                     }
 
-                    CONN_DEBUG("connection {} batch write msg, count {}, length {}, full {}, length full {}", conn_id_, batch_msg_ptr_->size(), batch_msg_ptr_->total_length(),
+                    log_->debug("connection {} batch write msg, count {}, length {}, full {}, length full {}", conn_id_, batch_msg_ptr_->size(), batch_msg_ptr_->total_length(),
                         batch_msg_ptr_->full(), batch_msg_ptr_->length_full());
 
                     batch_msg_ptr_->hton();
@@ -523,7 +506,7 @@ namespace cytx
                 {
                     received_msg_ = true;
 
-                    CONN_TRACE("connection {} begin sequence read", conn_id_);
+                    log_->trace("connection {} begin sequence read", conn_id_);
                     async_read(socket_, recv_buff, cytx::bind(&this_t::completion_condition, this->shared_from_this()),
                         cytx::bind(&this_t::handle_sequence_read, this->shared_from_this()));
                 }
@@ -536,7 +519,7 @@ namespace cytx
                     return;
                 }
 
-                CONN_TRACE("connection {} handle read, bytes {}", conn_id_, bytes_transfered);
+                log_->trace("connection {} handle read, bytes {}", conn_id_, bytes_transfered);
                 bool has_msg = reader_.parse(bytes_transfered);
                 if (has_msg)
                 {
@@ -558,7 +541,7 @@ namespace cytx
                 if (!is_running_)
                     return;
 
-                CONN_DEBUG("connection {} on error {}", conn_id_, err.message());
+                log_->debug("connection {} on error {}", conn_id_, err.message());
 
                 is_running_ = false;
                 timer_mgr_.stop_all_timer();
@@ -576,7 +559,7 @@ namespace cytx
             {
                 size_t msg_list_size = msg_list.size();
                 size_t new_list_size = 0;
-                CONN_DEBUG("connection {} start batch process msg, count {}", conn_id_, msg_list_size);
+                log_->debug("connection {} start batch process msg, count {}", conn_id_, msg_list_size);
 
                 std::vector<msg_ptr> new_msg_list;
                 auto conn_ptr = this->shared_from_this();
@@ -608,14 +591,14 @@ namespace cytx
                     router_ptr_->on_receive_msgs(conn_ptr, new_msg_list);
                 }
 
-                CONN_DEBUG("connection {} end batch process msg, call count {}, msg count {}", conn_id_, msg_list_size - new_list_size, new_list_size);
+                log_->debug("connection {} end batch process msg, call count {}, msg count {}", conn_id_, msg_list_size - new_list_size, new_list_size);
             }
 
             template<typename T>
             auto on_receive_msgs(const std::vector<msg_ptr>& msg_list) -> std::enable_if_t<!has_call_id_v<T>>
             {
                 size_t msg_list_size = msg_list.size();
-                CONN_DEBUG("connection {} start batch process msg, count {}", conn_id_, msg_list_size);
+                log_->debug("connection {} start batch process msg, count {}", conn_id_, msg_list_size);
 
                 if (!msg_list.empty())
                 {
@@ -624,7 +607,7 @@ namespace cytx
                     router_ptr_->on_receive_msgs(conn_ptr, msg_list);
                 }
 
-                CONN_DEBUG("connection {} end batch process msg, msg count {}", conn_id_, msg_list_size);
+                log_->debug("connection {} end batch process msg, msg count {}", conn_id_, msg_list_size);
             }
         private:
             io_service_t& ios_;

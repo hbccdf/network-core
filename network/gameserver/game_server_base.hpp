@@ -9,24 +9,6 @@
 #include "protocol.hpp"
 #include "config_service.hpp"
 
-#define SERVER_LOG(level, str, ...)             \
-if(log_)                                        \
-{                                               \
-    log_->level(str, ## __VA_ARGS__);           \
-}
-
-#define SERVER_DEBUG(str, ...)                  \
-if(log_)                                        \
-{                                               \
-    log_->debug(str, ## __VA_ARGS__);           \
-}
-
-#define SERVER_TRACE(str, ...)                  \
-if(log_)                                        \
-{                                               \
-    log_->trace(str, ## __VA_ARGS__);           \
-}
-
 namespace cytx
 {
     namespace gameserver
@@ -85,9 +67,9 @@ namespace cytx
                         logs_.push_back(log_ptr);
                     }
 
-                    log_ = cytx::log::get_log("server");
+                    log_ = cytx::log::force_get_log("server");
 
-                    SERVER_DEBUG("init server");
+                    log_->debug("init server");
                     //初始化server和timer
                     net::server_options options;
                     options.thread_mode = (net::server_thread_mode)info.thread_mode;
@@ -98,37 +80,37 @@ namespace cytx
                     timer_mgr_ = std::make_unique<timer_manager_t>(server_->get_io_service(), cytx::log::get_log("timer"));
                     flush_log_timer_ = timer_mgr_->set_auto_timer(info.flush_log_time * 1000, cytx::bind(&this_t::flush_logs, this));
 
-                    SERVER_DEBUG("begin register service");
+                    log_->debug("begin register service");
                     //注册所有的service
                     service_mgr_.reg_inter_service(new config_service(config_mgr_), "config");
                     if (info.services)
                     {
-                        SERVER_DEBUG("register {} service", info.services->size());
+                        log_->debug("register {} service", info.services->size());
                         service_mgr_.register_service(info.services.get());
                     }
                     else
                     {
-                        SERVER_DEBUG("register all service");
+                        log_->debug("register all service");
                         service_mgr_.register_all_service();
                     }
                 }
 
                 void start()
                 {
-                    SERVER_DEBUG("start service");
+                    log_->debug("start service");
                     service_mgr_.start_service();
 
-                    SERVER_DEBUG("start server");
+                    log_->debug("start server");
                     flush_log_timer_.start();
                     server_->start();
                 }
                 void stop()
                 {
-                    SERVER_DEBUG("stop server");
+                    log_->debug("stop server");
                     timer_mgr_->stop_all_timer();
                     server_->stop();
 
-                    SERVER_DEBUG("stop service");
+                    log_->debug("stop service");
                     service_mgr_.stop_service();
 
                     flush_logs();
