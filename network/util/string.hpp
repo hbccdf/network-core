@@ -3,6 +3,7 @@
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/optional.hpp>
 
 namespace cytx
 {
