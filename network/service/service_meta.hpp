@@ -323,7 +323,7 @@ private:                                                                \
 
 #define REG_SERVICE(type, ...)                                                                  \
 REG_TYPE(type);                                                                                 \
-namespace __reg_service_ ## type ## __LINE__                                                    \
+namespace MACRO_CONCAT(__reg_service_ ## type, __LINE__)                                        \
 {                                                                                               \
     static int r = cytx::service_factory::ins().register_service<type, ##__VA_ARGS__>(#type);   \
 }

@@ -85,7 +85,7 @@ namespace cytx
 
 #define REG_MODULE(type)                                                                        \
 REG_TYPE(type)                                                                                  \
-namespace __reg_module_ ## type ## __LINE__                                                     \
+namespace MACRO_CONCAT(__reg_module_ ## type, __LINE__)                                         \
 {                                                                                               \
     static int r = (cytx::module_manager::ins().register_module<type>(#type), 0);               \
 }

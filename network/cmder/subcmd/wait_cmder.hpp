@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "network/cmder/base_cmder.hpp"
+#include "network/cmder/cmder_meta.hpp"
 #include "network/util/string.hpp"
 
 namespace cytx

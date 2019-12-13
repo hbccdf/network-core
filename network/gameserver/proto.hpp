@@ -160,7 +160,7 @@ namespace cytx
 
 
 #define REGISTER_PROTOCOL(type) \
-namespace ___reg_proto_helper_value___ ## type ## __LINE__  \
+namespace MACRO_CONCAT(___reg_proto_helper_value___ ## type, __LINE__)  \
 { \
   static auto type ## _ptr = cytx::gameserver::detail::make_proto_ptr<type>(type::ProtoId());   \
 }

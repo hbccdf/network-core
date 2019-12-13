@@ -33,5 +33,5 @@ namespace cytx
 }
 
 #define REG_CMDER(type, name, desc) \
-REG_TYPE(name); \
-static int __REGISTER_CMDER_VAL__ ## type ## __LINE__ = (cmder_factory::ins().register_cmder<type>(name, desc))
+REG_TYPE(type); \
+static int MACRO_CONCAT(__REGISTER_CMDER_VAL__ ## type, __LINE__) = (cytx::cmder_factory::ins().register_cmder<type>(name, desc))
