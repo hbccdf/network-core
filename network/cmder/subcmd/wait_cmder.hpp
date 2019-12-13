@@ -16,6 +16,7 @@ namespace cytx
 
             int process() override
             {
+                std::cout << "wait input:" << std::endl;
                 std::string input_str;
                 std::cin >> input_str;
                 string_util::trim(input_str);

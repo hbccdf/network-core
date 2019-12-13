@@ -2,6 +2,7 @@
 #include "base_cmder.hpp"
 #include "network/base/world.hpp"
 #include "network/util/string.hpp"
+#include <mutex>
 
 namespace cytx
 {
@@ -100,10 +101,41 @@ namespace cytx
                 std::cout << fmt::format(fmt_str, c.first, c.second->desc()) << std::endl;
             }
         }
+
+    public:
+        void set_waiting_cmder(base_cmder_ptr cmder)
+        {
+            std::unique_lock<std::mutex> locker(mutex_);
+            waiting_cmder_ = cmder;
+        }
+
+        void clear_waiting_cmder()
+        {
+            std::unique_lock<std::mutex> locker(mutex_);
+            waiting_cmder_ = nullptr;
+        }
+
+        void notify_waiting_cmder(int result)
+        {
+            base_cmder_ptr tmp_waiting_cmder = nullptr;
+            {
+                std::unique_lock<std::mutex> locker(mutex_);
+                tmp_waiting_cmder = waiting_cmder_;
+                waiting_cmder_ = nullptr;
+            }
+
+            if (tmp_waiting_cmder != nullptr)
+            {
+                tmp_waiting_cmder->notify_waiting_result(result);
+            }
+        }
     protected:
         world_ptr_t world_ptr_;
         std::unordered_map<std::string, base_cmder_ptr> cmders_;
         int cmder_max_length_ = 0;
+
+        std::mutex mutex_;
+        base_cmder_ptr waiting_cmder_;
     };
 
     using icmder_manager_ptr = icmder_manager*;

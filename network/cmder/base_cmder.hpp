@@ -62,10 +62,28 @@ namespace cytx
                 show_help();
                 return 0;
             }
-            return process();
+
+            before_process();
+            int ret = process();
+            after_process();
+
+            return ret;
+        }
+
+        virtual void before_process()
+        {
         }
 
         virtual int process() = 0;
+
+        virtual void after_process()
+        {
+        }
+
+        virtual void notify_waiting_result(int result)
+        {
+
+        }
 
     protected:
         bool need_help() const

@@ -107,6 +107,22 @@ namespace cytx
                 boost::trim_if(str, boost::is_any_of(chars));
             }
 
+            static std::string trim_last_copy(const std::string& str, const std::string& last_str)
+            {
+                std::string new_str = str;
+                trim_last(new_str, last_str);
+                return new_str;
+            }
+
+            static void trim_last(std::string& str, const std::string& last_str)
+            {
+                auto range = boost::find_last(str, last_str);
+                if (!range.empty())
+                {
+                    str.erase(range.begin(), str.end());
+                }
+            }
+
             static bool contains_chars(const std::string& str, const std::string& chars)
             {
                 return std::any_of(str.begin(), str.end(), [&chars](auto c) -> bool { return chars.find(c) != std::string::npos; });

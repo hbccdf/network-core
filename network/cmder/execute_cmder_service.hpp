@@ -119,6 +119,9 @@ namespace cytx
 
         int execute_cmd_one_line(std::string cmd_str)
         {
+            //去除结尾的注释
+            string_util::trim_last(cmd_str, "#");
+
             string_util::trim(cmd_str);
             if (cmd_str.empty())
                 return 0;
