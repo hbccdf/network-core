@@ -130,6 +130,11 @@ namespace cytx
                 auto dir = ensure_exception_setting::ins().dump_dir();
                 wstring path = fmt::format(_T("{}/{}"), dir, file_name);
 
+                if (boost::filesystem::exists(path))
+                {
+                    return EXCEPTION_EXECUTE_HANDLER;
+                }
+
                 HANDLE hfile = CreateFile(path.c_str()
                     , GENERIC_READ | GENERIC_WRITE
                     , FILE_SHARE_READ | FILE_SHARE_WRITE
@@ -151,7 +156,10 @@ namespace cytx
                 int flag = MiniDumpNormal |
                     MiniDumpWithDataSegs |
                     MiniDumpWithHandleData |
-                    MiniDumpWithIndirectlyReferencedMemory;
+                    MiniDumpWithIndirectlyReferencedMemory |
+                    MiniDumpWithPrivateReadWriteMemory |
+                    MiniDumpWithThreadInfo |
+                    MiniDumpWithUnloadedModules;
 
                 if (::MiniDumpWriteDump(
                     ::GetCurrentProcess()
