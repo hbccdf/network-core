@@ -263,8 +263,11 @@ namespace cytx
             using value_t = ptree;
             using array_iterator = ptree::iterator;
             using member_iterator = ptree::iterator;
+            using properties_map = std::unordered_map<std::string, std::string>;
 
-            base_deserialize_adapter() {}
+            base_deserialize_adapter(properties_map* properties = nullptr)
+                : default_properties_(properties)
+            {}
             void parse(const char* str) { parse(string(str)); }
             void parse(const char* str, size_t len) { parse(string(str, len)); }
             void parse(const std::string& str)
@@ -353,11 +356,23 @@ namespace cytx
 
                 auto extend_func = [this](const std::string& prop, std::string& val) -> bool {
                     auto it = properties_.find(prop);
-                    if (it == properties_.end())
-                        return false;
+                    if (it != properties_.end())
+                    {
+                        val = it->second;
+                        return true;
+                    }
 
-                    val = it->second;
-                    return true;
+                    if (default_properties_)
+                    {
+                        auto dit = default_properties_->find(prop);
+                        if (dit != default_properties_->end())
+                        {
+                            val = dit->second;
+                            return true;
+                        }
+                    }
+
+                    return false;
                 };
 
                 bool is_extend = string_util::extend_all(str, "$(", ")", extend_func);
@@ -525,7 +540,8 @@ namespace cytx
             }
         protected:
             ptree pt_;
-            std::unordered_map<std::string, std::string> properties_;
+            properties_map properties_;
+            properties_map* default_properties_;
         };
     }
 

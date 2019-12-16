@@ -40,6 +40,13 @@ namespace cytx
             return id;
         }
 
+        template<typename T>
+        bool has() const
+        {
+            type_id_t tid = TypeId::id<T>();
+            return type_to_id_map_.find(tid) != type_to_id_map_.end();
+        }
+
     protected:
 
         template<typename T>
