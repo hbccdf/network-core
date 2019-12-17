@@ -265,7 +265,7 @@ namespace cytx
             using member_iterator = ptree::iterator;
             using properties_map = std::unordered_map<std::string, std::string>;
 
-            base_deserialize_adapter(properties_map* properties = nullptr)
+            base_deserialize_adapter(const properties_map* properties = nullptr)
                 : default_properties_(properties)
             {}
             void parse(const char* str) { parse(string(str)); }
@@ -541,7 +541,7 @@ namespace cytx
         protected:
             ptree pt_;
             properties_map properties_;
-            properties_map* default_properties_;
+            const properties_map* default_properties_;
         };
     }
 
