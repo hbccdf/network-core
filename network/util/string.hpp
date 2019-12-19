@@ -123,6 +123,15 @@ namespace cytx
                 }
             }
 
+            static void trim_first(std::string& str, const std::string& first_str)
+            {
+                auto range = boost::find_first(str, first_str);
+                if (!range.empty())
+                {
+                    str.erase(range.begin(), str.end());
+                }
+            }
+
             static bool contains_chars(const std::string& str, const std::string& chars)
             {
                 return std::any_of(str.begin(), str.end(), [&chars](auto c) -> bool { return chars.find(c) != std::string::npos; });

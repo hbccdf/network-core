@@ -7,6 +7,14 @@
 #include <memory>
 #include <fmt/format.h>
 #include "network/util/string.hpp"
+#include "network/util/file.hpp"
+#include "network/util/size.hpp"
+
+#ifdef _WIN32
+#define EXCEPTION_OVERRIDE override
+#else
+#define EXCEPTION_OVERRIDE noexcept override
+#endif
 
 namespace cytx
 {
@@ -34,11 +42,7 @@ namespace cytx
             public:
                 csv_exception(csv_error err_code, string err_msg) : err_code_(err_code), err_msg_(err_msg) {}
 
-#ifdef _WIN32
-                char const* what() const override { return err_msg_.c_str(); }
-#else
-                char const* what() const noexcept override { return err_msg_.c_str(); }
-#endif
+                char const* what() const EXCEPTION_OVERRIDE { return err_msg_.c_str(); }
 
                 string message() const { return err_msg_; }
 
@@ -358,25 +362,22 @@ namespace cytx
                 }
                 void parse_file(const string& file_name)
                 {
-                    ifstream file_stream;
-                    file_stream.open(file_name, std::ios::in | std::ios::binary);
-                    if(!file_stream.is_open())
-                        throw csv_exception(csv_error::fail, fmt::format("open file {} failed", file_name));
+                    string content;
+                    try
+                    {
+                        int64_t file_size = file_util::size(file_name);
+                        if (file_size == 0)
+                            return;
+                        if (file_size > 50 * size_util::MB)
+                            throw csv_exception(csv_error::over_max_size, fmt::format("this file over the max size 50M, size {} M", file_size / size_util::MB));
 
-                    file_stream.seekg(0, std::ios::end);
-                    size_t length = (size_t)file_stream.tellg();
-                    file_stream.seekg(0, std::ios::beg);
-                    if (length == 0)
-                        return;
-                    if (length > 50 * 1024 * 1024)
-                        throw csv_exception(csv_error::over_max_size, fmt::format("this file over the max size 50M, size {} M", length / 1024 / 1024));
+                        content = file_util::read_all(file_name);
+                    }
+                    catch (std::exception& e)
+                    {
+                        throw csv_exception(csv_error::fail, fmt::format("open file {} failed, error: {}", file_name, e.what()));
+                    }
 
-                    vector<char> buffer(length);
-                    file_stream.read(buffer.data(), buffer.size());
-                    file_stream.close();
-
-                    string content(buffer.data(), buffer.size());
-                    buffer.clear();
                     parse_string(content);
                 }
 

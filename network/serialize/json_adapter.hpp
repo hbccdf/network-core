@@ -2,6 +2,7 @@
 #include <fmt/format.h>
 #include "detail/json_util.hpp"
 #include "network/base/date_time.hpp"
+#include "network/util/file.hpp"
 
 namespace cytx {
 
@@ -57,12 +58,17 @@ namespace cytx {
     public:
         using value_t = json_util::value_type;
         using array_iterator = json_util::array_iterator;
-        using member_iterator = json_util::member_iterator ;
+        using member_iterator = json_util::member_iterator;
 
         json_deserialize_adapter() {}
         void parse(const char* str) { json_.parse(str); }
         void parse(const char* str, size_t len) { json_.parse(str, len); }
         void parse(const std::string& str) { json_.parse(str.c_str(), str.length()); }
+        void parse_file(const std::string& file_path)
+        {
+            std::string content = file_util::read_all(file_path);
+            parse(content);
+        }
 
         value_t& get_root(const char* key, bool has_root = true)
         {
