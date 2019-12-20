@@ -84,7 +84,7 @@ namespace cytx
             static std::vector<std::string> glob_paths(const std::string& dir, const std::string& glob, bool include_dir_path = false)
             {
                 std::vector<std::string> paths;
-                internal_glob_paths(paths, dir, glob, include_dir_path);
+                internal_glob_paths(paths, dir, dir, glob, include_dir_path);
                 std::sort(paths.begin(), paths.end());
                 return paths;
             }
@@ -93,13 +93,13 @@ namespace cytx
             {
                 if (paths.empty())
                 {
-                    internal_glob_paths(paths, dir, glob, include_dir_path);
+                    internal_glob_paths(paths, dir, dir, glob, include_dir_path);
                     std::sort(paths.begin(), paths.end());
                 }
                 else
                 {
                     std::vector<std::string> tmp_paths;
-                    internal_glob_paths(tmp_paths, dir, glob, include_dir_path);
+                    internal_glob_paths(tmp_paths, dir, dir, glob, include_dir_path);
                     std::sort(tmp_paths.begin(), tmp_paths.end());
                     std::copy(tmp_paths.begin(), tmp_paths.end(), std::back_inserter(paths));
                 }
@@ -231,27 +231,28 @@ namespace cytx
             }
 
         private:
-            static void internal_glob_paths(std::vector<std::string>& paths, const std::string& dir, const std::string& glob, bool include_dir_path = false)
+            static void internal_glob_paths(std::vector<std::string>& paths, const std::string& root_dir, const std::string& dir, const std::string& glob, bool include_dir_path = false)
             {
                 bfs::directory_iterator it(dir);
                 bfs::directory_iterator end_it;
                 while (it != end_it)
                 {
                     const std::string& cur_path = it->path().string();
+                    std::string relative_path = bfs::relative(cur_path, root_dir).string();
 
                     if (bfs::is_regular_file(it->status()))
                     {
-                        if (match_path(cur_path, glob, false, true))
+                        if (match_path(relative_path, glob, false, true))
                             paths.push_back(cur_path);
                     }
                     else if (bfs::is_directory(*it))
                     {
-                        if (match_path(cur_path, glob, true, true))
+                        if (match_path(relative_path, glob, true, true))
                         {
                             if (include_dir_path)
                                 paths.push_back(cur_path);
 
-                            internal_glob_paths(paths, cur_path, glob, include_dir_path);
+                            internal_glob_paths(paths, root_dir, cur_path, glob, include_dir_path);
                         }
                     }
 
