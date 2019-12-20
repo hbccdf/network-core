@@ -7,6 +7,7 @@ include_directories(
 
 file(GLOB SRC "*.h" "*.hpp" "*.cpp")
 add_files(SRC false "serialize")
+add_files(SRC false "util")
 
 add_executable(common_test ${SRC})
 set_target_properties(common_test PROPERTIES FOLDER "test")
