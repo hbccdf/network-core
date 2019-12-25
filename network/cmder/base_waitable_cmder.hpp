@@ -66,8 +66,6 @@ namespace cytx
 
     protected:
         bool need_register_waiting_cmder_ = true;
-
-    private:
         waitable<int> wait_result_;
     };
 
