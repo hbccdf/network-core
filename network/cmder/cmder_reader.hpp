@@ -38,7 +38,7 @@ namespace cytx
         {
             DeSerializer<xml_deserialize_adapter> de;
             de.enum_with_str(true);
-            de.parse_file(file);
+            de.parse_file(file, true);
 
             de.DeSerialize(config, "config");
         }

@@ -1,5 +1,7 @@
 ﻿#pragma once
-#include "whitespace_config.hpp"
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/info_parser.hpp>
 
 namespace cytx
 {
@@ -22,11 +24,12 @@ namespace cytx
         }
 
         template<typename... Args>
-        static void read_file(Args&&... args)
+        static void read_file(bool with_whitespace, Args&&... args)
         {
             using namespace boost::property_tree;
             using namespace boost::property_tree::xml_parser;
-            read_xml(std::forward<Args>(args)..., trim_whitespace | no_comments, std::locale());
+            int flags = with_whitespace ? no_comments : trim_whitespace | no_comments;
+            read_xml(std::forward<Args>(args)..., flags, std::locale());
         }
     };
 
@@ -47,7 +50,7 @@ namespace cytx
         }
 
         template<typename... Args>
-        static void read_file(Args&&... args)
+        static void read_file(bool with_whitespace, Args&&... args)
         {
             using namespace boost::property_tree;
             read_info(std::forward<Args>(args)..., std::locale());
@@ -71,7 +74,7 @@ namespace cytx
         }
 
         template<typename... Args>
-        static void read_file(Args&&... args)
+        static void read_file(bool with_whitespace, Args&&... args)
         {
             using namespace boost::property_tree;
             read_ini(std::forward<Args>(args)..., std::locale());

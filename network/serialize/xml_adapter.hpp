@@ -278,10 +278,10 @@ namespace cytx
                 init();
             }
 
-            void parse_file(const std::string& file)
+            void parse_file(const std::string& file, bool with_whitespace = false)
             {
-                T::read_file(file, pt_);
-                init();
+                T::read_file(with_whitespace, file, pt_);
+                init(with_whitespace);
             }
 
             value_t& get_root(const char* key, bool has_root = true)
@@ -428,7 +428,7 @@ namespace cytx
             }
 
         private:
-            void init()
+            void init(bool with_whitespace = false)
             {
                 if (pt_.empty())
                     return;
@@ -455,7 +455,7 @@ namespace cytx
                         {
                             std::string path;
                             read<std::string>(path, second(mb_it));
-                            T::read_file(path, other_pt);
+                            T::read_file(with_whitespace, path, other_pt);
 
                             for (auto& op : other_pt.begin()->second)
                             {
