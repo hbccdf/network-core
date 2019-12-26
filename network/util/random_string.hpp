@@ -1,9 +1,14 @@
 #pragma once
-#include "random.hpp"
 #include <string>
 #include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/sha1.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include "random.hpp"
 #include "cast.hpp"
+#include "network/base/date_time.hpp"
 
 namespace cytx
 {
@@ -81,7 +86,19 @@ namespace cytx
 
             static std::string get_token()
             {
-                return "";
+                boost::uuids::uuid id = ins().uuid_gen_();
+                std::string uuid_str = boost::uuids::to_string(id);
+                std::string str = fmt::format("{}_{}", uuid_str, date_time::now().total_milliseconds());
+                boost::uuids::detail::sha1 sha;
+                sha.process_bytes(str.data(), str.length());
+                uint32_t digest[5];
+                sha.get_digest(digest);
+                memory_wirter_t mr;
+                for (int i = 0; i < 5; ++i)
+                {
+                    mr.write("{:x}", digest[i]);
+                }
+                return mr.str();
             }
 
         private:
@@ -94,6 +111,9 @@ namespace cytx
             const std::string all_char_ = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const std::string letter_char_ = "abcdefghijkllmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const std::string number_char_ = "0123456789";
+            boost::uuids::random_generator uuid_gen_;
         };
     }
+
+    using random_string = util::random_string;
 }
