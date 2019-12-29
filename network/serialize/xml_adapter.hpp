@@ -304,7 +304,7 @@ namespace cytx
             size_t array_size(value_t& val) { return val.size(); }
             array_iterator array_begin(value_t& val) { return val.begin(); }
             array_iterator array_end(value_t& val) { return val.end(); }
-            value_t& it_val(array_iterator it) { return it->second; }
+            value_t& it_val(array_iterator& it) { return it->second; }
             array_iterator array_it(value_t& val, size_t index)
             {
                 auto it = array_begin(val);
@@ -314,6 +314,11 @@ namespace cytx
                     --index;
                 }
                 return it;
+            }
+
+            bool is_valid(array_iterator& it) const
+            {
+                return it->first != "<xmlattr>";
             }
 
             size_t member_size(value_t& val) { return val.size(); }

@@ -91,10 +91,15 @@ namespace cytx {
         size_t array_size(value_t& val) { return val.Size(); }
         array_iterator array_begin(value_t& val) { return val.Begin(); }
         array_iterator array_end(value_t& val) { return val.End(); }
-        value_t& it_val(array_iterator it) { return *it; }
+        value_t& it_val(array_iterator& it) { return *it; }
         array_iterator array_it(value_t& val, size_t index)
         {
             return array_begin(val) + index;
+        }
+
+        bool is_valid(array_iterator& it) const
+        {
+            return true;
         }
 
         size_t member_size(value_t& val) { return val.MemberCount(); }

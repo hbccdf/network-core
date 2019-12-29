@@ -177,6 +177,9 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
+                if (!rd_.is_valid(it))
+                    continue;
+
                 ele_t el{};
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 std::fill_n(std::inserter(t, t.end()), 1, std::move(el));
@@ -194,6 +197,9 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
+                if(!rd_.is_valid(it))
+                    continue;
+
                 ele_t el{};
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 std::fill_n(std::back_inserter(t), 1, std::move(el));
@@ -311,6 +317,9 @@ namespace cytx {
             auto it_end = rd_.array_end(val);
             for (; it != it_end; ++it)
             {
+                if (!rd_.is_valid(it))
+                    continue;
+
                 ele_t el{};
                 ReadObject(el, rd_.it_val(it), std::false_type{});
                 t.emplace_back(el);
@@ -323,9 +332,13 @@ namespace cytx {
             process_array<decltype((v)[0])>(val);
             auto it = rd_.array_begin(val);
             auto it_end = rd_.array_end(val);
-            for (size_t i = 0; i < array_size && it != it_end; ++i, ++it)
+            for (size_t i = 0; i < array_size && it != it_end; ++it)
             {
+                if (!rd_.is_valid(it))
+                    continue;
+
                 ReadObject(v[i], rd_.it_val(it), std::false_type{});
+                ++i;
             }
         }
 
