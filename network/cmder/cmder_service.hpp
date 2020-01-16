@@ -15,7 +15,7 @@ namespace cytx
         }
 
     public:
-        int handle_input(std::string input)
+        int handle_input(const std::string& input)
         {
             return manager_->handle_input(input);
         }
@@ -42,6 +42,16 @@ namespace cytx
                 std::cout << fmt::format("not find cmder {}", cmd_name) << std::endl;
                 show_help();
             }
+        }
+
+        void register_alias(const std::unordered_map<std::string, std::string>& alias)
+        {
+            manager_->register_alias(alias);
+        }
+
+        const std::unordered_map<std::string, std::string>& get_alias() const
+        {
+            return manager_->get_alias();
         }
 
     private:

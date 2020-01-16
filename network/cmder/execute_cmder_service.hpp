@@ -34,6 +34,8 @@ namespace cytx
                 return false;
             }
 
+            cmder_service_->register_alias(config_.alias);
+
             cmds_ptr_ = &(config_.cmds[profile]);
 
             for (int i = 0; (int)i < cmds_ptr_->size(); ++i)

@@ -15,7 +15,7 @@ namespace cytx
         using namespace boost::program_options;
         using namespace std;
 
-        inline vector<string> get_args(string input)
+        inline vector<string> get_args(const string& input)
         {
             return split_unix(input);
         }
@@ -27,7 +27,7 @@ namespace cytx
             });
         }
 
-        inline std::unique_ptr<options_description> options(string cmd_name)
+        inline std::unique_ptr<options_description> options(const string& cmd_name)
         {
             auto str = cmd_name;
             str += " options";
@@ -37,7 +37,7 @@ namespace cytx
             return op;
         }
 
-        inline variables_map get_vm(string input, options_description& op, positional_options_description& pd, bool show_help = true)
+        inline variables_map get_vm(const string& input, options_description& op, positional_options_description& pd, bool show_help = true)
         {
             variables_map vm;
             auto pr = command_line_parser(get_args(input))
@@ -78,7 +78,7 @@ namespace cytx
     public:
         virtual ~icmder() {}
     public:
-        void init_options(std::string name, std::string desc)
+        void init_options(const std::string& name, const std::string& desc)
         {
             name_ = name;
             desc_ = desc;
@@ -88,18 +88,13 @@ namespace cytx
 
         virtual void set_options() {}
 
-        virtual int handle_input(std::string input)
+        virtual int handle_input(const std::string& input)
         {
             auto input_args = detail::get_args(input);
-            std::vector<const char*> args;
-            for (auto& s : input_args)
-            {
-                args.push_back(s.c_str());
-            }
-            return handle_input((int)args.size(), args.data());
+            return handle_input(input_args);
         }
 
-        virtual int handle_input(int argc, const char* argv[])
+        virtual int handle_input(const std::vector<std::string>& args)
         {
             show_help();
             return 0;

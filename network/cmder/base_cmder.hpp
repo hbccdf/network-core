@@ -45,11 +45,11 @@ namespace cytx
             return add_options_helper(de_, op_.get(), &pd_, init_parser_func_);
         }
 
-        virtual int handle_input(int argc, const char* argv[]) override
+        virtual int handle_input(const std::vector<std::string>& args) override
         {
             reset_value();
 
-            de_.parse(argc, argv);
+            de_.parse(args);
             parser_func_(de_);
 
             return execute();

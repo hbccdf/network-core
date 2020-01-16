@@ -172,7 +172,7 @@ namespace cytx
         bpo_pos_options_t pod_;
     };
 
-    inline cmder_helper get_cmder_helper(const std::string& name, const std::string desc)
+    inline cmder_helper get_cmder_helper(const std::string& name, const std::string& desc)
     {
         return cmder_helper(name, desc);
     }

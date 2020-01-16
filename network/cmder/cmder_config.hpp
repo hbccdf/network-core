@@ -26,8 +26,9 @@ namespace cytx
     struct cmder_config
     {
         std::string profile;
+        std::unordered_map<std::string, std::string> alias;
         std::map<std::string, std::vector<cmd_node>> cmds;
     };
 
-    REG_META(cmder_config, profile, cmds);
+    REG_META(cmder_config, profile, alias, cmds);
 }
