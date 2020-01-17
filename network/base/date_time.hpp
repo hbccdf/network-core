@@ -167,6 +167,87 @@ namespace cytx
                 return ss.str();
             }
 
+            std::string to_string(const std::string& format_str) const
+            {
+                const char* str = format_str.c_str();
+                fmt::MemoryWriter writer;
+                format(writer, str, *this, true);
+                return writer.str();
+            }
+
+            static void format(fmt::BasicWriter<char> &writer, const char *&format_str, const date_time& t, bool self_to_string = false)
+            {
+                const char* s = format_str;
+                if (*s == ':' || self_to_string)
+                {
+                    ++s;
+                    while (*s != '}' && *s != 0)
+                    {
+                        if (*s == 'm' && *(s + 1) == 's')
+                        {
+                            writer << fmt::pad((uint32_t)t.ms(), 3, '0');
+                            ++s;
+                        }
+                        else if (*s == 'Y')
+                        {
+                            writer << fmt::pad((uint32_t)t.year(), 4, '0');
+                        }
+                        else if (*s == 'y')
+                        {
+                            int year = t.year() % 100;
+                            writer << fmt::pad((uint32_t)year, 4, '0');
+                        }
+                        else if (*s == 'm')
+                        {
+                            writer << fmt::pad((uint32_t)t.month(), 2, '0');
+                        }
+                        else if (*s == 'd' || *s == 'D')
+                        {
+                            writer << fmt::pad((uint32_t)t.day(), 2, '0');
+                        }
+                        else if (*s == 'h')
+                        {
+                            int hour = t.hour();
+                            if (hour > 12)
+                                hour -= 12;
+
+                            writer << fmt::pad((uint32_t)hour, 2, '0');
+                        }
+                        else if (*s == 'H')
+                        {
+                            writer << fmt::pad((uint32_t)t.hour(), 2, '0');
+                        }
+                        else if (*s == 'M')
+                        {
+                            writer << fmt::pad((uint32_t)t.minute(), 2, '0');
+                        }
+                        else if (*s == 's' || *s == 'S')
+                        {
+                            writer << fmt::pad((uint32_t)t.second(), 2, '0');
+                        }
+                        else if (*s == 'z' || *s == 'Z')
+                        {
+                            writer.write("{:+03}", t.zone_hours());
+                        }
+                        else
+                        {
+                            writer << *s;
+                        }
+
+                        ++s;
+                    }
+
+                    if (*s == '}')
+                        ++s;
+
+                    format_str = s;
+                }
+                else
+                {
+                    writer << t.to_string();
+                }
+            }
+
         public:
             int year() const
             {
@@ -342,4 +423,12 @@ namespace cytx
     using date_time = detail::date_time;
 
     IS_SAME_TYPE(date_time);
+}
+
+namespace fmt
+{
+    inline auto format(fmt::BasicFormatter<char> &f, const char *&format_str, const cytx::date_time& t)
+    {
+        cytx::date_time::format(f.writer(), format_str, t);
+    }
 }

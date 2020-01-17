@@ -367,15 +367,51 @@ namespace fmt
     template<typename T>
     auto format(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<cytx::is_enum_type_v<T>>
     {
-        boost::optional<std::string> v = cytx::to_string(val, false);
+        using under_type = std::underlying_type_t<std::decay_t<T>>;
+
+        bool with_enum_name = false;
+        bool link_by_dot = false;
+        bool with_number = false;
+        const char* s = format_str;
+        if (*s == ':')
+        {
+            ++s;
+            while (*s != '}')
+            {
+                if (*s == 'E')
+                {
+                    with_enum_name = true;
+                }
+                else if (*s == 'e')
+                {
+                    link_by_dot = true;
+                }
+                else if (*s == 'd')
+                {
+                    with_number = true;
+                }
+                ++s;
+            }
+            ++s;
+            format_str = s;
+        }
+        boost::optional<std::string> v = cytx::to_string(val, with_enum_name);
 
         if (v)
         {
-            f.writer().write("{}", v.get());
+            std::string str = v.get();
+            if (link_by_dot)
+            {
+                string_util::replace(str, "::", ".");
+            }
+            f.writer().write("{}", str);
+            if (with_number)
+            {
+                f.writer().write("({})", (under_type)val);
+            }
         }
         else
         {
-            using under_type = std::underlying_type_t<std::decay_t<T>>;
             f.writer().write("{}", (under_type)val);
         }
     }
