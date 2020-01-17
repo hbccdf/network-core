@@ -365,7 +365,7 @@ namespace cytx
 namespace fmt
 {
     template<typename T>
-    auto format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<cytx::is_enum_type_v<T>>
+    auto format(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<cytx::is_enum_type_v<T>>
     {
         boost::optional<std::string> v = cytx::to_string(val, false);
 
@@ -378,11 +378,5 @@ namespace fmt
             using under_type = std::underlying_type_t<std::decay_t<T>>;
             f.writer().write("{}", (under_type)val);
         }
-    }
-
-    template<typename T>
-    auto format(fmt::BasicFormatter<char> &f, const char *&format_str, const T& val) -> std::enable_if_t<cytx::is_enum_type_v<T>>
-    {
-        format_arg(f, format_str, val);
     }
 }
