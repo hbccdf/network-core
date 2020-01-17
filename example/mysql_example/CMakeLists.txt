@@ -2,7 +2,6 @@ include(../../cmake/common.cmake)
 
 if(MSVC)
     set(MYSQL_LIB_NAME libmysql)
-    include_directories(${ROOT}/third_party/mysql/include)
 else()
     include(FindMySQL)
     set(MYSQL_LIB_NAME mysqlclient)

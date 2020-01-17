@@ -1,12 +1,5 @@
 ﻿#pragma once
 #include "db_common.hpp"
-#include <errmsg.h>
-#ifdef max
-#undef max
-#endif
-#ifdef min
-#undef min
-#endif
 
 #include "network/base/log.hpp"
 #include "network/util/string.hpp"

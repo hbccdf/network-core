@@ -1,9 +1,10 @@
 ﻿#pragma once
-#include <boost/optional.hpp>
 #include <vector>
 #include <map>
 #include <memory>
 #include <cstdint>
+#include <boost/optional.hpp>
+#include <fmt/format.h>
 #include "network/traits/traits.hpp"
 #include "network/util/cast.hpp"
 #include "network/base/date_time.hpp"
@@ -420,13 +421,13 @@ namespace cytx {
         }
 
         template <typename P, typename T>
-        inline auto max(const field_proxy<P, T> &field)
+        inline auto cmax(const field_proxy<P, T> &field)
         {
             return aggregate<T> { "max", field };
         }
 
         template <typename P, typename T>
-        inline auto min(const field_proxy<P, T> &field)
+        inline auto cmin(const field_proxy<P, T> &field)
         {
             return aggregate<T> { "min", field };
         }

@@ -1,12 +1,11 @@
 #pragma once
-#include "db_meta.hpp"
-#ifdef VERSION
-#undef VERSION
-#endif
-#include <my_global.h>
-#include <mysql.h>
 #include <string>
 #include <vector>
+#include <windows.h>
+#include <winsock2.h>
+#include <mysql/mysql.h>
+#include <mysql/errmsg.h>
+#include "db_meta.hpp"
 
 namespace cytx
 {
