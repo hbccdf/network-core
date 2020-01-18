@@ -180,7 +180,9 @@ namespace cytx
                 const char* s = format_str;
                 if (*s == ':' || self_to_string)
                 {
-                    ++s;
+                    if(*s == ':')
+                        ++s;
+
                     while (*s != '}' && *s != 0)
                     {
                         if (*s == 'm' && *(s + 1) == 's')
