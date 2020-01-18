@@ -229,7 +229,7 @@ namespace cytx
 
             void SetValue(Variant &obj, const Variant &value) override
             {
-                UAssert(value.IsValid(), "Setting invalid value.");
+                //UAssert(value.IsValid(), "Setting invalid value.");
 
                 auto &instance = obj.GetValue<ClassType>();
 

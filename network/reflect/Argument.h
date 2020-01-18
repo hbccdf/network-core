@@ -61,7 +61,7 @@ namespace cytx
         template<typename T>
         Argument::Argument(T &data)
             : typeID_(typeidof(T))
-            , isArray_(meta_traits::IsArray<T>::value)
+            , isArray_(IsArray<T>::value)
             , data_(reinterpret_cast<const void*>(std::addressof(data)))
         {
             static_assert(!std::is_same< Argument, T >::value,
