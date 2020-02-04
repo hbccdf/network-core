@@ -21,8 +21,6 @@ namespace cytx
         {
             constexpr static bool value = !std::is_void_v<std::result_of_t<F(T, size_t, bool)>>;
         };
-
-        TEMPLATE_VALUE(is_result_bool);
     }
 
     template<typename T>
