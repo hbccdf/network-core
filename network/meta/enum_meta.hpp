@@ -402,7 +402,7 @@ namespace fmt
             std::string str = v.get();
             if (link_by_dot)
             {
-                string_util::replace(str, "::", ".");
+                cytx::string_util::replace(str, "::", ".");
             }
             f.writer().write("{}", str);
             if (with_number)
