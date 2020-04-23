@@ -48,7 +48,7 @@ namespace cytx
             {
                 return miss(chance, _base_chance);
             }
-        private:
+        public:
             static random_engine_t& get_engine()
             {
                 static thread_local random_engine_t* generator = nullptr;
@@ -60,6 +60,7 @@ namespace cytx
                 return *generator;
             }
 
+        private:
             static const int _base_chance = 10000;
 
         };
