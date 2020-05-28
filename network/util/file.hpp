@@ -26,6 +26,9 @@ namespace cytx
                 std::string content;
                 std::ifstream stream;
                 stream.open(file_path, std::ios::in | std::ios::binary);
+                if (!stream.is_open())
+                    return content;
+
                 stream.seekg(0, std::ios::end);
                 size_t length = (size_t)stream.tellg();
                 stream.seekg(0, std::ios::beg);
