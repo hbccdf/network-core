@@ -31,7 +31,7 @@ namespace cytx
 
                 for (int i = 0; i < thread_count; i++)
                 {
-                    executors_.push_back(new executor());
+                    executors_[i] = new executor();
                 }
             }
 
@@ -61,10 +61,33 @@ namespace cytx
                 }
             }
 
+            executor* get_executor()
+            {
+                if (executors_.empty())
+                    return nullptr;
+
+                auto executor_ptr = executors_[cur_executor_index_];
+                ++cur_executor_index_;
+                cur_executor_index_ = cur_executor_index_ % (int32_t)executors_.size();
+                return executor_ptr;
+            }
+            executor* get_executor(int32_t id)
+            {
+                if (executors_.empty() || id < 0)
+                    return nullptr;
+
+                int32_t index = id % (int32_t)executors_.size();
+                return executors_[index];
+            }
+
+            size_t size() const { return executors_.size(); }
+            int32_t get_cur_executor_index() const { return executors_.empty() ? -1 : cur_executor_index_; }
+
         protected:
             std::vector<executor*> executors_;
             std::vector<std::thread> threads_;
             std::vector<work_ptr> works_;
+            int32_t cur_executor_index_ = 0;
         };
     }
 }
