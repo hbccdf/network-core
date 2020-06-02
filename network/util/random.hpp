@@ -30,6 +30,12 @@ namespace cytx
                 return get_int(0, end_value);
             }
 
+            static float gaussian(float mean, float stdev)
+            {
+                std::normal_distribution<float> n(mean, stdev);
+                return n(get_engine());
+            }
+
         public:
             static bool hit(int chance, int total)
             {
