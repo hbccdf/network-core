@@ -13,6 +13,21 @@ namespace cytx
         class path_util
         {
         public:
+            static bool exists(const std::string& filepath)
+            {
+                return bfs::exists(filepath);
+            }
+
+            static bool is_file(const std::string& filepath)
+            {
+                return bfs::is_regular_file(filepath);
+            }
+
+            static bool is_file(const std::string& filepath)
+            {
+                return bfs::is_directory(filepath);
+            }
+
             //sub_dir_depth递归深度，-1表示不限递归深度
             static std::vector<std::string> get_files(const std::string& dir, bool include_sub_dir = false, int sub_dir_depth = -1)
             {
