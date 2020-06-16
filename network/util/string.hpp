@@ -5,6 +5,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/optional.hpp>
+#include <fmt/format.h>
 
 namespace cytx
 {
@@ -86,6 +87,36 @@ namespace cytx
                         strs.push_back(*it);
                 }
                 return strs;
+            }
+
+            static std::string join(char, std::string p)
+            {
+                return p;
+            }
+
+            template <typename... Args>
+            static std::string join(char j, const std::string& p1, const std::string& p2, Args&&... args)
+            {
+                if ((!p1.empty() && p1[p1.size() - 1] == j) || (!p2.empty() && p2[0] == j))
+                {
+                    return join(j, p1 + p2, std::forward<Args>(args)...);
+                }
+
+                return join(j, p1 + j + p2, std::forward<Args>(args)...);
+            }
+
+            static std::string join(char j, std::vector<std::string>& string_list)
+            {
+                fmt::MemoryWriter mr;
+                for (int i = 0; i < string_list.size(); ++i)
+                {
+                    mr << string_list[i];
+
+                    if (i + 1 < string_list.size())
+                        mr << j;
+                }
+
+                return mr.str();
             }
 
             static std::string trim_copy(const std::string& str)
