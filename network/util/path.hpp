@@ -23,7 +23,7 @@ namespace cytx
                 return bfs::is_regular_file(filepath);
             }
 
-            static bool is_file(const std::string& filepath)
+            static bool is_dir(const std::string& filepath)
             {
                 return bfs::is_directory(filepath);
             }
